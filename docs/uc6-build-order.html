@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UC6 — Archify diagram</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --panel:#ffffff; --ink:#15181d; --ink-2:#4a5159; --ink-3:#7b838c;
+    --rule:#dcd8d0; --rule-2:#ebe8e2;
+    --unity:#6d4fd0; --unity-soft:#efeaff;
+    --ros:#0f7a5a; --ros-soft:#e4f4ee;
+    --db:#a8631a; --db-soft:#fbeedd;
+    --bridge:#c2333a; --bridge-soft:#fdeaea;
+    --stretch:#7b838c; --stretch-soft:#eeecea;
+    --accent:#15181d;
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1380px;margin:0 auto;padding:32px 24px 96px}
+  header.doc{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:24px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+  h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;font-weight:650}
+  .question{font-size:17px;color:var(--ink-2);margin:0 0 14px;max-width:70ch}
+  .question strong{color:var(--ink);font-weight:600}
+  .scope{font-size:13px;color:var(--ink-3);max-width:82ch;margin:0}
+  .sources{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px}
+  .src{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);background:var(--rule-2);border:1px solid var(--rule);border-radius:4px;padding:3px 7px}
+  .board{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px;overflow:auto}
+  svg{display:block;max-width:100%;height:auto}
+  .zone-box{fill:none;stroke-width:1.5;rx:12}
+  .zone-fill{stroke:none}
+  .zone-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+  .zone-sub{font-size:10.5px;fill:var(--ink-3)}
+  .nodebox{cursor:pointer}
+  .nodebox rect.body{fill:#fff;stroke-width:1.5;rx:9}
+  .nodebox .n-title{font-size:13.5px;font-weight:620;fill:var(--ink)}
+  .nodebox .n-sub{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
+  .nodebox:hover rect.body{filter:drop-shadow(0 2px 6px rgba(0,0,0,.14))}
+  .nodebox.dim{opacity:.28}
+  .nodebox.hot rect.body{stroke-width:3}
+  .edge{fill:none;stroke-width:1.6}
+  .edge.hot{stroke-width:3}
+  .edge.dim{opacity:.18}
+  .elabel{font-size:10.5px;fill:var(--ink-2);paint-order:stroke fill;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round;cursor:pointer}
+  .elabel.hot{fill:var(--ink);font-weight:600}
+  .rail rect{fill:var(--bridge-soft);stroke:var(--bridge);stroke-width:1.5;rx:7;cursor:pointer}
+  .rail text{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;fill:var(--bridge);font-weight:700}
+  .phaseband rect{fill:#fff;stroke:var(--rule);stroke-width:1.2;rx:8}
+  .phaseband .p-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;fill:var(--ink)}
+  .phaseband .p-sub{font-size:10.5px;fill:var(--ink-3)}
+  .seqbadge circle{fill:var(--ink)}
+  .seqbadge text{font-family:var(--mono);font-size:11px;font-weight:700;fill:#fff}
+  .scenchip{font-family:var(--mono);font-size:9.5px;font-weight:700;fill:var(--ink-2)}
+  h2.sec{font-size:12px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:40px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+  .path{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-bottom:8px}
+  .pstep{flex:1 1 190px;background:var(--panel);border:1px solid var(--rule);border-left:3px solid var(--ink);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s}
+  .pstep:hover{border-left-color:var(--bridge)}
+  .pstep .pn{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.1em}
+  .pstep .pl{font-weight:650;font-size:14px;margin:2px 0 5px}
+  .pstep .pd{font-size:12px;color:var(--ink-2);line-height:1.45}
+  .pstep .cites{margin-top:7px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;scroll-margin-top:20px}
+  .card.hot{border-color:var(--ink);box-shadow:0 0 0 2px rgba(21,24,29,.1)}
+  .card h3{margin:0 0 3px;font-size:16px;font-weight:650;letter-spacing:-.01em}
+  .card .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;display:inline-block;padding:2px 7px;border-radius:4px;margin-bottom:9px}
+  .row{margin:9px 0;font-size:13px;line-height:1.5}
+  .row .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:2px}
+  .row .v{color:var(--ink-2)}
+  .row .v code,code{font-family:var(--mono);font-size:12px;background:var(--rule-2);padding:1px 4px;border-radius:3px}
+  .row.warn{background:#fff8e8;border-left:3px solid var(--db);padding:8px 10px;border-radius:0 6px 6px 0}
+  .row.note{background:var(--rule-2);border-left:3px solid var(--ink-3);padding:8px 10px;border-radius:0 6px 6px 0}
+  ul.list{margin:2px 0 0;padding-left:18px}
+  ul.list li{margin:3px 0;font-size:12.5px;color:var(--ink-2)}
+  .cites{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px;padding-top:10px;border-top:1px dashed var(--rule)}
+  .cite{font-family:var(--mono);font-size:10px;color:var(--ink-2);background:var(--rule-2);border-radius:3px;padding:2px 6px;white-space:nowrap}
+  .cites.bare{border-top:0;padding-top:0;margin-top:6px}
+  table.om{width:100%;border-collapse:collapse;font-size:13px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+  table.om th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:10px 14px;border-bottom:1px solid var(--rule);background:var(--rule-2)}
+  table.om td{padding:11px 14px;border-bottom:1px solid var(--rule-2);vertical-align:top;color:var(--ink-2)}
+  table.om td:first-child{color:var(--ink);font-weight:560;width:30%}
+  table.om tr:last-child td{border-bottom:0}
+  footer.doc{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-3)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:12px 2px 0;font-size:11.5px;color:var(--ink-2)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .swatch{width:14px;height:14px;border-radius:3px;border:1.5px solid}
+  @media print{body{background:#fff}.board{break-inside:avoid}.card{break-inside:avoid}}
+  @media (max-width:720px){.wrap{padding:20px 14px 60px}h1{font-size:23px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="doc">
+    <p class="eyebrow" id="eyebrow">Archify · UC6 mobile robot warehouse system</p>
+    <h1 id="title"></h1>
+    <p class="question" id="question"></p>
+    <p class="scope" id="scope"></p>
+    <div class="sources" id="sources"></div>
+  </header>
+  <div class="board"><div id="svghost"></div></div>
+  <div class="legend" id="legend"></div>
+  <div id="pathsec"></div>
+  <h2 class="sec" id="nodesec-h">Node cards — every node cites the file and section that proves it</h2>
+  <div class="cards" id="nodecards"></div>
+  <h2 class="sec" id="edgesec-h">Edge cards</h2>
+  <div class="cards" id="edgecards"></div>
+  <h2 class="sec">Deliberately omitted</h2>
+  <table class="om"><thead><tr><th>Component</th><th>Why it is not a node</th><th>Cited in</th></tr></thead><tbody id="omissions"></tbody></table>
+  <footer class="doc" id="footer"></footer>
+</div>
+<script id="diagram-data" type="application/json">
+{
+  "schema": "archify/architecture-1",
+  "id": "uc6-build-order",
+  "mode": "roadmap",
+  "title": "UC6 Build Order — empty repo to M3",
+  "question": "In what order do I build this from nothing, and what proves each step is done?",
+  "scope": "Sequenced by Phase only (Phase 0–5, docs/milestones.md §2). Milestone (M1/M2/M3) and Stage (A/B/C) are the other two axes and are shown as labels, never as sequence — they are three separate axes and must not be conflated (CONTEXT.md §2).",
+  "sources": [
+    "docs/milestones.md §1 (owner roles), §2 (phase plan), §3 (risk register)",
+    "docs/test-plan.md §2 (scenario matrix), §3 (headless runner), §4 (CSV), §5 (demo)",
+    "docs/prd.md §5 (FR), §6 (NFR), §8 (success metrics)",
+    "docs/architecture.md §2, §3, §4, §5, §6, §7",
+    "docs/data-model.md §5, §6",
+    "docs/schema.sql",
+    "CONTEXT.md §2, §4",
+    "ADR-001 … ADR-007"
+  ],
+  "canvas": { "width": 1240, "height": 1320 },
+  "phases": [
+    { "id": "p0", "label": "Phase 0", "sublabel": "Week 1 · environment verification", "x": 36, "y": 56, "w": 196, "h": 236 },
+    { "id": "p1", "label": "Phase 1", "sublabel": "Weeks 2–3 · M1 tutorial adaptation", "x": 36, "y": 300, "w": 196, "h": 356 },
+    { "id": "p2", "label": "Phase 2", "sublabel": "Weeks 3–4 · M2 static avoidance", "x": 36, "y": 664, "w": 196, "h": 236 },
+    { "id": "p3", "label": "Phase 3", "sublabel": "Weeks 5–6 · M3 dynamic avoidance", "x": 36, "y": 908, "w": 196, "h": 236 },
+    { "id": "p5", "label": "Phase 5", "sublabel": "Week 8 · hardening, evidence, demo", "x": 36, "y": 1152, "w": 196, "h": 124 },
+    { "id": "p4", "label": "Phase 4", "sublabel": "Weeks 6–7 · gated stretch, beyond M3", "x": 740, "y": 1112, "w": 460, "h": 36, "stretch": true }
+  ],
+  "nodes": [
+    {
+      "id": "s1",
+      "seq": 1,
+      "label": "Standardise the environment and pin the distro",
+      "phase": "p0",
+      "milestone": "pre-M1 groundwork",
+      "kind": "main",
+      "x": 260, "y": 70, "w": 420, "h": 92,
+      "card": {
+        "builds": "Ubuntu on every team member's machine (dual-boot expected, WSL2 only as a per-person accommodation whose results do not count toward a gate), then the ROS 2 distro and tutorial commit/tag pinned by reading the tutorial repository itself rather than assuming.",
+        "creates": [
+          "An Ubuntu LTS partition per machine, paired to the pinned ROS 2 distro",
+          "Unity Editor for Linux, running the Unity Robotics Hub tutorial scene",
+          "Status updates recorded into ADR-003 and ADR-007 (status change, not new ADRs)"
+        ],
+        "gate": "Phase 0 exit gate: tutorial repo runs unmodified; ROS 2 distro pinned (ADR-003 finalised); Unity version confirmed; TurtleBot3 Waffle Pi model/plugin availability confirmed.",
+        "scenario": "No scenario yet — Phase 0 is verified by its exit gate alone; the scenario matrix starts at S-00 in Phase 1.",
+        "why_first": "ADR-007 is upstream of every other Phase 0 task: the distro cannot be verified against the tutorial repo until an Ubuntu environment exists.",
+        "cites": ["milestones.md §2 Phase 0", "ADR-007", "ADR-003", "ADR-001"]
+      }
+    },
+    {
+      "id": "s2",
+      "seq": 2,
+      "label": "Stand up the persistence layer",
+      "phase": "p0",
+      "milestone": "pre-M1 groundwork",
+      "kind": "main",
+      "x": 260, "y": 190, "w": 420, "h": 92,
+      "card": {
+        "builds": "MySQL under docker-compose with docs/schema.sql applied on container init, dry-run on every team member's machine.",
+        "creates": [
+          "docker-compose configuration mounting docs/schema.sql into /docker-entrypoint-initdb.d/",
+          "The six tables from docs/schema.sql: categories, items, shelf_slots, tasks, runs, run_events"
+        ],
+        "gate": "Phase 0 exit gate: docker-compose up succeeds with docs/schema.sql applied, on every member's machine.",
+        "scenario": "No scenario yet — verified by the Phase 0 exit gate. The seeded catalog it produces is later shown as step 1 of the grading-day demo (test-plan.md §5).",
+        "why_first": "Phase 1's own exit gate requires the orchestrator skeleton to be operational against a seeded MySQL, so the schema has to exist before the skeleton does.",
+        "cites": ["milestones.md §2 Phase 0", "ADR-005", "data-model.md §1", "docs/schema.sql", "test-plan.md §5 step 1"]
+      }
+    },
+    {
+      "id": "s3",
+      "seq": 3,
+      "label": "Adapt the tutorial scene and fix the bridge contract",
+      "phase": "p1",
+      "milestone": "M1 tutorial adaptation",
+      "kind": "main",
+      "x": 260, "y": 314, "w": 420, "h": 92,
+      "card": {
+        "builds": "The Unity warehouse scene adapted from the Unity Robotics Hub Nav2 + SLAM example, plus the C# side of the bridge and the custom message set the rest of the system references.",
+        "creates": [
+          "Unity warehouse scene with shelf and drop-off poses matching the seeded shelf_slots grid",
+          "Robot Controller (C#), ROS-TCP-Connector configuration",
+          "Item Re-parent / Release Handler (C#) — dwell-then-re-parent, release at drop-off",
+          "warehouse_msgs / warehouse_srvs: PickupEvent, PickupAck, PlaceEvent, PlaceAck, CollisionEvent, ReplanEvent, ClearanceSample, CategoryUpdate, TaskResult, GetNextTask, SetCategory",
+          "The M1 map produced by the SLAM/mapping step, used as the global costmap static_layer"
+        ],
+        "gate": "Contributes to the Phase 1 exit gate (S-00 below). Its own blocking check is the architecture.md §2 [VERIFY]: confirm the tutorial's actual default topic set before the contract is frozen.",
+        "scenario": "S-00 — open room, no obstacles, single robot, Standard category only.",
+        "why_first": "The bridge contract is referenced by every ROS 2 node built afterwards; changing it later invalidates work in all four owner areas.",
+        "cites": ["milestones.md §2 Phase 1", "milestones.md §1 (Unity/Bridge Lead)", "architecture.md §2", "architecture.md §5", "test-plan.md S-00", "ADR-001"]
+      }
+    },
+    {
+      "id": "s4",
+      "seq": 4,
+      "label": "task_manager and mission_orchestrator skeleton",
+      "phase": "p1",
+      "milestone": "M1 tutorial adaptation",
+      "kind": "main",
+      "x": 260, "y": 434, "w": 420, "h": 92,
+      "card": {
+        "builds": "The episode spine: the single database-touching node, and the per-task FSM that drives two legs with a dwell at each end.",
+        "creates": [
+          "task_manager (Python): /task_manager/get_next_task service, the episode-end transaction, and the FR-16 disk-buffer fallback",
+          "mission_orchestrator (Python): shelf leg → dwell → profile → drop-off leg → dwell → report, over /navigate_to_pose",
+          "The seed script (data-model.md §5): three categories rows, a shelf_slots grid, a sample items catalog, a pending tasks queue"
+        ],
+        "gate": "Phase 1 exit gate: S-00 goal success rate ≥ 90% over N=20 and 0 collisions; task_manager / mission_orchestrator skeleton operational against seeded MySQL.",
+        "scenario": "S-00 — open room, no obstacles, single robot, Standard category only.",
+        "why_first": "NFR-03 is cheapest to hold from the first line: exactly one node performs database I/O, so no control-loop node ever acquires a query to remove later.",
+        "cites": ["milestones.md §2 Phase 1", "CONTEXT.md §4", "architecture.md §3", "data-model.md §5", "data-model.md §6", "test-plan.md S-00", "prd.md FR-01, FR-13, FR-16, NFR-03", "ADR-005"]
+      }
+    },
+    {
+      "id": "s5",
+      "seq": 5,
+      "label": "metrics_collector and the headless runner",
+      "phase": "p1",
+      "milestone": "M1 tutorial adaptation",
+      "kind": "main",
+      "x": 260, "y": 554, "w": 420, "h": 92,
+      "card": {
+        "builds": "The measurement path, without which no gate from here on can be evaluated: in-run event accumulation plus the harness that repeats a scenario N≥20 times and exports CSV.",
+        "creates": [
+          "metrics_collector (Python): collision, replan, clearance_sample and goal_outcome events; the per-episode run summary on /task/next_task_result",
+          "Headless runner parameterised by scenario_id and run_count (default 20)",
+          "CSV exporter: <scenario_id>_results.csv (16 columns) and <scenario_id>_summary.csv"
+        ],
+        "gate": "Phase 1 exit gate, measured: S-00 goal success rate ≥ 90% over N=20 with 0 collisions — a number that cannot be produced without this node and this runner.",
+        "scenario": "S-00 — and every scenario after it, since the runner is what makes N≥20 per scenario practical within 8 weeks.",
+        "sequencing_note": "Phase placement inferred, not stated: milestones.md §2 names the Phase 1 exit gate as a numeric rate over N=20, and milestones.md §1 assigns metrics_collector, the headless runner and CSV export to the Integration/Test Lead. The Phase 5 exit gate governs the completed CSV evidence set, not the tool's first build.",
+        "cites": ["milestones.md §1 (Integration/Test Lead)", "milestones.md §2 Phase 1", "test-plan.md §1", "test-plan.md §3", "test-plan.md §4", "prd.md FR-12, FR-20", "data-model.md §6 step 2"]
+      }
+    },
+    {
+      "id": "s6",
+      "seq": 6,
+      "label": "Static obstacle avoidance: costmaps and planner tuning",
+      "phase": "p2",
+      "milestone": "M2 static avoidance",
+      "kind": "main",
+      "x": 260, "y": 678, "w": 420, "h": 92,
+      "card": {
+        "builds": "The first graded capability. Nav2 is configured, never rebuilt: the obstacle layer is enabled for static obstacles, the global planner is tuned for costmap responsiveness, and stock recovery behaviours are left at defaults.",
+        "creates": [
+          "Nav2 YAML parameter layers over the tutorial defaults (no Nav2 source modified)",
+          "global_costmap: static_layer from the M1 map, obstacle_layer from /scan, inflation_layer",
+          "local_costmap: rolling-window obstacle_layer from /scan, inflation_layer",
+          "Unity scenes for the three static scenarios, including a 1.5× footprint corridor and a dead-end branch"
+        ],
+        "gate": "S-01 and S-02: 0 collisions across 20 consecutive runs, min clearance ≥ 0.15 m; S-02 additionally path length ratio ≤ 1.3. S-03: 0 collisions across 20 consecutive runs and goal success rate ≥ 90% over N=20, with recovery resolving the dead end rather than merely avoiding contact.",
+        "scenario": "S-01 static-only · S-02 narrow corridor · S-03 dead-end recovery.",
+        "cites": ["milestones.md §2 Phase 2", "architecture.md §4", "architecture.md §5", "test-plan.md S-01, S-02, S-03", "prd.md FR-03, FR-04, FR-06, NG3", "prd.md §8 (M2 headline)"]
+      }
+    },
+    {
+      "id": "s7",
+      "seq": 7,
+      "label": "Wire the category to the motion profile",
+      "phase": "p2",
+      "milestone": "M2 static avoidance",
+      "kind": "main",
+      "x": 260, "y": 798, "w": 420, "h": 92,
+      "card": {
+        "builds": "motion_profile_node and the parameter path it drives — end to end, even while only the Standard profile is exercised.",
+        "creates": [
+          "motion_profile_node (Python): /mission/active_category subscriber, /motion_profile/set_category service",
+          "Category parameter sets: Standard 0.26 / 2.5 / 0.30, Fragile 0.10 / 2.5 / 0.50, Heavy 0.15 / 1.0 / 0.35 (max_vel_x / acc_lim_x / inflation_radius)",
+          "The fail-safe path: on service failure or timeout, hold Fragile values and log a warning run_event"
+        ],
+        "gate": "Phase 2 exit gate: category profile mechanism wired end-to-end, even with only the Standard profile exercised — alongside the S-01–S-03 numbers above.",
+        "scenario": "S-01–S-03 for the phase gate; the mechanism's own numeric proof is S-06, run in Phase 3.",
+        "framing": "A mechanism reinforcing obstacle avoidance, never a standalone feature (PRD G4). Category is a catalog attribute, never inferred (ADR-002).",
+        "cites": ["milestones.md §2 Phase 2", "architecture.md §6", "prd.md FR-09, NFR-07, G4", "test-plan.md S-06", "ADR-002"]
+      }
+    },
+    {
+      "id": "s8",
+      "seq": 8,
+      "label": "Dynamic avoidance and the ADR-004 benchmark",
+      "phase": "p3",
+      "milestone": "M3 dynamic avoidance",
+      "kind": "main",
+      "x": 260, "y": 922, "w": 420, "h": 92,
+      "card": {
+        "builds": "The graded headline. Scripted NPC obstacles in Unity, the local costmap driving short-horizon avoidance, tightened recovery timeouts to keep replans responsive, and the pre-registered DWB-vs-TEB selection.",
+        "creates": [
+          "Scripted NPC Obstacle Controllers (C#) crossing the path at a fixed interval",
+          "Two local-planner parameter files (DWB and TEB) kept buildable until the benchmark decides",
+          "Costmap obstacle layers extended to LIDAR-observed dynamic obstacles; tuned spin / back-up / wait timeouts",
+          "The replan hook publishing /metrics/replan_event"
+        ],
+        "gate": "S-04: goal success rate ≥ 85% over N=20, ≤ 1 collision per 20 runs, replan count > 0 on at least 1 run in 20. Benchmark criterion, pre-registered: the configuration with the lower collision count over N=20 in S-04 is adopted; on a tie, the higher goal success rate; time-boxed to 2 days, defaulting to DWB if inconclusive.",
+        "scenario": "S-04 — dynamic NPC.",
+        "cites": ["milestones.md §2 Phase 3", "milestones.md §3 (benchmark risk)", "test-plan.md S-04", "ADR-004", "architecture.md §4", "architecture.md §5", "prd.md FR-05, FR-07, FR-17, NFR-02", "prd.md §8 (M3 headline)"]
+      }
+    },
+    {
+      "id": "s9",
+      "seq": 9,
+      "label": "Prove the per-category velocity difference",
+      "phase": "p3",
+      "milestone": "M3 dynamic avoidance (Phase 3 exit)",
+      "kind": "main",
+      "x": 260, "y": 1042, "w": 420, "h": 92,
+      "card": {
+        "builds": "The numeric evidence that the category mechanism measurably changes robot behaviour — a fixed route in an open room, run 20 times per category.",
+        "creates": [
+          "The S-06 fixed-route scene and its three 20-run task batches (60 runs total)",
+          "The cross-run mean-linear-velocity-per-category rollup in the CSV exporter (not a per-run runs column)"
+        ],
+        "gate": "S-06: mean linear velocity per category strictly ordered Fragile < Heavy < Standard, with each pairwise difference ≥ 0.03 m/s. Closes the Phase 3 exit gate together with S-04 and the finalised local planner.",
+        "scenario": "S-06 — per-category profile, ungraded but proves FR-09.",
+        "cites": ["milestones.md §2 Phase 3", "test-plan.md S-06", "test-plan.md §1 (mean linear velocity)", "test-plan.md §4", "prd.md FR-09, G4", "architecture.md §6"]
+      }
+    },
+    {
+      "id": "s10",
+      "seq": 10,
+      "label": "Harden, produce the evidence, rehearse the demo",
+      "phase": "p5",
+      "milestone": "M1–M3 evidence package",
+      "kind": "terminal",
+      "x": 260, "y": 1166, "w": 420, "h": 92,
+      "card": {
+        "builds": "The submission. Stage A alone is sufficient to enter this phase and to ship.",
+        "creates": [
+          "N≥20 CSV-exported runs per required scenario, from the headless runner",
+          "<scenario_id>_results.csv and <scenario_id>_summary.csv for S-00 through S-06",
+          "The 9-step scripted manual demo sequence, plus pre-recorded headless logs as the grading-day fallback",
+          "Finalised documentation and the packaged submission"
+        ],
+        "gate": "Phase 5 exit gate: headless runner has produced N≥20 CSV-exported runs per required scenario; manual demo sequence rehearsed at least twice; documentation finalised; submission packaged. Entry gate: Phase 3 exit met — Stage A is sufficient.",
+        "scenario": "S-00 through S-06, replayed as the evidence set; the live demo runs S-02, S-04 and S-06.",
+        "cites": ["milestones.md §2 Phase 5", "test-plan.md §3", "test-plan.md §4", "test-plan.md §5", "prd.md FR-20, G6, NFR-09"]
+      }
+    },
+    {
+      "id": "s11",
+      "seq": 11,
+      "label": "Stage B / Stage C multi-robot — gated stretch",
+      "phase": "p4",
+      "milestone": "Beyond M3 — never required for a graded milestone",
+      "kind": "stretch",
+      "x": 740, "y": 1166, "w": 460, "h": 92,
+      "card": {
+        "builds": "One independently-navigating second robot (Stage B), then a third (Stage C) — each a full Nav2 stack under its own namespace and TF prefix, entered only if the prior stage's exit gate is met.",
+        "creates": [
+          "Per-robot namespaces /robot1…/robot3 and TF prefixes robot1/…robot3/, with a single shared map frame [VERIFY]",
+          "A resolution of the ROS-TCP-Endpoint question: one endpoint multiplexed, or one endpoint process per robot on incrementing ports (e.g. 10000+n), load-tested before Stage B"
+        ],
+        "gate": "Stage B gate: 2 robots run without TF/namespace conflict across 20 consecutive runs in S-05, and goal success rate ≥ 80% over N=20 for every robot in the stage. Stage C gate: the same with 3 robots, attempted only within remaining Week 7 time. If either gate fails, ship the prior stage.",
+        "scenario": "S-05 — multi-robot, explicitly beyond M3 and gated.",
+        "warning": "This is a terminal branch, not a step on the way to M3. Stage A is the M3 baseline and already satisfies every graded milestone; Phase 4 is attempted only after the Phase 3 exit gate is met, and its failure costs nothing but the stretch. A namespace conflict here is a namespace conflict, never a collision.",
+        "cites": ["milestones.md §2 Phase 4", "ADR-006", "architecture.md §7", "test-plan.md S-05", "prd.md FR-18, FR-19, NFR-08", "CONTEXT.md §2 (Stage axis)", "CONTEXT.md §3 (Namespace / TF prefix)"]
+      }
+    }
+  ],
+  "edges": [
+    { "id": "b1", "from": "s1", "to": "s2", "kind": "seq", "label": "Phase 0 exit gate", "path": [[470,162],[470,190]] },
+    { "id": "b2", "from": "s2", "to": "s3", "kind": "seq", "label": "Phase 0 exit gate met → Phase 1 entry", "path": [[470,282],[470,314]] },
+    { "id": "b3", "from": "s3", "to": "s4", "kind": "seq", "label": "bridge contract frozen", "path": [[470,406],[470,434]] },
+    { "id": "b4", "from": "s4", "to": "s5", "kind": "seq", "label": "episode runs end to end", "path": [[470,526],[470,554]] },
+    { "id": "b5", "from": "s5", "to": "s6", "kind": "seq", "label": "Phase 1 exit gate met (S-00) → Phase 2 entry", "path": [[470,646],[470,678]] },
+    { "id": "b6", "from": "s6", "to": "s7", "kind": "seq", "label": "S-01–S-03 passing", "path": [[470,770],[470,798]] },
+    { "id": "b7", "from": "s7", "to": "s8", "kind": "seq", "label": "Phase 2 exit gate met → Phase 3 entry", "path": [[470,890],[470,922]] },
+    { "id": "b8", "from": "s8", "to": "s9", "kind": "seq", "label": "S-04 passing, local planner finalised", "path": [[470,1014],[470,1042]] },
+    { "id": "b9", "from": "s9", "to": "s10", "kind": "seq", "label": "Phase 3 exit gate met — Stage A is sufficient to ship", "path": [[470,1134],[470,1166]] },
+    { "id": "b10", "from": "s9", "to": "s11", "kind": "stretch", "label": "only if the Phase 3 exit gate is met, and only as time permits (ADR-006)", "path": [[680,1088],[710,1088],[710,1212],[740,1212]] }
+  ],
+  "omitted": [
+    { "item": "Owner-role assignment across the four leads", "why": "An orthogonal axis (who, not when); folded into the cards where it settles sequencing rather than drawn as nodes.", "cites": ["milestones.md §1"] },
+    { "item": "The nine-entry risk register", "why": "Not a build step; the two risks that actually move the order (tutorial/distro drift, benchmark overrun) are carried in the s1 and s8 cards.", "cites": ["milestones.md §3"] },
+    { "item": "YOLOv8n perception prototype", "why": "Gated behind the M3/Stage exit gates, never on the graded path, and not part of any phase exit gate.", "cites": ["prd.md NG1, FR-21", "ADR-002"] },
+    { "item": "Stage B and Stage C as separate nodes", "why": "Collapsed into one terminal gated-stretch node; C is entered only if B's gate passes, and neither is required for a graded milestone.", "cites": ["ADR-006", "milestones.md §2 Phase 4"] },
+    { "item": "Phase 4 as a position in the main sequence", "why": "Phase 4 sits between Phases 3 and 5 on the calendar but is not on the path from nothing to M3; drawn as a branch off the Phase 3 exit gate.", "cites": ["milestones.md §2 Phase 4, Phase 5", "ADR-006"] }
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+var data = JSON.parse(document.getElementById('diagram-data').textContent);
+var NS = 'http://www.w3.org/2000/svg';
+
+var KIND = {
+  'unity':     {c:'var(--unity)',  s:'var(--unity-soft)',  sub:'Unity · C#'},
+  'ros':       {c:'var(--ros)',    s:'var(--ros-soft)',    sub:'ROS 2 · Python'},
+  'ros-stock': {c:'var(--ros)',    s:'var(--ros-soft)',    sub:'ROS 2 · stock, configured', dash:'5 3'},
+  'ros-db':    {c:'var(--ros)',    s:'var(--ros-soft)',    sub:'ROS 2 · Python · only DB writer'},
+  'db':        {c:'var(--db)',     s:'var(--db-soft)',     sub:'MySQL · docker-compose'},
+  'fallback':  {c:'var(--db)',     s:'var(--db-soft)',     sub:'FR-16 fallback', dash:'5 3'},
+  'main':      {c:'var(--accent)', s:'var(--rule-2)',      sub:''},
+  'terminal':  {c:'var(--ros)',    s:'var(--ros-soft)',    sub:''},
+  'stretch':   {c:'var(--stretch)',s:'var(--stretch-soft)',sub:'', dash:'6 4'}
+};
+var EKIND = {
+  'bridge':  'var(--bridge)',
+  'cross':   'var(--bridge)',
+  'flow':    '#4a5159',
+  'unity':   'var(--unity)',
+  'fallback':'var(--db)',
+  'seq':     'var(--accent)',
+  'stretch': 'var(--stretch)'
+};
+
+function mk(tag, attrs, text){
+  var e = document.createElementNS(NS, tag);
+  if (attrs) for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+function h(tag, cls, text){
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function wrap(str, maxW, fs){
+  var cw = fs * 0.53, per = Math.max(6, Math.floor(maxW / cw));
+  var words = String(str).split(' '), lines = [], cur = '';
+  for (var i=0;i<words.length;i++){
+    var t = cur ? cur + ' ' + words[i] : words[i];
+    if (t.length > per && cur){ lines.push(cur); cur = words[i]; } else { cur = t; }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function scenarios(card){
+  var found = [], txt = JSON.stringify(card||{}), m, re = /S-0\d/g;
+  while ((m = re.exec(txt))) if (found.indexOf(m[0]) < 0) found.push(m[0]);
+  return found;
+}
+
+/* ---------- header ---------- */
+document.title = data.title;
+document.getElementById('title').textContent = data.title;
+var q = document.getElementById('question');
+q.appendChild(h('strong', null, 'Question this answers: '));
+q.appendChild(document.createTextNode(data.question));
+document.getElementById('scope').textContent = data.scope || '';
+var srcHost = document.getElementById('sources');
+(data.sources||[]).forEach(function(s){ srcHost.appendChild(h('span','src',s)); });
+
+/* ---------- svg ---------- */
+var W = data.canvas.width, H = data.canvas.height;
+var svg = mk('svg', {viewBox:'0 0 '+W+' '+H, width:W, height:H, role:'img', 'aria-label':data.title});
+var defs = mk('defs');
+var seen = {};
+Object.keys(EKIND).forEach(function(k){
+  var col = EKIND[k];
+  if (seen[col]) return; seen[col] = 1;
+  var id = 'arw-' + k;
+  var m = mk('marker', {id:id, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'6.5', markerHeight:'6.5', orient:'auto-start-reverse'});
+  m.appendChild(mk('path', {d:'M 0 0 L 10 5 L 0 10 z', fill:col}));
+  defs.appendChild(m);
+  EKIND[k+'#marker'] = id;
+});
+svg.appendChild(defs);
+var gZone = mk('g'), gEdge = mk('g'), gNode = mk('g'), gTop = mk('g');
+svg.appendChild(gZone); svg.appendChild(gEdge); svg.appendChild(gNode); svg.appendChild(gTop);
+
+/* zones (runtime mode) */
+(data.zones||[]).forEach(function(z){
+  var col = z.accent === 'unity' ? 'var(--unity)' : z.accent === 'db' ? 'var(--db)' : 'var(--ros)';
+  var soft = z.accent === 'unity' ? 'var(--unity-soft)' : z.accent === 'db' ? 'var(--db-soft)' : 'var(--ros-soft)';
+  gZone.appendChild(mk('rect', {x:z.x, y:z.y, width:z.w, height:z.h, rx:12, fill:soft, opacity:'.5'}));
+  gZone.appendChild(mk('rect', {x:z.x, y:z.y, width:z.w, height:z.h, rx:12, fill:'none', stroke:col, 'stroke-width':1.5, 'stroke-dasharray':'3 4'}));
+  var t = mk('text', {x:z.x+16, y:z.y+26, class:'zone-label', fill:col}, z.label);
+  gZone.appendChild(t);
+  wrap(z.sublabel||'', z.w-32, 10.5).forEach(function(ln,i){
+    gZone.appendChild(mk('text', {x:z.x+16, y:z.y+44+i*13, class:'zone-sub'}, ln));
+  });
+});
+
+/* phase bands (roadmap mode) */
+(data.phases||[]).forEach(function(p){
+  var g = mk('g', {class:'phaseband'});
+  g.appendChild(mk('rect', {x:p.x, y:p.y, width:p.w, height:p.h,
+    fill: p.stretch ? 'var(--stretch-soft)' : '#fff',
+    stroke: p.stretch ? 'var(--stretch)' : 'var(--rule)',
+    'stroke-dasharray': p.stretch ? '5 4' : 'none'}));
+  g.appendChild(mk('text', {x:p.x+14, y:p.y+24, class:'p-label'}, p.label));
+  wrap(p.sublabel||'', p.w-28, 10.5).forEach(function(ln,i){
+    g.appendChild(mk('text', {x:p.x+14, y:p.y+41+i*13, class:'p-sub'}, ln));
+  });
+  gZone.appendChild(g);
+});
+
+/* rail = the single bridge edge */
+if (data.rail){
+  var r = data.rail, gr = mk('g', {class:'rail', 'data-edge':r.edgeId});
+  gr.appendChild(mk('rect', {x:r.x-10, y:r.y1, width:20, height:r.y2-r.y1}));
+  var mid = (r.y1+r.y2)/2;
+  gr.appendChild(mk('text', {x:r.x, y:mid, 'text-anchor':'middle',
+    transform:'rotate(-90 '+r.x+' '+mid+')', dy:'4'}, r.label));
+  gTop.appendChild(gr);
+  gr.addEventListener('click', function(){ focusEdge(r.edgeId); });
+}
+
+/* edges */
+var edgeEls = {};
+(data.edges||[]).forEach(function(e){
+  if (!e.path || e.path.length < 2) return;
+  var col = EKIND[e.kind] || '#4a5159';
+  var pts = e.path.map(function(p){ return p[0]+','+p[1]; }).join(' ');
+  var g = mk('g', {'data-edge':e.id});
+  var line = mk('polyline', {points:pts, class:'edge', stroke:col,
+    'marker-end':'url(#'+ (EKIND[e.kind+'#marker']||'arw-flow') +')',
+    'stroke-dasharray': (e.kind==='fallback'||e.kind==='stretch') ? '6 4' : 'none'});
+  if (e.bidir) line.setAttribute('marker-start', 'url(#'+(EKIND[e.kind+'#marker']||'arw-flow')+')');
+  g.appendChild(line);
+  if (e.label){
+    var segs = [], tot = 0;
+    for (var i=1;i<e.path.length;i++){
+      var dx = e.path[i][0]-e.path[i-1][0], dy = e.path[i][1]-e.path[i-1][1];
+      var L = Math.sqrt(dx*dx+dy*dy); segs.push(L); tot += L;
+    }
+    var target = tot/2, acc = 0, mx = e.path[0][0], my = e.path[0][1], horiz = true;
+    for (var j=0;j<segs.length;j++){
+      if (acc + segs[j] >= target){
+        var f = (target-acc)/segs[j];
+        mx = e.path[j][0] + (e.path[j+1][0]-e.path[j][0])*f;
+        my = e.path[j][1] + (e.path[j+1][1]-e.path[j][1])*f;
+        horiz = Math.abs(e.path[j+1][0]-e.path[j][0]) >= Math.abs(e.path[j+1][1]-e.path[j][1]);
+        break;
+      }
+      acc += segs[j];
+    }
+    var lines = wrap(e.label, horiz ? 300 : 190, 10.5);
+    lines.forEach(function(ln, i){
+      var t = mk('text', {x:mx, y:my - (horiz ? 7 : 0) - (lines.length-1-i)*12 + (horiz?0:4),
+        'text-anchor':'middle', class:'elabel'}, ln);
+      g.appendChild(t);
+    });
+  }
+  g.addEventListener('click', function(){ focusEdge(e.id); });
+  g.style.cursor = 'pointer';
+  gEdge.appendChild(g);
+  edgeEls[e.id] = g;
+});
+
+/* nodes */
+var nodeEls = {};
+(data.nodes||[]).forEach(function(n){
+  var km = KIND[n.kind] || KIND.main;
+  var g = mk('g', {class:'nodebox', 'data-node':n.id});
+  g.appendChild(mk('rect', {x:n.x, y:n.y, width:n.w, height:n.h, class:'body',
+    stroke:km.c, 'stroke-dasharray':km.dash||'none'}));
+  g.appendChild(mk('rect', {x:n.x, y:n.y, width:6, height:n.h, rx:3, fill:km.c}));
+
+  if (data.mode === 'roadmap'){
+    var bx = n.x + 30, by = n.y + n.h/2;
+    var bg = mk('g', {class:'seqbadge'});
+    bg.appendChild(mk('circle', {cx:bx, cy:by, r:13, fill:km.c}));
+    bg.appendChild(mk('text', {x:bx, y:by+4, 'text-anchor':'middle'}, n.seq));
+    g.appendChild(bg);
+    var tx = n.x + 54, avail = n.w - 68;
+    var tl = wrap(n.label, avail, 13.5);
+    var sc = scenarios(n.card);
+    var subLine = (n.milestone||'') + (sc.length ? '  ·  ' + sc.join(' ') : '');
+    var sl = wrap(subLine, avail, 9.8);
+    var totH = tl.length*17 + sl.length*12 + 4;
+    var sy = n.y + (n.h - totH)/2 + 13;
+    tl.forEach(function(ln,i){ g.appendChild(mk('text', {x:tx, y:sy+i*17, class:'n-title'}, ln)); });
+    sl.forEach(function(ln,i){ g.appendChild(mk('text', {x:tx, y:sy+tl.length*17+4+i*12, class:'n-sub', fill:km.c}, ln)); });
+  } else {
+    var cx = n.x + n.w/2, availr = n.w - 26;
+    var tlr = wrap(n.label, availr, 13.5);
+    var subr = km.sub ? wrap(km.sub, availr, 9.8) : [];
+    var totHr = tlr.length*17 + (subr.length ? subr.length*12 + 3 : 0);
+    var syr = n.y + (n.h - totHr)/2 + 13;
+    tlr.forEach(function(ln,i){ g.appendChild(mk('text', {x:cx, y:syr+i*17, 'text-anchor':'middle', class:'n-title'}, ln)); });
+    subr.forEach(function(ln,i){ g.appendChild(mk('text', {x:cx, y:syr+tlr.length*17+3+i*12, 'text-anchor':'middle', class:'n-sub', fill:km.c}, ln)); });
+  }
+  g.addEventListener('click', function(){ focusNode(n.id); });
+  gNode.appendChild(g);
+  nodeEls[n.id] = g;
+});
+document.getElementById('svghost').appendChild(svg);
+
+/* legend */
+var legHost = document.getElementById('legend');
+var legend = data.mode === 'roadmap'
+  ? [['var(--accent)','Build step on the main path'],['var(--ros)','Terminal step — the submission'],['var(--stretch)','Gated stretch, beyond M3 (ADR-006)']]
+  : [['var(--unity)','Unity process · C#'],['var(--ros)','ROS 2 graph · Python'],['var(--db)','MySQL + disk fallback'],['var(--bridge)','ROS-TCP bridge — one edge, contract in its card']];
+legend.forEach(function(l){
+  var s = h('span');
+  var sw = h('i','swatch'); sw.style.borderColor = l[0]; sw.style.background = l[0]; sw.style.opacity = '.85';
+  s.appendChild(sw); s.appendChild(document.createTextNode(l[1]));
+  legHost.appendChild(s);
+});
+legHost.appendChild(h('span', null, 'Click any node, edge label or step to highlight it and jump to its card.'));
+
+/* main path strip */
+if (data.mainPath && data.mainPath.length){
+  var host = document.getElementById('pathsec');
+  var hh = h('h2','sec','The episode, in order — one main path');
+  host.appendChild(hh);
+  var strip = h('div','path');
+  data.mainPath.forEach(function(s){
+    var d = h('div','pstep');
+    d.appendChild(h('div','pn','Step ' + s.step));
+    d.appendChild(h('div','pl', s.label));
+    d.appendChild(h('div','pd', s.detail));
+    d.appendChild(citeRow(s.cites, true));
+    d.addEventListener('click', function(){ highlight(s.nodes, []); });
+    strip.appendChild(d);
+  });
+  host.appendChild(strip);
+}
+
+function citeRow(cites, bare){
+  var c = h('div', 'cites' + (bare ? ' bare' : ''));
+  (cites||[]).forEach(function(x){ c.appendChild(h('span','cite',x)); });
+  return c;
+}
+function row(k, v, cls){
+  var r = h('div','row' + (cls ? ' ' + cls : ''));
+  r.appendChild(h('span','k',k));
+  if (Array.isArray(v)){
+    var ul = h('ul','list');
+    v.forEach(function(i){ ul.appendChild(h('li',null,i)); });
+    r.appendChild(ul);
+  } else {
+    r.appendChild(h('span','v',v));
+  }
+  return r;
+}
+
+/* node cards */
+var ncHost = document.getElementById('nodecards');
+(data.nodes||[]).forEach(function(n){
+  var km = KIND[n.kind] || KIND.main, c = n.card || {};
+  var card = h('div','card'); card.id = 'card-' + n.id;
+  var tag = h('span','tag', data.mode === 'roadmap'
+    ? ('Step ' + n.seq + ' · ' + (data.phases.filter(function(p){return p.id===n.phase;})[0]||{}).label + ' · ' + n.milestone)
+    : (km.sub || n.kind));
+  tag.style.background = km.s; tag.style.color = km.c;
+  card.appendChild(tag);
+  card.appendChild(h('h3', null, n.label));
+  if (c.responsibility) card.appendChild(row('Responsibility', c.responsibility));
+  if (c.language) card.appendChild(row('Language', c.language));
+  if (c.inputs) card.appendChild(row('Inputs', c.inputs));
+  if (c.outputs) card.appendChild(row('Outputs', c.outputs));
+  if (c.constraint) card.appendChild(row('Constrained by', c.constraint, 'note'));
+  if (c.builds) card.appendChild(row('What gets built', c.builds));
+  if (c.creates) card.appendChild(row('Files / packages it creates', c.creates));
+  if (c.gate) card.appendChild(row('Exit gate (numeric)', c.gate, 'warn'));
+  if (c.scenario) card.appendChild(row('Verified by scenario', c.scenario));
+  if (c.framing) card.appendChild(row('Framing', c.framing, 'note'));
+  if (c.why_first) card.appendChild(row('Why here in the order', c.why_first));
+  if (c.sequencing_note) card.appendChild(row('Sequencing note', c.sequencing_note, 'note'));
+  if (c.warning) card.appendChild(row('Not on the graded path', c.warning, 'warn'));
+  card.appendChild(citeRow(c.cites));
+  ncHost.appendChild(card);
+});
+
+/* edge cards */
+var ecHost = document.getElementById('edgecards');
+var withCards = (data.edges||[]).filter(function(e){ return e.card; });
+if (!withCards.length){ document.getElementById('edgesec-h').style.display='none'; }
+withCards.forEach(function(e){
+  var card = h('div','card'); card.id = 'card-' + e.id;
+  var col = EKIND[e.kind] || '#4a5159';
+  var tag = h('span','tag', e.kind === 'bridge' ? 'the bridge · single edge' : e.kind);
+  tag.style.background = 'var(--rule-2)'; tag.style.color = col;
+  card.appendChild(tag);
+  var names = {};
+  (data.nodes||[]).forEach(function(n){ names[n.id] = n.label; });
+  (data.zones||[]).forEach(function(z){ names[z.id] = z.label; });
+  names['rail'] = data.rail ? data.rail.label : 'bridge';
+  card.appendChild(h('h3', null, (names[e.from]||e.from) + '  →  ' + (names[e.to]||e.to)));
+  if (e.label) card.appendChild(row('On the diagram', e.label));
+  if (e.card.note) card.appendChild(row('What it carries', e.card.note));
+  if (e.card.contract) card.appendChild(row('Message contract', e.card.contract));
+  if (e.card.constraint) card.appendChild(row('Constrained by', e.card.constraint, 'note'));
+  card.appendChild(citeRow(e.card.cites));
+  ecHost.appendChild(card);
+});
+
+/* omissions */
+var omHost = document.getElementById('omissions');
+(data.omitted||[]).forEach(function(o){
+  var tr = document.createElement('tr');
+  var a = document.createElement('td'); a.textContent = o.item;
+  var b = document.createElement('td'); b.textContent = o.why;
+  var c = document.createElement('td'); c.appendChild(citeRow(o.cites, true));
+  tr.appendChild(a); tr.appendChild(b); tr.appendChild(c);
+  omHost.appendChild(tr);
+});
+
+document.getElementById('footer').textContent =
+  data.title + ' · ' + (data.nodes||[]).length + ' nodes · drawn only from the cited document set; nothing is implemented yet.';
+
+/* interaction */
+function clearAll(){
+  Object.keys(nodeEls).forEach(function(k){ nodeEls[k].classList.remove('hot','dim'); });
+  Object.keys(edgeEls).forEach(function(k){
+    edgeEls[k].classList.remove('dim');
+    var pl = edgeEls[k].querySelector('polyline'); if (pl) pl.classList.remove('hot');
+    Array.prototype.forEach.call(edgeEls[k].querySelectorAll('.elabel'), function(t){ t.classList.remove('hot'); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.card'), function(c){ c.classList.remove('hot'); });
+}
+function highlight(nodeIds, edgeIds){
+  clearAll();
+  Object.keys(nodeEls).forEach(function(k){
+    if (nodeIds.indexOf(k) >= 0) nodeEls[k].classList.add('hot'); else nodeEls[k].classList.add('dim');
+  });
+  Object.keys(edgeEls).forEach(function(k){
+    if (edgeIds.indexOf(k) >= 0){
+      var pl = edgeEls[k].querySelector('polyline'); if (pl) pl.classList.add('hot');
+      Array.prototype.forEach.call(edgeEls[k].querySelectorAll('.elabel'), function(t){ t.classList.add('hot'); });
+    } else { edgeEls[k].classList.add('dim'); }
+  });
+}
+function focusNode(id){
+  var touching = (data.edges||[]).filter(function(e){ return e.from === id || e.to === id; }).map(function(e){ return e.id; });
+  highlight([id], touching);
+  var card = document.getElementById('card-' + id);
+  if (card){ card.classList.add('hot'); card.scrollIntoView({behavior:'smooth', block:'center'}); }
+}
+function focusEdge(id){
+  var e = (data.edges||[]).filter(function(x){ return x.id === id; })[0];
+  highlight(e ? [e.from, e.to] : [], [id]);
+  var card = document.getElementById('card-' + id);
+  if (card){ card.classList.add('hot'); card.scrollIntoView({behavior:'smooth', block:'center'}); }
+}
+svg.addEventListener('click', function(ev){ if (ev.target === svg) clearAll(); });
+})();
+</script>
+</body>
+</html>
