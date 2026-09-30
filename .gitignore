@@ -1,0 +1,55 @@
+# ---------- Unity: generated folders (Unity rebuilds these) ----------
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# ---------- Unity: IDE and generated project files ----------
+.vs/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity crash / profiler / build outputs
+sysinfo.txt
+*.apk
+*.aab
+*.unitypackage
+crashlytics-build.properties
+
+# NOTE: never ignore *.meta files. Unity needs them.
+
+# ---------- ROS / catkin ----------
+build/
+devel/
+install/
+logs/
+.catkin_workspace
+.catkin_tools/
+
+# ---------- Python ----------
+__pycache__/
+*.pyc
+
+# ---------- OS / editor ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
