@@ -1,80 +1,119 @@
-# Data Model — UC6 Mobile Robot Warehouse System
+# Data Model: UC6 Warehouse Robot
 
-Database: MySQL, run via `docker-compose`, seeded by script (ADR-005). Exactly one ROS 2 node, `task_manager`, performs any I/O against this schema at runtime.
+MySQL 8 in Docker ([ADR-005](ADR-005-mysql-database.md)). Only `task_manager` reads or writes it. DDL: [schema.sql](schema.sql).
 
-## 1. Entities
+---
 
-| Table | Purpose |
-|-------|---------|
-| `categories` | The three item categories and their motion-profile parameters (fragile/standard/heavy), per `docs/architecture.md` §6. |
-| `items` | Item catalog: category, home shelf slot, optional weight. |
-| `shelf_slots` | Known static shelf poses (no perception; ADR-002). |
-| `tasks` | A pending or completed fulfilment task: item + drop-off pose. |
-| `runs` | One row per simulated episode attempt at a task, with aggregate metrics. |
-| `run_events` | Fine-grained events within a run: collision, replan, clearance-sample, goal-outcome. |
+## 1. Tables at a glance
 
-## 2. Entity-Relationship Summary
+```mermaid
+erDiagram
+    CATEGORIES ||--o{ ITEMS : "has"
+    SHELF_SLOTS ||--o| ITEMS : "home of"
+    ITEMS ||--o{ TASKS : "requested by"
+    TASKS ||--o{ RUNS : "attempted as"
+    RUNS ||--o{ RUN_EVENTS : "logs"
 
-- `categories` 1—∞ `items` (an item belongs to exactly one category)
-- `shelf_slots` 1—0..1 `items` (a slot may currently hold at most one item)
-- `items` 1—∞ `tasks` (an item may be requested by multiple tasks over time)
-- `tasks` 1—∞ `runs` (a task may be attempted multiple times, e.g. retries in testing)
-- `runs` 1—∞ `run_events` (a run has zero or more discrete events)
+    CATEGORIES {
+        tinyint category_id PK
+        varchar name "Fragile, Standard, Heavy"
+    }
+    SHELF_SLOTS {
+        int slot_id PK
+        varchar label "e.g. A-03"
+        decimal pose_x
+        decimal pose_y
+        decimal pose_theta
+    }
+    ITEMS {
+        int item_id PK
+        varchar name
+        tinyint category_id FK
+        int slot_id FK "unique"
+    }
+    TASKS {
+        int task_id PK
+        int item_id FK
+        varchar scenario_id
+        decimal dropoff_x
+        decimal dropoff_y
+        decimal dropoff_theta
+        enum status
+    }
+    RUNS {
+        int run_id PK
+        int task_id FK
+        enum outcome
+        varchar fail_reason
+        int collisions
+        decimal min_clearance_m
+        decimal path_ratio
+        decimal duration_s
+    }
+    RUN_EVENTS {
+        bigint event_id PK
+        int run_id FK
+        enum event_type
+        json payload
+    }
+```
 
-See `docs/diagrams.md` §(d) for the Mermaid ER diagram.
+| Group | Tables | Changes when |
+|-------|--------|--------------|
+| **Catalog** | `categories`, `shelf_slots`, `items` | Only when the seed script runs |
+| **Work** | `tasks` | Seeded per scenario batch; `status` updated per episode |
+| **Evidence** | `runs`, `run_events` | One row (plus events) per episode |
 
-## 3. Column-Level Notes
+---
 
-### `categories`
-Holds the exact motion-profile parameter set from `docs/architecture.md` §6 so `motion_profile_node` reads them indirectly (via `task_manager`-populated task context, not at runtime — see Non-Functional constraint that no control-loop node queries the database). `max_vel_x`, `acc_lim_x`, `inflation_radius` are stored as authored defaults; runtime application is via ROS parameter services, not live DB reads.
+## 2. Key rules
 
-### `items`
-`weight_kg` is retained for future refinement (§6 of architecture.md) but is not read by any graded runtime path today.
+| Rule | Why |
+|------|-----|
+| `categories` holds **names only**. Speed/margin values live in `motion_profiles.yaml`. | One source of truth ([architecture.md §9](architecture.md#9-category-motion-profiles)) |
+| One item has one home slot, and a slot holds at most one item (`items.slot_id` is `UNIQUE`). | Removes the old circular FK |
+| `tasks.status`: `pending → in_progress → done` | `done` means an attempt was made. Whether it worked lives in `runs.outcome`. |
+| `runs.outcome`: `success` or `fail`. When `fail`, `fail_reason` ∈ `nav_aborted`, `timeout`, `item_error`, `bridge_lost`. | Matches [architecture.md §11](architecture.md#11-failure-handling) |
+| `run_events.event_type`: `collision`, `replan`, `recovery`, `warning` | Clearance is **not** stored per sample; only its minimum goes in `runs` |
+| The robot start pose is stored in `runs` (`start_x`, `start_y`) | Needed to compute `baseline_m` |
 
-### `shelf_slots`
-`pose_x`, `pose_y`, `pose_theta` are the known, catalog-sourced coordinates that stand in for perception (ADR-002). `occupied_item_id` is nullable and updated when an item is placed/removed in the seed data; it is not updated live during simulation runs (Unity re-parenting is a visual/simulation concern, not a database write).
+---
 
-### `tasks`
-`status` moves `pending → in_progress → completed | failed`, written only by `task_manager` at episode start/end.
+## 3. Episode read/write path
 
-### `runs`
-Carries every metric defined in `docs/prd.md` §8 as a column, so a single row is sufficient for scenario-matrix reporting and CSV export (`docs/test-plan.md`).
+```mermaid
+sequenceDiagram
+    participant MO as mission_orchestrator
+    participant TM as task_manager
+    participant DB as MySQL
+    participant FS as ~/.warehouse/pending/
 
-### `run_events`
-`event_type` is constrained to exactly the four types required: `collision`, `replan`, `clearance_sample`, `goal_outcome`. `payload_json` carries type-specific detail (e.g. clearance value in metres, collision contact point, replan trigger reason, final outcome detail) so the schema does not need one column per event type.
+    MO->>TM: get_next_task(scenario_id)
+    TM->>FS: upload any buffered runs first
+    TM->>DB: SELECT … WHERE status='pending' AND scenario_id=? FOR UPDATE
+    TM->>DB: UPDATE tasks SET status='in_progress'
+    TM-->>MO: task (or bundled default if DB down)
 
-## 4. Indexes and Constraints
+    Note over MO: episode runs, no DB access at all
 
-| Table | Constraint / Index | Reason |
-|-------|----------------------|--------|
-| `categories` | `PRIMARY KEY (category_id)`, `UNIQUE (name)` | One row per named category. |
-| `items` | `FOREIGN KEY (category_id) REFERENCES categories`, `FOREIGN KEY (home_slot_id) REFERENCES shelf_slots` | Referential integrity to catalog data. |
-| `shelf_slots` | `PRIMARY KEY (slot_id)`, `FOREIGN KEY (occupied_item_id) REFERENCES items` (nullable), `INDEX idx_shelf_pose (pose_x, pose_y)` | Fast lookup by approximate location for seed/debug tooling. |
-| `tasks` | `FOREIGN KEY (item_id) REFERENCES items`, `INDEX idx_tasks_status (status)` | `task_manager` polls by status at episode start. |
-| `runs` | `FOREIGN KEY (task_id) REFERENCES tasks`, `INDEX idx_runs_task (task_id)`, `INDEX idx_runs_scenario (scenario_id)` | Scenario-matrix and per-task queries (`docs/test-plan.md`). |
-| `run_events` | `FOREIGN KEY (run_id) REFERENCES runs ON DELETE CASCADE`, `INDEX idx_events_run (run_id)`, `INDEX idx_events_type (event_type)` | Deleting a run (test cleanup) cascades its events; type filtering is used by the CSV exporter. |
+    MO->>TM: report_run(summary)
+    alt DB reachable
+        TM->>DB: BEGIN · UPDATE tasks · INSERT runs · INSERT run_events · COMMIT
+    else DB down
+        TM->>FS: write <uuid>.json
+    end
+```
 
-## 5. Seed Strategy
+---
 
-1. `docs/schema.sql` is mounted into the MySQL container's `/docker-entrypoint-initdb.d/` via `docker-compose`, so the schema is applied automatically on first container start.
-2. A companion seed script (Phase 1 deliverable, not part of this document set) inserts:
-   - The three fixed `categories` rows with the parameter values from `docs/architecture.md` §6.
-   - A generated `shelf_slots` grid (e.g. aisle × bay coordinates) sized to the Unity warehouse scene.
-   - A sample `items` catalog referencing those slots and categories.
-   - An initial `tasks` queue (`status = 'pending'`) covering the scenario matrix in `docs/test-plan.md`.
-3. Re-seeding is idempotent: the seed script truncates `tasks`, `runs`, `run_events` (test data) but preserves `categories`, `items`, `shelf_slots` (catalog data) unless a `--full-reset` flag is passed.
+## 4. Seeding
 
-## 6. Telemetry Write Path
+A script `warehouse_eval/seed.py` creates the data:
 
-1. At episode start, `task_manager` calls `SELECT ... FROM tasks WHERE status='pending' ORDER BY priority, created_at LIMIT 1 FOR UPDATE`, marks it `in_progress`, and returns it to `mission_orchestrator` via the `/task_manager/get_next_task` service (`docs/architecture.md` §3).
-2. Throughout the run, `metrics_collector` accumulates events in memory (no DB writes during the run — NFR-03).
-3. At episode end, `mission_orchestrator` publishes the final outcome; `metrics_collector` finalises its summary and hands it to `task_manager` on `/task/next_task_result`.
-4. `task_manager` performs a single transaction:
-   ```sql
-   START TRANSACTION;
-   UPDATE tasks SET status = <completed|failed> WHERE task_id = ?;
-   INSERT INTO runs (...) VALUES (...);
-   INSERT INTO run_events (...) VALUES (...), (...), ...;
-   COMMIT;
-   ```
-5. If the transaction fails (MySQL unreachable), the full payload is serialised to a local disk buffer file and retried at the next episode start before that episode's own read (FR-16); the simulation itself has already ended by this point, so this failure mode cannot block a run in progress.
+| Command | Effect |
+|---------|--------|
+| `seed.py --catalog` | Inserts the 3 categories, the shelf-slot grid matching the Unity scene, and the items |
+| `seed.py --scenario S-02 --runs 20` | Inserts 20 `pending` tasks for S-02 (called by the runner) |
+| `seed.py --reset-evidence` | Empties `runs`, `run_events` and `tasks`; keeps the catalog |
+
+Shelf-slot poses must match the Unity scene. The Unity lead exports them once from the scene to `warehouse_eval/shelf_slots.csv`, and the seed script reads that file.

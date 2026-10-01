@@ -1,0 +1,7 @@
+# /motion_profile/set_category - served by motion_profile_node.
+# Applies the category's motion profile to move_base via dynamic_reconfigure.
+string category                    # Task.CATEGORY_*
+---
+bool ok
+string applied                     # category actually active (Fragile if applying failed)
+string error                       # "" when ok

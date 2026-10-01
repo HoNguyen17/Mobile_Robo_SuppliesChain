@@ -1,0 +1,7 @@
+# /task_manager/report_run - served by task_manager.
+# Writes the run in one transaction, or buffers it to disk if MySQL is down.
+RunSummary summary
+---
+bool stored                        # written to MySQL
+bool buffered                      # saved to ~/.warehouse/pending/ instead
+string error                       # "" when stored or buffered

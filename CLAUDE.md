@@ -1,6 +1,6 @@
 # Auto_SupplyChain
 
-Autonomous mobile-robot supply-chain system. Start with `docs/prd.md` and `docs/architecture.md`.
+Autonomous mobile-robot supply-chain system. Start with `docs/README.md` (ROS 1 Noetic in WSL2 + Unity on Windows, single robot).
 
 ## Agent skills
 

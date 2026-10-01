@@ -1,73 +1,130 @@
-# Test Plan — UC6 Mobile Robot Warehouse System
+# Test Plan: UC6 Warehouse Robot
 
-## 1. Metric Definitions
+Every claim we make to the grader is backed by **20 automated runs per scenario**, exported as CSV.
 
-| Metric | Unit | Definition / measurement method |
-|--------|------|----------------------------------|
-| Collisions per run | count | Number of `collision` `run_events` logged in the run (Unity collider contact between robot footprint and any obstacle/wall/robot). |
-| Goal success rate | % over N≥20 runs | (count of runs with `outcome = success`) / N × 100. |
-| Minimum obstacle clearance | metres | `MIN()` over all `clearance_sample` events in the run; each sample is the local-costmap-derived distance from the robot footprint boundary to the nearest obstacle, taken at 2 Hz. |
-| Path length ratio | dimensionless | `path_length_m / straight_line_baseline_m`, where `path_length_m` is the integrated odometry travel distance and `straight_line_baseline_m` is the Euclidean distance between the task's start and goal poses. |
-| Time-to-goal | seconds | `end_time − start_time` for a `success` outcome, where `start_time` is task dispatch and `end_time` is the goal-reached event. |
-| Replan count per run | count | Number of `replan` `run_events` logged in the run. |
-| Mean linear velocity per category | m/s | Mean of the commanded `/cmd_vel` linear-x samples over a run, grouped by the task's item category across all runs in a scenario, computed by the CSV exporter (not stored per-run in `runs`, since it is a cross-run rollup). |
+---
 
-## 2. Scenario Matrix
+## 1. Scenarios
 
-| ID | Scenario type | Description | Milestone | Acceptance criterion |
-|----|-----------------|--------------|:--:|------------------------|
-| S-00 | Baseline (M1) | Open room, no obstacles, single robot, Standard category only | M1 | Goal success rate ≥ 90% over N=20; 0 collisions |
-| S-01 | Static-only | Single static obstacle placed directly between shelf and drop-off poses | M2 | 0 collisions across 20 consecutive runs; min clearance ≥ 0.15 m |
-| S-02 | Narrow-corridor (static) | Corridor width 1.5× robot footprint, static obstacles along both sides | M2 | 0 collisions across 20 consecutive runs; min clearance ≥ 0.15 m; path length ratio ≤ 1.3 |
-| S-03 | Dead-end recovery (static) | A dead-end branch forces at least one recovery-behaviour trigger before the correct path is found | M2/M3 | 0 collisions across 20 consecutive runs; goal success rate ≥ 90% over N=20 (recovery must resolve, not just avoid collision) |
-| S-04 | Dynamic-NPC | Scripted NPC crosses the robot's path at a fixed interval | M3 | Goal success rate ≥ 85% over N=20; ≤1 collision per 20 runs; replan count > 0 on at least 1 run in 20 |
-| S-05 | Multi-robot (Stage B/C) | 2 (Stage B) or 3 (Stage C) independently-navigating robots sharing the warehouse map | Beyond M3 (stretch, gated) | 0 cross-robot TF/namespace conflicts across 20 consecutive runs; goal success rate ≥ 80% over N=20 for every robot in the stage |
-| S-06 | Per-category profile | Fixed route (open room, no extraneous obstacles), 20 runs per category (Fragile / Standard / Heavy), 60 runs total | Ungraded (proves FR-09) | Mean linear velocity per category strictly ordered Fragile < Heavy < Standard, with each pairwise difference ≥ 0.03 m/s |
+All scenarios use one robot, the same static map (walls + shelves), and a fixed start pose. Obstacles are placed by Unity's `ScenarioLoader` and are **not** in the map.
 
-All "20 consecutive runs" / "N=20" figures are the minimum required by the acceptance-criteria rules (N≥20); the headless runner (§3) is what makes running this volume of trials for every scenario and every planner candidate (ADR-004) practical within the 8-week timeline.
+| ID | Name | Setup | Tests | Milestone |
+|----|------|-------|-------|:---------:|
+| **S-00** | Open room | No extra obstacles. Standard item. | Basic navigation | M1 |
+| **S-01** | Single box | One 0.5 m box on the straight line between shelf and drop-off | Static avoidance | M2 |
+| **S-02** | Corridor | 1.0 m wide corridor (≈ 3× robot width) with boxes along both sides | Precise static avoidance | M2 |
+| **S-03** | Dead end | A box row closes the short route; the robot must back out and take the long route | Recovery + replanning | M2 |
+| **S-04** | Crossing NPC | An NPC walks across the robot's path at 0.5 m/s, every 8 s | Dynamic avoidance | M3 |
+| **S-05** | Category speeds | Same route as S-00; 20 runs each of Fragile, Standard and Heavy (60 total) | Profile changes behaviour | supports G4 |
 
-## 3. Headless Automated Runner Specification
+```mermaid
+flowchart LR
+    S00[S-00<br/>open room] --> S01[S-01<br/>single box] --> S02[S-02<br/>corridor] --> S03[S-03<br/>dead end] --> S04[S-04<br/>crossing NPC]
+    S00 -.-> S05[S-05<br/>category speeds]
 
-- **Invocation:** one runner process per scenario, parameterised by `scenario_id` and `run_count` (default 20).
-- **Per-run sequence:** (1) ensure MySQL is up and seeded with a `pending` task matching the scenario's category/route; (2) launch/reset the Unity scene in batch/headless mode for that scenario [VERIFY Unity batch-mode compatibility with the ROS-TCP bridge in the pinned Unity version — Phase 0 task]; (3) launch the ROS 2 launch file for the scenario's robot count (1 for S-00–S-04/S-06, 2 or 3 for S-05); (4) dispatch the task via `task_manager`/`mission_orchestrator` as in normal operation (`docs/diagrams.md` (b)); (5) wait for episode end (success, fail, or a hard timeout, e.g. 3× the S-00 median time-to-goal); (6) confirm the `runs`/`run_events` rows were written (or the disk-buffer fallback triggered, per FR-16); (7) reset scene state for the next run.
-- **Isolation:** each run uses a fresh `task` row so that `runs.task_id` unambiguously identifies the trial; the seed script's re-seed mode (`docs/data-model.md` §5) is used between scenario batches, not between individual runs, to keep runtime reasonable.
-- **Output:** on completion of a scenario's `run_count` runs, the runner invokes the CSV exporter (§4) against that scenario's `runs`/`run_events` rows.
+    classDef m1 fill:#E8F0FE,stroke:#3B6FD8,color:#000
+    classDef m2 fill:#E6F4EA,stroke:#2E8B57,color:#000
+    classDef m3 fill:#FFF4E5,stroke:#E08A00,color:#000
+    classDef extra fill:#F1F3F4,stroke:#5F6368,color:#000
+    class S00 m1
+    class S01,S02,S03 m2
+    class S04 m3
+    class S05 extra
+```
 
-## 4. CSV Output Schema
+<sub>Blue = M1 · Green = M2 · Orange = M3 · Grey = supporting evidence. Build scenarios in this order; each one reuses the previous setup.</sub>
 
-One row per run, one file per scenario (`<scenario_id>_results.csv`):
+---
 
-| Column | Source |
-|--------|--------|
-| `run_id` | `runs.run_id` |
-| `scenario_id` | `runs.scenario_id` |
-| `task_id` | `runs.task_id` |
-| `robot_namespace` | `runs.robot_namespace` |
-| `item_category` | joined from `tasks.item_id → items.category_id → categories.name` |
-| `outcome` | `runs.outcome` |
-| `collisions_count` | `runs.collisions_count` |
-| `min_clearance_m` | `runs.min_clearance_m` |
-| `path_length_m` | `runs.path_length_m` |
-| `straight_line_baseline_m` | `runs.straight_line_baseline_m` |
-| `path_length_ratio` | `runs.path_length_ratio` |
-| `time_to_goal_s` | `runs.time_to_goal_s` |
-| `replan_count` | `runs.replan_count` |
-| `mean_linear_vel_mps` | `runs.mean_linear_vel_mps` |
-| `start_time` | `runs.start_time` |
-| `end_time` | `runs.end_time` |
+## 2. Acceptance criteria (N = 20 per scenario)
 
-A second, scenario-level summary file (`<scenario_id>_summary.csv`) reports the aggregate values referenced in §2's acceptance criteria (goal success rate, collisions per 20 runs, min-of-mins clearance, mean path length ratio, and — for S-06 only — mean linear velocity per category).
+| ID | Success rate | Collisions (total over 20) | Min clearance | Path ratio | Other |
+|----|:-----:|:-----:|:-----:|:-----:|-------|
+| S-00 | ≥ 90 % | 0 | — | ≤ 1.3 | — |
+| S-01 | ≥ 95 % | 0 | ≥ 0.15 m | ≤ 1.5 | — |
+| S-02 | ≥ 90 % | 0 | ≥ 0.10 m | ≤ 1.4 | — |
+| S-03 | ≥ 85 % | 0 | ≥ 0.10 m | — | recoveries ≥ 1 in ≥ 15 of 20 runs (proves the recovery path is exercised) |
+| S-04 | ≥ 85 % | ≤ 1 | — | — | replans and recoveries are **reported, not gated** |
+| S-05 | ≥ 90 % per category | 0 | — | — | mean drop-off speed: Fragile < Heavy < Standard, each gap ≥ 0.03 m/s |
 
-## 5. Scripted Manual Demo Sequence (Grading Day)
+"Min clearance" is the worst single value across all 20 runs, not an average.
 
-| Step | Action | Purpose |
-|:--:|--------|---------|
-| 1 | Start `docker-compose up` (MySQL) and confirm the seeded catalog is present | Show the persistence layer is live and independent of the sim |
-| 2 | Launch the Unity scene in Play mode | Visual context for the grader |
-| 3 | Launch the ROS 2 stack via the project's single launch file | Show the full node graph coming up cleanly |
-| 4 | Run scenario S-02 (narrow corridor, Standard item) live, narrating the global/local planner behaviour | Demonstrates M2 |
-| 5 | Run scenario S-04 (dynamic NPC) live, narrating the re-plan trigger when the NPC crosses | Demonstrates M3 |
-| 6 | Run scenario S-06 back-to-back for all three categories, narrating the visibly different speeds | Demonstrates FR-09 without over-emphasising it as a standalone feature |
-| 7 | If the Stage B gate was met, run one Stage B (2-robot) episode | Demonstrates the multi-robot stretch, time permitting |
-| 8 | Display the Phase 5 CSV summary tables for S-00–S-06 | Presents the numeric N≥20 evidence backing every claim above |
-| 9 | If any live run misbehaves, fall back to the pre-recorded Phase 5 headless run logs/CSVs for that scenario | Keeps the demo from being derailed by simulation flakiness on the day |
+**Changing a threshold** is allowed once per scenario, after its first dry run. Record the old value, the new value and the reason in the change log at the bottom of this file.
+
+---
+
+## 3. Metrics
+
+How each metric is measured is defined in [architecture.md §10](architecture.md#10-how-each-metric-is-measured-metrics_collector). Summary:
+
+| Metric | Unit | Meaning |
+|--------|------|---------|
+| success rate | % | runs with `outcome = success` ÷ 20 |
+| collisions | count | Unity contacts between the robot and a wall, shelf, obstacle or NPC |
+| min clearance | m | closest LIDAR distance minus the robot radius |
+| path ratio | — | distance driven ÷ straight-line distance (shelf leg + drop-off leg) |
+| duration | s | from dispatch to item release |
+| replans | count | global replans beyond the first plan of each leg |
+| recoveries | count | `move_base` recovery behaviours triggered |
+| drop-off mean speed | m/s | mean speed during the drop-off leg (where the category profile applies) |
+
+---
+
+## 4. Headless runner (`warehouse_eval`)
+
+```mermaid
+flowchart TD
+    A(["rosrun warehouse_eval run_scenario.py<br/>--scenario S-02 --runs 20"]) --> B[Seed 20 pending tasks for the scenario]
+    B --> C{run i ≤ 20?}
+    C -- yes --> D["/sim/reset_scenario<br/>(obstacles + robot start pose)"]
+    D --> E[Publish /initialpose to AMCL<br/>wait 2 s]
+    E --> F[mission_orchestrator runs one episode]
+    F --> G{Episode ended<br/>or timeout?}
+    G --> H[Check the run row was stored<br/>or buffered]
+    H --> C
+    C -- no --> I[Export CSV]
+    I --> J(["results/S-02_runs.csv<br/>results/S-02_summary.csv"])
+```
+
+| Rule | Value |
+|------|-------|
+| Unity | Stays running (Play mode or a built player). The runner resets the scene between runs; it does not relaunch Unity. |
+| Per-leg timeout | `leg_timeout_s` from `scenarios.yaml` (default 90 s) |
+| Isolation | Each run gets its own `task` row, so `runs.task_id` identifies exactly one trial |
+| Local planner | `--local-planner dwa\|teb`, which is how the ADR-004 benchmark is run |
+
+---
+
+## 5. CSV output
+
+**`<scenario>_runs.csv`**: one row per run.
+
+```text
+run_id, scenario_id, task_id, category, local_planner, outcome, fail_reason,
+collisions, replans, recoveries, min_clearance_m, path_length_m, baseline_m,
+path_ratio, duration_s, dropoff_mean_speed_mps, started_at, ended_at
+```
+
+**`<scenario>_summary.csv`**: one row per scenario (per category for S-05), containing each §2 criterion with its measured value and `PASS`/`FAIL`.
+
+---
+
+## 6. Grading-day demo (≈ 10 min)
+
+| # | Show | Proves |
+|:-:|------|--------|
+| 1 | `docker compose up`, then `SELECT * FROM tasks LIMIT 5` | The data layer is live and separate |
+| 2 | Unity Play + `roslaunch warehouse_bringup bringup.launch` + RViz | The full stack comes up |
+| 3 | S-02 live, narrating the costmap and planned path in RViz | M2 |
+| 4 | S-04 live, narrating local avoidance as the NPC crosses | M3 |
+| 5 | Fragile vs Standard back to back | Profiles change behaviour |
+| 6 | The `*_summary.csv` tables | The numbers behind every claim |
+| ↩ | If a live run misbehaves, play the recorded video of that scenario | The demo cannot be derailed |
+
+---
+
+## Threshold change log
+
+| Date | Scenario | Old | New | Reason |
+|------|----------|-----|-----|--------|
+| | | | | |

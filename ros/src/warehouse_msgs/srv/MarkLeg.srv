@@ -1,0 +1,9 @@
+# /metrics/mark_leg - served by metrics_collector.
+# Called when a leg starts, so replans are counted per leg and the
+# drop-off mean speed only covers the drop-off leg.
+string LEG_SHELF=shelf
+string LEG_DROPOFF=dropoff
+
+string leg                         # LEG_*
+---
+bool ok

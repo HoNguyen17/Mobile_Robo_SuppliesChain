@@ -1,0 +1,9 @@
+# /metrics/start_run - served by metrics_collector.
+# Resets all counters and starts measuring a new episode.
+string scenario_id
+string local_planner               # dwa | teb
+Task task
+geometry_msgs/Pose2D start_pose    # robot start, map frame (for baseline_m)
+---
+bool ok
+string error                       # "" when ok

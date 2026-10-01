@@ -69,6 +69,7 @@ MonoBehaviour:
   - id: 1
   - id: 2
   - id: 3
+  configuration: {fileID: 0}
   constants:
     randomSeed: 539662031
   references:
@@ -78,6 +79,7 @@ MonoBehaviour:
       data:
         m_Enabled: 1
         collapsed: 0
+        <enabledStateCanBeSwitchedByUser>k__BackingField: 1
         numBoxToSpawn: 0
         maxPlacementTries: 100
     00000001:
@@ -85,6 +87,7 @@ MonoBehaviour:
       data:
         m_Enabled: 1
         collapsed: 0
+        <enabledStateCanBeSwitchedByUser>k__BackingField: 1
         rotation:
           collapsed: 0
           x:
@@ -98,6 +101,7 @@ MonoBehaviour:
       data:
         m_Enabled: 1
         collapsed: 0
+        <enabledStateCanBeSwitchedByUser>k__BackingField: 1
         hour:
           collapsed: 0
           value:
@@ -115,6 +119,7 @@ MonoBehaviour:
       data:
         m_Enabled: 1
         collapsed: 0
+        <enabledStateCanBeSwitchedByUser>k__BackingField: 1
         boxParameter:
           collapsed: 0
           probabilities:
@@ -133,39 +138,60 @@ MonoBehaviour:
         range:
           minimum: 0
           maximum: 0
+        <minAllowed>k__BackingField: 0
+        <maxAllowed>k__BackingField: 0
+        <shouldCheckValidRange>k__BackingField: 0
     00000005:
       type: {class: UniformSampler, ns: UnityEngine.Perception.Randomization.Samplers, asm: Unity.Perception.Runtime}
       data:
         range:
           minimum: -15
           maximum: 15
+        <minAllowed>k__BackingField: 0
+        <maxAllowed>k__BackingField: 0
+        <shouldCheckValidRange>k__BackingField: 0
     00000006:
       type: {class: UniformSampler, ns: UnityEngine.Perception.Randomization.Samplers, asm: Unity.Perception.Runtime}
       data:
         range:
           minimum: 0
           maximum: 0
+        <minAllowed>k__BackingField: 0
+        <maxAllowed>k__BackingField: 0
+        <shouldCheckValidRange>k__BackingField: 0
     00000007:
       type: {class: UniformSampler, ns: UnityEngine.Perception.Randomization.Samplers, asm: Unity.Perception.Runtime}
       data:
         range:
           minimum: 0
           maximum: 24
+        <minAllowed>k__BackingField: 0
+        <maxAllowed>k__BackingField: 0
+        <shouldCheckValidRange>k__BackingField: 0
     00000008:
       type: {class: UniformSampler, ns: UnityEngine.Perception.Randomization.Samplers, asm: Unity.Perception.Runtime}
       data:
         range:
           minimum: 0
           maximum: 364
+        <minAllowed>k__BackingField: 0
+        <maxAllowed>k__BackingField: 0
+        <shouldCheckValidRange>k__BackingField: 0
     00000009:
       type: {class: UniformSampler, ns: UnityEngine.Perception.Randomization.Samplers, asm: Unity.Perception.Runtime}
       data:
         range:
           minimum: -90
           maximum: 90
+        <minAllowed>k__BackingField: 0
+        <maxAllowed>k__BackingField: 0
+        <shouldCheckValidRange>k__BackingField: 0
     0000000A:
       type: {class: UniformSampler, ns: UnityEngine.Perception.Randomization.Samplers, asm: Unity.Perception.Runtime}
       data:
         range:
           minimum: 0
           maximum: 1
+        <minAllowed>k__BackingField: 0
+        <maxAllowed>k__BackingField: 0
+        <shouldCheckValidRange>k__BackingField: 0

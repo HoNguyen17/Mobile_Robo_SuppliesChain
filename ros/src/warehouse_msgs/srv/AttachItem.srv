@@ -1,0 +1,6 @@
+# /sim/attach_item - served by Unity (ItemCarrier).
+# Re-parents the item GameObject onto the robot after the shelf dwell.
+int32 item_id
+---
+bool ok
+string error                       # "" when ok

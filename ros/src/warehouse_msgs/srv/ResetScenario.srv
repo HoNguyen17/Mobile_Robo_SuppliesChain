@@ -1,0 +1,7 @@
+# /sim/reset_scenario - served by Unity (ScenarioLoader).
+# Loads the obstacle/NPC layout for a scenario and teleports the robot.
+string scenario_id                 # S-00 .. S-05
+geometry_msgs/Pose2D robot_start   # map frame
+---
+bool ok
+string error                       # "" when ok

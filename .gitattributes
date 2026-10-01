@@ -1,0 +1,5 @@
+# ROS code runs in WSL (Linux): keep LF line endings even when checked out on Windows,
+# otherwise "#!/usr/bin/env python3" breaks with "python3\r: No such file".
+ros/** text eol=lf
+*.sh   text eol=lf
+*.py   text eol=lf

@@ -1,39 +1,115 @@
-# Milestones — UC6 Mobile Robot Warehouse System
+# Milestones: UC6 Warehouse Robot
 
-8-week timeline, 4-person team. Phase 0 completes in Week 1 per the course brief.
+8 weeks · 4 people · 1 robot. Phases do **not** overlap. A phase starts only when the previous one's exit gate passes.
 
-## 1. Owner Roles (4-person team)
+---
 
-| Role | Primary responsibility |
-|------|--------------------------|
-| Nav2/Planning Lead | Global/local planner configuration, recovery behaviours, ADR-004 benchmark. |
-| Unity/Bridge Lead | Unity scene, robot controller, ROS-TCP bridge, pickup/place/collision event contract, NPC scripting. |
-| Backend/Data Lead | MySQL schema/seed, `task_manager`, telemetry write path, docker-compose. |
-| Integration/Test Lead | `mission_orchestrator`, `metrics_collector`, headless runner, CSV export, demo script. |
+## 1. Timeline
 
-All four collaborate on multi-robot staging (Stage B/C) once Stage A's exit gate is met, since it touches every area.
+```mermaid
+flowchart LR
+    P0["<b>P0</b> · W1<br/>Environment"] --> P1["<b>P1</b> · W2<br/>M1 navigate"] --> P2["<b>P2</b> · W3–4<br/>M2 static"] --> P3["<b>P3</b> · W5–6<br/>M3 dynamic"] --> P4["<b>P4</b> · W7–8<br/>Evidence + demo"]
 
-## 2. Phase Plan
+    classDef setup fill:#F1F3F4,stroke:#5F6368,color:#000
+    classDef graded fill:#E6F4EA,stroke:#2E8B57,color:#000
+    classDef ev fill:#FFF4E5,stroke:#E08A00,color:#000
+    class P0 setup
+    class P1,P2,P3 graded
+    class P4 ev
+```
 
-| Phase | Weeks | Focus | Entry gate | Exit gate |
-|-------|:--:|-------|-------------|-----------|
-| Phase 0 | 1 | Environment verification | Team formed, repo/tool access confirmed | Tutorial repo runs unmodified; ROS 2 distro pinned (ADR-003 finalised); Unity version confirmed; `docker-compose up` succeeds with `docs/schema.sql` applied; TurtleBot3 Waffle Pi model/plugin availability confirmed |
-| Phase 1 | 2–3 | M1: tutorial adaptation to warehouse scenario | Phase 0 exit gate met | M1 acceptance criteria met (`docs/test-plan.md` S-00): goal success rate ≥ 90% over N=20, 0 collisions; `task_manager`/`mission_orchestrator` skeleton operational against seeded MySQL |
-| Phase 2 | 3–4 | M2: static obstacle avoidance | Phase 1 exit gate met | M2 acceptance criteria met (S-01–S-03); category profile mechanism wired end-to-end (even with only the Standard profile exercised) |
-| Phase 3 | 5–6 | M3: dynamic obstacle avoidance | Phase 2 exit gate met | M3 acceptance criteria met (S-04); ADR-004 benchmark completed and local planner finalised; recovery/replanning verified; per-category velocity difference proven (S-06) |
-| Phase 4 | 6–7 | Multi-robot Stage B, then Stage C if time permits | Phase 3 exit gate met (Stage A baseline) | Stage B gate: 2 robots run without TF/namespace conflict over N=20 in S-05; if met, attempt Stage C gate (3 robots) within remaining Week 7 time; if either gate fails, ship the prior stage (ADR-006) |
-| Phase 5 | 8 | Hardening, evidence, demo | Phase 3 exit gate met at minimum (Stage A is sufficient) | Headless runner has produced N≥20 CSV-exported runs per required scenario; manual demo sequence rehearsed at least twice; documentation finalised; submission packaged |
+| Phase | Weeks | Goal | Exit gate (all must pass) |
+|:-----:|:-----:|------|---------------------------|
+| **P0** | 1 | Everyone can run the stack | Setup-guide smoke test (§8) passes on **all 4 machines** · MySQL up with schema · Waffle Pi imported in Unity · `/scan` and `/odom` visible in RViz |
+| **P1** | 2 | **M1** | Map built with gmapping and committed · AMCL localises · S-00 meets its criteria · all 4 app nodes run end to end (even if simple) |
+| **P2** | 3–4 | **M2** | S-01, S-02 and S-03 meet their criteria with DWA · category profiles switch at runtime |
+| **P3** | 5–6 | **M3** | S-04 meets its criteria · ADR-004 benchmark done, planner chosen · S-05 meets its criteria |
+| **P4** | 7–8 | Evidence | N = 20 CSVs for S-00 to S-05 with the final planner · each live scenario recorded on video · demo rehearsed twice · docs updated |
 
-## 3. Risk Register
+Week 8 is deliberately light. It is buffer for any gate that slipped.
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|:--:|:--:|------------|
-| Tutorial repo API drift or ROS 2 distro incompatibility | Medium | High | Phase 0 verification task (ADR-003); pin an exact commit/tag, not just a branch name |
-| ROS-TCP-Endpoint bandwidth/connection-count limits under multi-robot | Medium–High | Medium | Stage gating (ADR-006); per-robot endpoint fallback documented in `docs/architecture.md` §7; load-test before Stage B |
-| DWB vs TEB benchmark inconclusive or overruns | Medium | Medium | Time-boxed to 2 days (ADR-004); default to DWB if inconclusive |
-| MySQL/docker-compose environment issues on student machines | Medium | Low | DB failure fallback already architected (FR-16); Phase 0 includes a `docker-compose up` dry run on every team member's machine |
-| Category profile parameters cause instability (e.g. Fragile too slow, causing timeouts) | Medium | Medium | Values documented as tunable defaults with stated basis (`docs/architecture.md` §6); revisit after Phase 2/3 dry runs |
-| Scope creep toward ML perception (YOLOv8n) before graded milestones are secure | Medium | High (grading risk) | Explicit non-goal (PRD NG1); FR-21 gates any YOLOv8n work behind the M3/Stage exit gates |
-| Multi-robot TF/namespace conflicts | Medium | Medium | Namespacing/TF-prefix scheme fixed once in `docs/architecture.md` §7; Stage B dry-run required before Stage C is attempted |
-| Grading-day demo failure (flaky simulation) | Low–Medium | High | Scripted manual demo sequence rehearsed in Phase 5 (`docs/test-plan.md`); headless automated CSV evidence available as backup if the live demo falters |
-| Team member unavailability during a critical week | Low–Medium | Medium | Owner roles documented above so any two members can cover a phase's exit-gate work if one is unavailable |
+---
+
+## 2. Roles
+
+| Role | Owns | Main files |
+|------|------|------------|
+| **Navigation lead** | Map, AMCL, `move_base` configs, DWA/TEB tuning, ADR-004 benchmark | `warehouse_bringup/config/`, `maps/` |
+| **Unity lead** | Scene, Waffle Pi import, diff-drive, LIDAR, odom, clock, collisions, NPCs, scenarios | `WarehouseProjectURP/Assets/Scripts/` |
+| **Mission lead** | `mission_orchestrator`, `motion_profile_node`, `metrics_collector`, `warehouse_msgs` | `warehouse_mission/`, `warehouse_msgs/` |
+| **Data & eval lead** | Schema, `task_manager`, Docker, headless runner, CSV export, demo script | `warehouse_mission/task_manager.py`, `warehouse_eval/`, `infra/` |
+
+| Role | Person |
+|------|--------|
+| Navigation lead | _TBD_ |
+| Unity lead | _TBD_ |
+| Mission lead | _TBD_ |
+| Data & eval lead | _TBD_ |
+
+Every role has a named backup, so any two people can close a gate if someone is away.
+
+---
+
+## 3. Work breakdown per phase
+
+<details open>
+<summary><b>P0: Environment (week 1)</b></summary>
+
+- [ ] All: follow [setup-windows-wsl.md](setup-windows-wsl.md) to the end
+- [ ] Unity: import Waffle Pi URDF; `DiffDriveController`, `OdometryPublisher`, `LaserScanPublisher`, `ClockPublisher`
+- [ ] Mission: create `warehouse_msgs` with all messages from [architecture.md §5](architecture.md#5-interface-contract); generate C# in Unity
+- [ ] Nav: `bringup.launch` with endpoint + `robot_state_publisher` + RViz config
+- [ ] Data: `infra/docker-compose.yml`, `.env.example`, `.gitattributes` (`ros/** text eol=lf`)
+- [ ] Retire the Unity A* prototype: move `CubeCarNavigator.cs` to `_archive/` ([ADR-008](ADR-008-navigation-stack.md))
+</details>
+
+<details>
+<summary><b>P1: M1 navigate (week 2)</b></summary>
+
+- [ ] Nav: drive around with teleop and record a map with gmapping; save it as `maps/warehouse.yaml`
+- [ ] Nav: AMCL + `move_base` with DWA at TurtleBot3 defaults; 2D Nav Goal works in RViz
+- [ ] Unity: `ItemCarrier` (attach/release), `ScenarioLoader` (S-00), `CollisionReporter`
+- [ ] Mission: `mission_orchestrator` state machine; `metrics_collector` basic metrics
+- [ ] Data: `task_manager` get/report with the JSON fallback; seed script
+- [ ] Data: headless runner v1 + CSV export → S-00 × 20
+</details>
+
+<details>
+<summary><b>P2: M2 static (weeks 3–4)</b></summary>
+
+- [ ] Unity: S-01, S-02 and S-03 layouts
+- [ ] Nav: tune costmaps, inflation and recovery for S-01 to S-03
+- [ ] Mission: `motion_profile_node` with `dynamic_reconfigure`
+- [ ] Data: full metrics in CSV; summary file with PASS/FAIL
+</details>
+
+<details>
+<summary><b>P3: M3 dynamic (weeks 5–6)</b></summary>
+
+- [ ] Unity: `NpcMover` + S-04
+- [ ] Nav: tune DWA for S-04; configure TEB; run the ADR-004 benchmark (time-boxed to 2 days)
+- [ ] All: S-05 category runs
+</details>
+
+<details>
+<summary><b>P4: Evidence (weeks 7–8)</b></summary>
+
+- [ ] Final N = 20 batches for every scenario with the chosen planner
+- [ ] Record demo videos (fallback for grading day)
+- [ ] Rehearse the demo twice; freeze the code
+</details>
+
+---
+
+## 4. Risks
+
+| Risk | Chance | Impact | Plan |
+|------|:------:|:------:|------|
+| WSL networking or bridge problems on one machine | Med | High | NAT + localhost forwarding (tested); WSL-IP fallback in setup Appendix A; smoke test is the P0 gate |
+| Noetic is EOL: a package breaks or disappears | Low | High | Binaries are still hosted; pin versions in P0 and keep an `apt` package list ([ADR-003](ADR-003-ros1-noetic.md)) |
+| Sim time / TF timing errors across the bridge | Med | Med | Unity owns `/clock` ([ADR-009](ADR-009-simulation-clock.md)); relax `transform_tolerance` if needed |
+| AMCL drifts in a repetitive warehouse | Med | Med | Reset the initial pose on every run; fall back to `fake_localization` if still unstable (document it in ADR-008) |
+| DWA cannot pass S-04 | Med | High | TEB is the planned alternative (ADR-004); lower NPC speed only through the change log |
+| Fragile profile too slow → timeouts | Med | Low | Tunable values; `leg_timeout_s` per scenario |
+| Scope creep (perception, more robots) | Med | High | Explicit non-goals in the PRD; nothing new before P3's gate |
+| Demo fails live | Low | High | Recorded videos + CSVs as backup |

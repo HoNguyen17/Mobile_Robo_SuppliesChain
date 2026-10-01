@@ -16,27 +16,24 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 ```
 /
 ├── CLAUDE.md
-├── CONTEXT.md                              ← created lazily by /domain-modeling
+├── CONTEXT.md                              ← glossary
 └── docs/
-    ├── ADR-001-robot-platform.md
-    ├── ADR-002-perception-scope.md
-    ├── ADR-003-ros-distro-pinning.md
-    ├── ADR-004-nav2-local-planner.md
-    ├── ADR-005-mysql-database.md
-    ├── ADR-006-multirobot-staging.md
-    ├── architecture.md
-    ├── data-model.md
-    ├── diagrams.md
-    ├── milestones.md
+    ├── README.md                           ← start here (index + reading order)
+    ├── ADR-001 … ADR-009-*.md
     ├── prd.md
-    ├── schema.sql
+    ├── architecture.md
+    ├── setup-windows-wsl.md
     ├── test-plan.md
+    ├── milestones.md
+    ├── data-model.md
+    ├── schema.sql
+    ├── _archive/                           ← superseded docs (ROS 2 / Nav2 plan); do not use
     └── agents/
         ├── issue-tracker.md
         └── domain.md
 ```
 
-New ADRs continue the existing numbering (`ADR-007-…`) and live directly in `docs/`, not in a `docs/adr/` subfolder.
+New ADRs continue the existing numbering (`ADR-010-…`) and live directly in `docs/`, not in a `docs/adr/` subfolder.
 
 ## Use the glossary's vocabulary
 
@@ -48,4 +45,4 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-004 (nav2 local planner), but worth reopening because…_
+> _Contradicts ADR-004 (local planner), but worth reopening because…_
