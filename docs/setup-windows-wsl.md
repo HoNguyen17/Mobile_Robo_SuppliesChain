@@ -180,7 +180,8 @@ sudo apt install -y \
   ros-noetic-gmapping \
   ros-noetic-turtlebot3 \
   ros-noetic-turtlebot3-msgs \
-  python3-pymysql
+  python3-pymysql \
+  python-is-python3
 ```
 
 | Package | Why |
@@ -190,6 +191,7 @@ sudo apt install -y \
 | `gmapping` | Build the warehouse map once |
 | `turtlebot3` | Waffle Pi URDF, meshes, reference nav configs |
 | `python3-pymysql` | MySQL driver for `task_manager` |
+| `python-is-python3` | Makes `python` mean `python3`. `ros_tcp_endpoint` starts with `#!/usr/bin/env python` and dies silently without it |
 
 ✅ **Check:** both commands print a path.
 
@@ -344,6 +346,7 @@ roslaunch warehouse_bringup bringup.launch
 | `ports are not available: exposing port TCP 127.0.0.1:3306` | Another MySQL already uses that port. Set `MYSQL_HOST_PORT` in `.env` to a free port (default 3307). |
 | TF "extrapolation into the future" errors | Check that `use_sim_time` is `true` (the bringup launch sets it) and that `/clock` is publishing. |
 | `apt update` fails with a GPG / NO_PUBKEY error | You used an old `apt-key` guide. Redo step 3.1. |
+| Endpoint "starts" but nothing listens on 10000 (`ss -ltn` empty, not in `rosnode list`) | No `python` command. Run `sudo apt install python-is-python3` (step 4). `bringup.launch` works even without it. |
 | `python3\r: No such file or directory` | CRLF line endings. See the note in step 5. |
 | URDF import: `DirectoryNotFoundException … turtlebot3_description\turtlebot3_description\meshes` | The `.urdf` is one folder too deep. It must sit next to the `turtlebot3_description/` folder, not inside it (step 7.4). |
 | Imported robot is **pink** | URP project, Built-in materials. Select `Assets/URDF/turtlebot3_description/Materials/*` → **Edit → Render Pipeline → Universal Render Pipeline → Upgrade Selected Materials to UniversalRP Materials**. |
