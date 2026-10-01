@@ -18,6 +18,7 @@ A simulated warehouse in **Unity** on Windows. One **TurtleBot3 Waffle Pi** is d
 | 5 | [milestones.md](milestones.md) | Week-by-week plan, owners, risks |
 | 6 | [data-model.md](data-model.md) + [schema.sql](schema.sql) | MySQL tables and the write path |
 | 7 | [../CONTEXT.md](../CONTEXT.md) | Glossary: the exact words to use |
+| 8 | [features/](features/) | Agreed features beyond the graded plan, e.g. [mobile manipulator + inventory panel](features/mobile-manipulator-inventory/requirements.md) |
 
 ## Decisions (ADRs)
 
@@ -33,6 +34,7 @@ A simulated warehouse in **Unity** on Windows. One **TurtleBot3 Waffle Pi** is d
 | [008](ADR-008-navigation-stack.md) | move_base + AMCL + static map. Unity A* prototype is retired |
 | [009](ADR-009-simulation-clock.md) | Unity publishes `/clock`. ROS uses sim time |
 | [010](ADR-010-robot-scale.md) | Robot scaled 4x in Unity; ROS still sees true robot metres |
+| [011](ADR-011-physics-standard.md) | Physics standard: exact 4x model of Earth, g = 39.24 in Unity, real kg via `PhysicalBody` |
 
 ## One-minute summary
 

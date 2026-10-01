@@ -42,7 +42,7 @@ flowchart LR
 ## 1. Where we are now (status checklist)
 
 **Current phase: P0 · Environment (week 1).** Phases and gates are defined in [docs/milestones.md](docs/milestones.md).
-Last updated: 2026-10-01 (branch `Nguyen-planning`).
+Last updated: 2026-10-02 (branch `Nguyen-planning`).
 
 ### Done so far
 
@@ -73,11 +73,19 @@ Last updated: 2026-10-01 (branch `Nguyen-planning`).
 
 ### Still to do to close P0
 
-- [ ] Unity: `OdometryPublisher` (`/odom` + TF), `LaserScanPublisher` (`/scan`), `ClockPublisher` (`/clock`), and a `/cmd_vel` subscriber feeding `DiffDriveController`. Divide positions and ranges by the robot scale (4) before publishing ([ADR-010](docs/ADR-010-robot-scale.md))
-- [ ] ROS: `warehouse_bringup` package with `bringup.launch` (endpoint + `robot_state_publisher` + RViz config)
+- [x] Unity: `OdometryPublisher` (`/odom` + TF), `LaserScanPublisher` (`/scan`), `ClockPublisher` (`/clock`), `CmdVelSubscriber` (`/cmd_vel` → `DiffDriveController`), all in robot metres ([Assets/Scripts/Ros/](WarehouseProjectURP/Assets/Scripts/Ros/)). EditMode tests pass
+- [x] ROS: `warehouse_bringup` with `bringup.launch` (endpoint + `robot_state_publisher` + RViz config) ([ros/src/warehouse_bringup/](ros/src/warehouse_bringup/)). Builds and starts; port 10000 listens
+- [x] Unity: **Robotics → Warehouse → Add ROS Bridge**, scene saved
+- [x] Physics standard ([ADR-011](docs/ADR-011-physics-standard.md)): `PhysicalBody` + menu + scene tests. Compiles
+- [x] Unity: **Robotics → Warehouse → Apply Physics Standard** applied, scene saved
+- [x] Holding brake: idle robot no longer creeps (0.00 mm in 30 s)
+- [x] Unity tests on Nguyen's machine: EditMode 49/49 (before the 5 `WheelHoldTests` were added); PlayMode drive, navigator mission and holding brake pass under the new gravity
+- [x] HomePoint on its floor tile at (-23.48, 0, 25.29)
 - [ ] Smoke test ([setup guide §8](docs/setup-windows-wsl.md#8-end-to-end-smoke-test)) passes on **all 4 machines**
-- [ ] `/scan` and `/odom` visible in RViz
+- [x] `/scan` and `/odom` visible in RViz; `/clock` 93 Hz, `/odom` 30 Hz, `/scan` 5 Hz (Nguyen's machine)
 - [ ] Assign the 4 roles in [docs/milestones.md §2](docs/milestones.md#2-roles)
+
+**Planned feature (after the graded milestones are safe):** mobile manipulator + inventory panel, see [docs/features/mobile-manipulator-inventory/requirements.md](docs/features/mobile-manipulator-inventory/requirements.md).
 
 ### Next phases (not started)
 
@@ -194,24 +202,30 @@ No ROS needed. Open `Warehouse.unity` and select the robot `turtlebot3_waffle_pi
 
 ### Bridge smoke test (Unity ↔ ROS)
 
-Each command in its own WSL terminal:
+One command in WSL starts the endpoint, the robot model and RViz (`rviz:=false` to skip RViz):
 
 ```bash
-roscore
+roslaunch warehouse_bringup bringup.launch
 ```
+
+Then press **Play** in Unity. The HUD arrows in the top-left turn **blue** when connected. In a second WSL terminal:
 
 ```bash
-roslaunch ros_tcp_endpoint endpoint.launch tcp_ip:=0.0.0.0 tcp_port:=10000
+rostopic hz /clock /odom /scan
 ```
 
-Then press **Play** in Unity. The HUD arrows in the top-left turn **blue** when connected.
+Drive the robot forward from ROS (this switches off the Unity-only navigator):
+
+```bash
+rostopic pub -r 10 /cmd_vel geometry_msgs/Twist '{linear: {x: 0.1}}'
+```
+
+In RViz (fixed frame `odom`) you should see the robot model, red `/scan` points on nearby shelves and walls, and `/odom` arrows.
 From a Windows PowerShell you can also check the port:
 
 ```powershell
 (Test-NetConnection 127.0.0.1 -Port 10000).TcpTestSucceeded
 ```
-
-> `/clock`, `/scan`, `/odom` and driving through `/cmd_vel` need the Unity publishers that are still on the P0 to-do list. Until they exist, rows 5–6 of the smoke test cannot pass yet.
 
 ### MySQL
 
@@ -288,6 +302,7 @@ roslaunch warehouse_bringup bringup.launch
 | [008](docs/ADR-008-navigation-stack.md) | move_base + AMCL + static map. Unity A* is test mode only |
 | [009](docs/ADR-009-simulation-clock.md) | Unity publishes `/clock`. ROS uses sim time |
 | [010](docs/ADR-010-robot-scale.md) | Robot scaled 4x in Unity; ROS still sees true metres |
+| [011](docs/ADR-011-physics-standard.md) | Physics standard: exact 4x model of Earth, g = 39.24 in Unity, real kg via `PhysicalBody` |
 
 Stuck during setup? Check the **Troubleshooting** table at the end of [docs/setup-windows-wsl.md](docs/setup-windows-wsl.md) first.
 
