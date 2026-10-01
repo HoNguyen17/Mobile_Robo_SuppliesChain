@@ -1,0 +1,7 @@
+# /task_manager/get_next_task - served by task_manager (the only MySQL node).
+string scenario_id
+---
+bool ok
+Task task
+bool from_fallback                 # true = MySQL was down, bundled default task returned
+string error                       # "" when ok

@@ -1,0 +1,6 @@
+# /metrics/finish_run - served by metrics_collector.
+# Stops measuring and returns the complete summary.
+string outcome                     # RunSummary.OUTCOME_*
+string fail_reason                 # RunSummary.FAIL_*, "" on success
+---
+RunSummary summary

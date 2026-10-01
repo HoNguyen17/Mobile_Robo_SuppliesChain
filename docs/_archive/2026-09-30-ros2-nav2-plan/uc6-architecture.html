@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UC6 — Archify diagram</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --panel:#ffffff; --ink:#15181d; --ink-2:#4a5159; --ink-3:#7b838c;
+    --rule:#dcd8d0; --rule-2:#ebe8e2;
+    --unity:#6d4fd0; --unity-soft:#efeaff;
+    --ros:#0f7a5a; --ros-soft:#e4f4ee;
+    --db:#a8631a; --db-soft:#fbeedd;
+    --bridge:#c2333a; --bridge-soft:#fdeaea;
+    --stretch:#7b838c; --stretch-soft:#eeecea;
+    --accent:#15181d;
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1380px;margin:0 auto;padding:32px 24px 96px}
+  header.doc{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:24px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+  h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px;font-weight:650}
+  .question{font-size:17px;color:var(--ink-2);margin:0 0 14px;max-width:70ch}
+  .question strong{color:var(--ink);font-weight:600}
+  .scope{font-size:13px;color:var(--ink-3);max-width:82ch;margin:0}
+  .sources{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px}
+  .src{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);background:var(--rule-2);border:1px solid var(--rule);border-radius:4px;padding:3px 7px}
+  .board{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px;overflow:auto}
+  svg{display:block;max-width:100%;height:auto}
+  .zone-box{fill:none;stroke-width:1.5;rx:12}
+  .zone-fill{stroke:none}
+  .zone-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+  .zone-sub{font-size:10.5px;fill:var(--ink-3)}
+  .nodebox{cursor:pointer}
+  .nodebox rect.body{fill:#fff;stroke-width:1.5;rx:9}
+  .nodebox .n-title{font-size:13.5px;font-weight:620;fill:var(--ink)}
+  .nodebox .n-sub{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
+  .nodebox:hover rect.body{filter:drop-shadow(0 2px 6px rgba(0,0,0,.14))}
+  .nodebox.dim{opacity:.28}
+  .nodebox.hot rect.body{stroke-width:3}
+  .edge{fill:none;stroke-width:1.6}
+  .edge.hot{stroke-width:3}
+  .edge.dim{opacity:.18}
+  .elabel{font-size:10.5px;fill:var(--ink-2);paint-order:stroke fill;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round;cursor:pointer}
+  .elabel.hot{fill:var(--ink);font-weight:600}
+  .rail rect{fill:var(--bridge-soft);stroke:var(--bridge);stroke-width:1.5;rx:7;cursor:pointer}
+  .rail text{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;fill:var(--bridge);font-weight:700}
+  .phaseband rect{fill:#fff;stroke:var(--rule);stroke-width:1.2;rx:8}
+  .phaseband .p-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;fill:var(--ink)}
+  .phaseband .p-sub{font-size:10.5px;fill:var(--ink-3)}
+  .seqbadge circle{fill:var(--ink)}
+  .seqbadge text{font-family:var(--mono);font-size:11px;font-weight:700;fill:#fff}
+  .scenchip{font-family:var(--mono);font-size:9.5px;font-weight:700;fill:var(--ink-2)}
+  h2.sec{font-size:12px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:40px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+  .path{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-bottom:8px}
+  .pstep{flex:1 1 190px;background:var(--panel);border:1px solid var(--rule);border-left:3px solid var(--ink);border-radius:8px;padding:10px 12px;cursor:pointer;transition:border-color .12s}
+  .pstep:hover{border-left-color:var(--bridge)}
+  .pstep .pn{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.1em}
+  .pstep .pl{font-weight:650;font-size:14px;margin:2px 0 5px}
+  .pstep .pd{font-size:12px;color:var(--ink-2);line-height:1.45}
+  .pstep .cites{margin-top:7px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;scroll-margin-top:20px}
+  .card.hot{border-color:var(--ink);box-shadow:0 0 0 2px rgba(21,24,29,.1)}
+  .card h3{margin:0 0 3px;font-size:16px;font-weight:650;letter-spacing:-.01em}
+  .card .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;display:inline-block;padding:2px 7px;border-radius:4px;margin-bottom:9px}
+  .row{margin:9px 0;font-size:13px;line-height:1.5}
+  .row .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:2px}
+  .row .v{color:var(--ink-2)}
+  .row .v code,code{font-family:var(--mono);font-size:12px;background:var(--rule-2);padding:1px 4px;border-radius:3px}
+  .row.warn{background:#fff8e8;border-left:3px solid var(--db);padding:8px 10px;border-radius:0 6px 6px 0}
+  .row.note{background:var(--rule-2);border-left:3px solid var(--ink-3);padding:8px 10px;border-radius:0 6px 6px 0}
+  ul.list{margin:2px 0 0;padding-left:18px}
+  ul.list li{margin:3px 0;font-size:12.5px;color:var(--ink-2)}
+  .cites{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px;padding-top:10px;border-top:1px dashed var(--rule)}
+  .cite{font-family:var(--mono);font-size:10px;color:var(--ink-2);background:var(--rule-2);border-radius:3px;padding:2px 6px;white-space:nowrap}
+  .cites.bare{border-top:0;padding-top:0;margin-top:6px}
+  table.om{width:100%;border-collapse:collapse;font-size:13px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+  table.om th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:10px 14px;border-bottom:1px solid var(--rule);background:var(--rule-2)}
+  table.om td{padding:11px 14px;border-bottom:1px solid var(--rule-2);vertical-align:top;color:var(--ink-2)}
+  table.om td:first-child{color:var(--ink);font-weight:560;width:30%}
+  table.om tr:last-child td{border-bottom:0}
+  footer.doc{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-3)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:12px 2px 0;font-size:11.5px;color:var(--ink-2)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .swatch{width:14px;height:14px;border-radius:3px;border:1.5px solid}
+  @media print{body{background:#fff}.board{break-inside:avoid}.card{break-inside:avoid}}
+  @media (max-width:720px){.wrap{padding:20px 14px 60px}h1{font-size:23px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="doc">
+    <p class="eyebrow" id="eyebrow">Archify · UC6 mobile robot warehouse system</p>
+    <h1 id="title"></h1>
+    <p class="question" id="question"></p>
+    <p class="scope" id="scope"></p>
+    <div class="sources" id="sources"></div>
+  </header>
+  <div class="board"><div id="svghost"></div></div>
+  <div class="legend" id="legend"></div>
+  <div id="pathsec"></div>
+  <h2 class="sec" id="nodesec-h">Node cards — every node cites the file and section that proves it</h2>
+  <div class="cards" id="nodecards"></div>
+  <h2 class="sec" id="edgesec-h">Edge cards</h2>
+  <div class="cards" id="edgecards"></div>
+  <h2 class="sec">Deliberately omitted</h2>
+  <table class="om"><thead><tr><th>Component</th><th>Why it is not a node</th><th>Cited in</th></tr></thead><tbody id="omissions"></tbody></table>
+  <footer class="doc" id="footer"></footer>
+</div>
+<script id="diagram-data" type="application/json">
+{
+  "schema": "archify/architecture-1",
+  "id": "uc6-architecture",
+  "mode": "runtime-zones",
+  "title": "UC6 Runtime Architecture — one episode",
+  "question": "What runs where, and what crosses the bridge, during one episode?",
+  "scope": "Stage A (single robot + scripted NPC obstacles). Nothing is implemented yet; every node below is drawn from the document set, not from code.",
+  "sources": [
+    "CONTEXT.md §1, §3, §4, §5",
+    "docs/architecture.md §1, §2, §3, §4, §5, §6, §8",
+    "docs/prd.md §5 (FR), §6 (NFR), §3 (NG)",
+    "docs/data-model.md §1, §3, §5, §6",
+    "docs/schema.sql",
+    "ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006"
+  ],
+  "canvas": { "width": 1340, "height": 800 },
+  "zones": [
+    { "id": "unity", "label": "Unity Process", "sublabel": "C# — not ROS 2 nodes (architecture.md §1) · NFR-01", "x": 24, "y": 64, "w": 300, "h": 660, "accent": "unity" },
+    { "id": "ros", "label": "ROS 2 Graph", "sublabel": "Python only (NFR-01) · Stage A namespace /robot1, TF prefix robot1/ (architecture.md §7)", "x": 372, "y": 64, "w": 590, "h": 660, "accent": "ros" },
+    { "id": "db", "label": "MySQL", "sublabel": "docker-compose, schema.sql on init (ADR-005)", "x": 1010, "y": 64, "w": 270, "h": 660, "accent": "db" }
+  ],
+  "rail": { "x": 348, "y1": 110, "y2": 690, "label": "ROS-TCP bridge", "edgeId": "e-bridge" },
+  "nodes": [
+    {
+      "id": "robot_controller",
+      "label": "Robot Controller",
+      "kind": "unity",
+      "zone": "unity",
+      "x": 48, "y": 130, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "Drives the simulated Waffle Pi body in the Unity scene: applies the commanded velocity and publishes the robot's odometry, LIDAR scan and transforms back across the bridge.",
+        "language": "C# (Unity) — NFR-01",
+        "inputs": "/cmd_vel (geometry_msgs/Twist), across the bridge",
+        "outputs": "/odom (nav_msgs/Odometry), /scan (sensor_msgs/LaserScan), /tf + /tf_static (tf2_msgs/TFMessage); warehouse_msgs/CollisionEvent on collider contact",
+        "constraint": "NFR-01 — C# in Unity, no C++. ADR-001 — TurtleBot3 Waffle Pi, no arm; its published velocity and footprint limits set the motion-profile baselines (architecture.md §6).",
+        "cites": ["architecture.md §1 (Unity-side, not ROS 2 nodes)", "architecture.md §2", "architecture.md §3", "prd.md NFR-01", "ADR-001"]
+      }
+    },
+    {
+      "id": "npc",
+      "label": "Scripted NPC Obstacle Controllers",
+      "kind": "unity",
+      "zone": "unity",
+      "x": 48, "y": 268, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "Unity-driven moving obstacles that cross the robot's path at a fixed interval. Not ROS nodes; they carry no navigation stack of their own.",
+        "language": "C# (Unity) — NFR-01",
+        "inputs": "Unity scene tick; the scenario's scripted crossing interval (S-04)",
+        "outputs": "Physical presence only — LIDAR returns on /scan and, on contact, a CollisionEvent from the robot's collider",
+        "constraint": "FR-17 — Stage A runs exactly one robot with scripted NPC obstacles only. A second/third robot (Stage B/C) is a different actor and is gated (ADR-006).",
+        "cites": ["architecture.md §1", "CONTEXT.md §3 (Scripted NPC, Dynamic obstacle)", "test-plan.md S-04", "prd.md FR-17", "ADR-006"]
+      }
+    },
+    {
+      "id": "item_handler",
+      "label": "Item Re-parent / Release Handler",
+      "kind": "unity",
+      "zone": "unity",
+      "x": 48, "y": 406, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "On the pickup trigger, re-parents the item GameObject to the robot so it travels with it; on the place trigger, releases (un-parents) it at the drop-off pose.",
+        "language": "C# (Unity) — NFR-01",
+        "inputs": "warehouse_msgs/PickupEvent (item_id, robot_ns), warehouse_msgs/PlaceEvent (item_id, robot_ns)",
+        "outputs": "warehouse_msgs/PickupAck (item_id, success), warehouse_msgs/PlaceAck (item_id, success)",
+        "constraint": "ADR-001 — there is no arm and no grasping; re-parent is the whole mechanism. FR-08 / FR-11 are ungraded mechanical support, but this integration point must be reliable enough not to mask navigation results (ADR-001 Consequences).",
+        "cites": ["architecture.md §1", "architecture.md §2", "ADR-001", "CONTEXT.md §3 (Re-parent)", "prd.md FR-08, FR-11"]
+      }
+    },
+    {
+      "id": "mission_orchestrator",
+      "label": "mission_orchestrator",
+      "kind": "ros",
+      "zone": "ros",
+      "x": 396, "y": 300, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "Runs the per-task FSM: shelf leg → dwell → profile → drop-off leg → dwell → report. (CONTEXT.md §4)",
+        "language": "Python — NFR-01",
+        "inputs": "Task (item, shelf slot pose, drop-off pose, category) from /task_manager/get_next_task; NavigateToPose feedback and result; PickupAck / PlaceAck across the bridge",
+        "outputs": "Two /navigate_to_pose goals per episode; /mission/active_category and /motion_profile/set_category; PickupEvent / PlaceEvent across the bridge; /task/next_task_result at episode end",
+        "constraint": "NFR-03 — does not query MySQL; it receives the task through a service call. ADR-002 — the shelf pose is catalog-sourced, never inferred at runtime. On /motion_profile/set_category failure it keeps the most conservative (Fragile) parameters and logs a warning (architecture.md §6).",
+        "cites": ["CONTEXT.md §4", "architecture.md §1", "architecture.md §3", "architecture.md §6", "prd.md FR-02, FR-10, NFR-03", "ADR-002"]
+      }
+    },
+    {
+      "id": "nav2",
+      "label": "Nav2 (configured, not rebuilt)",
+      "kind": "ros-stock",
+      "zone": "ros",
+      "x": 700, "y": 130, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "The stock Nav2 stack — bt_navigator, planner_server, controller_server, behavior_server/recoveries, global + local costmaps and localisation — executing the navigate_to_pose behaviour tree, planning globally, tracking locally, and running recovery behaviours before any abort.",
+        "language": "Python (Nav2 stock). Configured through layered YAML parameter files only; no Nav2 source is modified.",
+        "inputs": "/navigate_to_pose goals; /scan, /odom, /tf across the bridge; runtime parameter updates from motion_profile_node",
+        "outputs": "/cmd_vel across the bridge; /metrics/replan_event on a re-plan; the local costmap from which clearance is sampled; recovery behaviours (spin, back-up, wait, clear costmap)",
+        "constraint": "PRD NG3 — Nav2 is configured, never rebuilt. ADR-004 — the local planner is DWB or TEB, selected by the S-04 collision-count benchmark, not preference (NFR-02). ADR-003 — exact server names and default parameter file names carry [VERIFY] until the distro is pinned in Phase 0.",
+        "cites": ["architecture.md §1", "architecture.md §4", "architecture.md §5", "prd.md NG3, NFR-02, FR-03–FR-07", "ADR-003", "ADR-004"]
+      }
+    },
+    {
+      "id": "motion_profile_node",
+      "label": "motion_profile_node",
+      "kind": "ros",
+      "zone": "ros",
+      "x": 700, "y": 250, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "Turns the active category into Nav2 parameter updates. (CONTEXT.md §4)",
+        "language": "Python — NFR-01",
+        "inputs": "/mission/active_category (warehouse_msgs/CategoryUpdate); /motion_profile/set_category (warehouse_srvs/SetCategory)",
+        "outputs": "Parameter updates to controller_server and both costmap inflation layers: max_vel_x, acc_lim_x, inflation_radius — Standard 0.26 / 2.5 / 0.30, Fragile 0.10 / 2.5 / 0.50, Heavy 0.15 / 1.0 / 0.35",
+        "constraint": "NFR-07 — parameters are hot-applicable per task without restarting Nav2 nodes. PRD G4 — this is a mechanism reinforcing obstacle avoidance, never a standalone feature. Fail-safe: on service failure or timeout the parameters stay at the Fragile (most conservative) values and a warning run_event is logged.",
+        "cites": ["CONTEXT.md §4", "architecture.md §6", "architecture.md §3 (topics, services)", "prd.md FR-09, NFR-07, G4"]
+      }
+    },
+    {
+      "id": "metrics_collector",
+      "label": "metrics_collector",
+      "kind": "ros",
+      "zone": "ros",
+      "x": 700, "y": 370, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "Accumulates in-run events and hands over a run summary at episode end. (CONTEXT.md §4)",
+        "language": "Python — NFR-01",
+        "inputs": "/metrics/collision_event (from Unity across the bridge); /metrics/replan_event (from bt_navigator); /metrics/clearance_sample — its own local-costmap-derived sampler at a fixed 2 Hz; the final outcome from mission_orchestrator",
+        "outputs": "One run summary per episode on /task/next_task_result: collisions_count, min_clearance_m, path_length_m, path_length_ratio, time_to_goal_s, replan_count, mean_linear_vel_mps, outcome",
+        "constraint": "NFR-03 — accumulates in memory; performs no database I/O during the run (data-model.md §6 step 2). Clearance is the local-costmap distance from the footprint boundary to the nearest obstacle; minimum clearance is the per-run minimum over those 2 Hz samples.",
+        "cites": ["CONTEXT.md §4", "CONTEXT.md §3 (Clearance, Replan, Collision)", "architecture.md §3", "data-model.md §6", "test-plan.md §1", "prd.md FR-12, NFR-03"]
+      }
+    },
+    {
+      "id": "task_manager",
+      "label": "task_manager",
+      "kind": "ros-db",
+      "zone": "ros",
+      "x": 700, "y": 490, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "The only node that touches MySQL: reads the task in, writes the run out. (CONTEXT.md §4)",
+        "language": "Python — NFR-01",
+        "inputs": "Run summary on /task/next_task_result; the next pending task row from MySQL",
+        "outputs": "The dispatched task over /task_manager/get_next_task; one runs row plus its run_events rows, and the tasks.status transition, in a single transaction at episode end",
+        "constraint": "NFR-03 / ADR-005 — exactly one node performs database I/O, with two call sites (episode start, episode end). FR-14 / FR-16 — a MySQL outage never aborts or blocks a run: a read failure falls back to the last-cached task list or a bundled default task; a write failure buffers to local disk and retries at the next episode start.",
+        "cites": ["CONTEXT.md §4", "CONTEXT.md §5", "architecture.md §1", "architecture.md §3", "architecture.md §8", "data-model.md §6", "prd.md FR-01, FR-13, FR-14, FR-16, NFR-03", "ADR-005"]
+      }
+    },
+    {
+      "id": "mysql",
+      "label": "MySQL — catalog + evidence",
+      "kind": "db",
+      "zone": "db",
+      "x": 1034, "y": 490, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "Holds the catalog and the evidence: categories, items, shelf_slots, tasks, runs, run_events.",
+        "language": "MySQL via docker-compose; docs/schema.sql mounted into /docker-entrypoint-initdb.d/ and applied on first container start; seeded by script.",
+        "inputs": "One end-of-episode transaction from task_manager: UPDATE tasks · INSERT runs · INSERT run_events",
+        "outputs": "The next pending task — SELECT ... FROM tasks WHERE status='pending' ORDER BY priority, created_at LIMIT 1 FOR UPDATE",
+        "constraint": "ADR-005 — MySQL is the course-locked choice, single-writer. FR-14 — an outage at either call site never aborts or blocks the run. shelf_slots poses are catalog-sourced and stand in for perception (ADR-002); occupied_item_id is not updated live during a run.",
+        "cites": ["CONTEXT.md §1", "data-model.md §1", "data-model.md §3", "data-model.md §5", "data-model.md §6", "docs/schema.sql", "ADR-005", "ADR-002"]
+      }
+    },
+    {
+      "id": "disk_buffer",
+      "label": "Local disk run buffer",
+      "kind": "fallback",
+      "zone": "db",
+      "x": 1034, "y": 610, "w": 230, "h": 86,
+      "card": {
+        "responsibility": "Holds the serialised run payload when the end-of-episode transaction fails, so the evidence survives a database outage.",
+        "language": "Written by task_manager (Python) — the same single node that owns database I/O (NFR-03)",
+        "inputs": "The full runs + run_events payload when the single transaction fails",
+        "outputs": "Retried against MySQL at the next episode start, before that episode's own read",
+        "constraint": "FR-16 / FR-14 — the simulation has already ended by the time this path is taken, so it cannot block a run in progress (architecture.md §8: 'Blocks sim run? No'). ADR-005 notes this fallback must itself be tested, since 'the database must never block a run' is only true if it works.",
+        "cites": ["prd.md FR-16, FR-14", "data-model.md §6 step 5", "architecture.md §8", "ADR-005"]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-bridge",
+      "kind": "bridge",
+      "from": "unity",
+      "to": "ros",
+      "label": "ROS-TCP bridge",
+      "card": {
+        "note": "Transport: Unity-Robotics-Hub ROS-TCP-Connector (Unity, C#) ↔ ros_tcp_endpoint (ROS 2, Python). One TCP connection per robot instance; Stage A has exactly one.",
+        "contract": [
+          "Velocity command — ROS → Unity — geometry_msgs/Twist on /cmd_vel",
+          "Odometry — Unity → ROS — nav_msgs/Odometry on /odom",
+          "LIDAR scan — Unity → ROS — sensor_msgs/LaserScan on /scan",
+          "Transforms — Unity → ROS — tf2_msgs/TFMessage on /tf, /tf_static",
+          "Pickup trigger (dwell complete at shelf) — ROS → Unity — warehouse_msgs/PickupEvent (item_id, robot_ns)",
+          "Pickup acknowledged (re-parent done) — Unity → ROS — warehouse_msgs/PickupAck (item_id, success)",
+          "Place trigger (dwell complete at drop-off) — ROS → Unity — warehouse_msgs/PlaceEvent (item_id, robot_ns)",
+          "Place acknowledged (un-parent done) — Unity → ROS — warehouse_msgs/PlaceAck (item_id, success)",
+          "Collision notification — Unity → ROS — warehouse_msgs/CollisionEvent (contact_point, other_tag, robot_ns)"
+        ],
+        "constraint": "A TCP disconnect aborts the in-flight run as outcome=fail and auto-reconnect is attempted before the next episode — the only failure in architecture.md §8 that blocks a run at all. Field-level message definitions are an implementation task; the names above are the contract graders should expect to see referenced. [VERIFY] against the tutorial's actual default topic set before Phase 1. Whether one endpoint can multiplex multiple namespaced robots is unresolved and gated to Stage B (architecture.md §7).",
+        "cites": ["architecture.md §2", "architecture.md §3", "architecture.md §7", "architecture.md §8", "CONTEXT.md §3 (Bridge)"]
+      },
+      "path": []
+    },
+    { "id": "e-rc-rail", "kind": "cross", "from": "robot_controller", "to": "rail", "label": "", "path": [[278,173],[348,173]] },
+    { "id": "e-rail-nav2", "kind": "cross", "from": "rail", "to": "nav2", "label": "/cmd_vel ↓  ·  /odom /scan /tf ↑", "path": [[348,173],[700,173]],
+      "card": { "note": "The motion half of the bridge contract. Nav2 commands velocity; Unity returns the odometry, scan and transforms that both costmaps and localisation consume.", "cites": ["architecture.md §2", "architecture.md §3 (topic table)"] } },
+    { "id": "e-npc-rail", "kind": "cross", "from": "npc", "to": "rail", "label": "collision_event", "path": [[278,311],[348,311]],
+      "card": { "note": "A collision is a Unity collider contact between the robot footprint and any obstacle, wall or other robot, published as CollisionEvent and logged as a collision run_event. It is the primary thing the grade punishes.", "cites": ["CONTEXT.md §3 (Collision)", "architecture.md §2", "architecture.md §3", "test-plan.md §1"] } },
+    { "id": "e-ih-rail", "kind": "cross", "from": "item_handler", "to": "rail", "label": "Pickup / Place Ack", "path": [[278,449],[348,449]] },
+    { "id": "e-rail-mo", "kind": "cross", "from": "rail", "to": "mission_orchestrator", "label": "PickupEvent / PlaceEvent ⇄ Ack", "path": [[348,343],[396,343]],
+      "card": { "note": "Fired after the dwell completes at the shelf pose and again at the drop-off pose. The FSM waits on the Ack before continuing — this is the whole of pickup and release (ADR-001).", "cites": ["architecture.md §2", "ADR-001", "CONTEXT.md §3 (Dwell, Re-parent)", "prd.md FR-08, FR-11"] } },
+    { "id": "e-npc-rc", "kind": "unity", "from": "npc", "to": "robot_controller", "label": "path intrusion", "path": [[163,268],[163,216]],
+      "card": { "note": "Unity physics only. The NPC intrudes on the planned path; the intrusion reaches ROS 2 as LIDAR returns on /scan, which the local costmap turns into a replan (M3).", "cites": ["CONTEXT.md §3 (Dynamic obstacle, Replan)", "architecture.md §5", "test-plan.md S-04"] } },
+    { "id": "e-ih-rc", "kind": "unity", "from": "item_handler", "to": "robot_controller", "label": "item travels with the robot", "path": [[48,449],[36,449],[36,173],[48,173]],
+      "card": { "note": "Re-parenting attaches the item GameObject to the robot body so it moves with it; release is the inverse at drop-off. No grasping and no arm.", "cites": ["ADR-001", "CONTEXT.md §3 (Re-parent)"] } },
+    { "id": "e-tm-mo", "kind": "flow", "from": "task_manager", "to": "mission_orchestrator", "label": "/task_manager/get_next_task — task dispatch", "path": [[700,533],[560,533],[560,386]],
+      "card": { "note": "A read-only MySQL query wrapped as a service call. This hand-off is where the episode begins.", "cites": ["architecture.md §3 (services)", "CONTEXT.md §3 (Episode)", "data-model.md §6 step 1", "prd.md FR-01"] } },
+    { "id": "e-mo-nav2", "kind": "flow", "from": "mission_orchestrator", "to": "nav2", "label": "/navigate_to_pose — shelf leg, then drop-off leg", "path": [[511,300],[511,232],[760,232],[760,216]],
+      "card": { "note": "nav2_msgs/action/NavigateToPose, served by bt_navigator. Exactly two legs per episode: the shelf leg to the item's catalog-sourced slot pose, and the drop-off leg to the task's destination pose.", "cites": ["architecture.md §3 (actions)", "CONTEXT.md §3 (Leg)", "prd.md FR-02, FR-10", "ADR-002"] } },
+    { "id": "e-mo-mp", "kind": "flow", "from": "mission_orchestrator", "to": "motion_profile_node", "label": "set category", "path": [[626,343],[663,343],[663,293],[700,293]],
+      "card": { "note": "/mission/active_category (event-driven, per task) plus the /motion_profile/set_category service call. Issued after the re-parent and before the drop-off leg's goal is sent.", "cites": ["architecture.md §3", "architecture.md §6", "prd.md FR-09"] } },
+    { "id": "e-mp-nav2", "kind": "flow", "from": "motion_profile_node", "to": "nav2", "label": "param set: max_vel_x · acc_lim_x · inflation_radius", "path": [[870,250],[870,216]],
+      "card": { "note": "Applied to controller_server and to both the global and local inflation layers, kept in sync, before the next goal is sent. Wider inflation and lower speed reduce collision risk — framed strictly as reinforcing avoidance (G4).", "cites": ["architecture.md §5", "architecture.md §6", "prd.md NFR-07, G4"] } },
+    { "id": "e-mo-mc", "kind": "flow", "from": "mission_orchestrator", "to": "metrics_collector", "label": "episode events + final outcome", "path": [[511,386],[511,430],[700,430]],
+      "card": { "note": "Outcome is the terminal result of the episode: success or fail. Not result, not status — status belongs to tasks.", "cites": ["CONTEXT.md §3 (Outcome)", "CONTEXT.md §6", "prd.md FR-12"] } },
+    { "id": "e-nav2-mc", "kind": "flow", "from": "nav2", "to": "metrics_collector", "label": "/metrics/replan_event · clearance sampled at 2 Hz", "path": [[930,173],[948,173],[948,400],[930,400]],
+      "card": { "note": "A replan is a global re-plan triggered by dynamic obstacle intrusion — evidence that avoidance is working, not a failure. Clearance samples are derived from the local costmap at a fixed 2 Hz.", "cites": ["CONTEXT.md §3 (Replan, Clearance)", "architecture.md §3 (topic table)", "test-plan.md §1"] } },
+    { "id": "e-mc-tm", "kind": "flow", "from": "metrics_collector", "to": "task_manager", "label": "/task/next_task_result — run summary", "path": [[815,456],[815,490]],
+      "card": { "note": "Once per episode end. Episode is the thing happening; run is the row it leaves behind.", "cites": ["architecture.md §3", "CONTEXT.md §3 (Episode, Run)", "data-model.md §6 step 3"] } },
+    { "id": "e-tm-db", "kind": "flow", "bidir": true, "from": "task_manager", "to": "mysql", "label": "read task in · write run out", "path": [[930,533],[1034,533]],
+      "card": { "note": "Two call sites only. At episode end, in one transaction: START TRANSACTION; UPDATE tasks SET status=<completed|failed>; INSERT INTO runs; INSERT INTO run_events; COMMIT.", "cites": ["data-model.md §6", "architecture.md §1", "prd.md FR-01, FR-13, NFR-03", "ADR-005"] } },
+    { "id": "e-tm-buf", "kind": "fallback", "from": "task_manager", "to": "disk_buffer", "label": "on write failure — buffer, retry next episode (FR-16)", "path": [[815,576],[815,653],[1034,653]],
+      "card": { "note": "The point of the single-writer design: the database can be down and the run still completes and still leaves evidence.", "cites": ["prd.md FR-14, FR-16", "architecture.md §8", "data-model.md §6 step 5"] } }
+  ],
+  "mainPath": [
+    { "step": 1, "label": "task dispatch", "nodes": ["mysql", "task_manager", "mission_orchestrator"], "detail": "task_manager reads the next pending task and hands it to mission_orchestrator over /task_manager/get_next_task. The episode begins here.", "cites": ["prd.md FR-01", "data-model.md §6 step 1", "CONTEXT.md §3 (Episode)"] },
+    { "step": 2, "label": "shelf leg", "nodes": ["mission_orchestrator", "nav2", "robot_controller"], "detail": "First /navigate_to_pose goal, to the item's catalog-sourced shelf slot pose. /cmd_vel crosses the bridge; /odom, /scan and /tf come back.", "cites": ["prd.md FR-02", "architecture.md §3", "CONTEXT.md §3 (Leg)", "ADR-002"] },
+    { "step": 3, "label": "dwell", "nodes": ["mission_orchestrator"], "detail": "The configured pause on arriving within pose tolerance. The robot is stationary and the simulation is waiting, deliberately.", "cites": ["CONTEXT.md §3 (Dwell)", "prd.md FR-08"] },
+    { "step": 4, "label": "re-parent", "nodes": ["mission_orchestrator", "item_handler"], "detail": "PickupEvent crosses the bridge; Unity attaches the item GameObject to the robot and returns PickupAck. No arm, no grasp.", "cites": ["architecture.md §2", "ADR-001", "prd.md FR-08"] },
+    { "step": 5, "label": "motion profile", "nodes": ["mission_orchestrator", "motion_profile_node", "nav2"], "detail": "The item's category is applied as Nav2 parameter updates before the drop-off leg's goal is sent. On failure the parameters stay at Fragile.", "cites": ["architecture.md §6", "prd.md FR-09, NFR-07"] },
+    { "step": 6, "label": "drop-off leg", "nodes": ["mission_orchestrator", "nav2", "robot_controller"], "detail": "Second /navigate_to_pose goal, to the task's drop-off pose, with the category profile active and the same avoidance requirements as the shelf leg.", "cites": ["prd.md FR-10", "CONTEXT.md §3 (Drop-off pose)"] },
+    { "step": 7, "label": "dwell", "nodes": ["mission_orchestrator"], "detail": "The configured pause at the drop-off pose before release.", "cites": ["CONTEXT.md §3 (Dwell)", "prd.md FR-11"] },
+    { "step": 8, "label": "release", "nodes": ["mission_orchestrator", "item_handler"], "detail": "PlaceEvent crosses the bridge; Unity un-parents the item and returns PlaceAck.", "cites": ["architecture.md §2", "prd.md FR-11", "CONTEXT.md §3 (Re-parent / Release)"] },
+    { "step": 9, "label": "outcome reported", "nodes": ["mission_orchestrator", "metrics_collector", "task_manager", "mysql"], "detail": "metrics_collector finalises the run summary and hands it to task_manager, which writes the runs row and its run_events in one transaction — or buffers to disk if MySQL is down.", "cites": ["data-model.md §6 steps 3–5", "prd.md FR-12, FR-13, FR-16", "CONTEXT.md §3 (Outcome, Run)"] }
+  ],
+  "omitted": [
+    { "item": "bt_navigator, planner_server, controller_server, behavior_server, global_costmap, local_costmap, slam_toolbox/amcl", "why": "Folded into the single Nav2 (configured, not rebuilt) node — they are configured, never rebuilt.", "cites": ["architecture.md §1", "prd.md NG3"] },
+    { "item": "ros_tcp_endpoint and the Unity ROS-TCP-Connector", "why": "Shown as the single labelled bridge edge, with the full message contract in its edge card, rather than as boxes.", "cites": ["architecture.md §1", "architecture.md §2"] },
+    { "item": "Shelf / Drop-off Pose Visualiser (Unity)", "why": "A Unity-side visualisation aid with no role in the episode path; dropped for the node cap.", "cites": ["architecture.md §1"] },
+    { "item": "Second / third robot (Stage B, Stage C)", "why": "Out of Stage A scope; gated stretch work beyond M3.", "cites": ["architecture.md §7", "ADR-006", "prd.md FR-18, FR-19"] },
+    { "item": "Headless runner and CSV exporter", "why": "Verification tooling around an episode, not a participant in one; it appears in the build-order diagram instead.", "cites": ["test-plan.md §3, §4", "prd.md FR-20"] },
+    { "item": "YOLOv8n perception prototype", "why": "Explicit non-goal; gated behind the M3/Stage exit gates and never on the graded path.", "cites": ["prd.md NG1, FR-21", "ADR-002"] }
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+var data = JSON.parse(document.getElementById('diagram-data').textContent);
+var NS = 'http://www.w3.org/2000/svg';
+
+var KIND = {
+  'unity':     {c:'var(--unity)',  s:'var(--unity-soft)',  sub:'Unity · C#'},
+  'ros':       {c:'var(--ros)',    s:'var(--ros-soft)',    sub:'ROS 2 · Python'},
+  'ros-stock': {c:'var(--ros)',    s:'var(--ros-soft)',    sub:'ROS 2 · stock, configured', dash:'5 3'},
+  'ros-db':    {c:'var(--ros)',    s:'var(--ros-soft)',    sub:'ROS 2 · Python · only DB writer'},
+  'db':        {c:'var(--db)',     s:'var(--db-soft)',     sub:'MySQL · docker-compose'},
+  'fallback':  {c:'var(--db)',     s:'var(--db-soft)',     sub:'FR-16 fallback', dash:'5 3'},
+  'main':      {c:'var(--accent)', s:'var(--rule-2)',      sub:''},
+  'terminal':  {c:'var(--ros)',    s:'var(--ros-soft)',    sub:''},
+  'stretch':   {c:'var(--stretch)',s:'var(--stretch-soft)',sub:'', dash:'6 4'}
+};
+var EKIND = {
+  'bridge':  'var(--bridge)',
+  'cross':   'var(--bridge)',
+  'flow':    '#4a5159',
+  'unity':   'var(--unity)',
+  'fallback':'var(--db)',
+  'seq':     'var(--accent)',
+  'stretch': 'var(--stretch)'
+};
+
+function mk(tag, attrs, text){
+  var e = document.createElementNS(NS, tag);
+  if (attrs) for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+function h(tag, cls, text){
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function wrap(str, maxW, fs){
+  var cw = fs * 0.53, per = Math.max(6, Math.floor(maxW / cw));
+  var words = String(str).split(' '), lines = [], cur = '';
+  for (var i=0;i<words.length;i++){
+    var t = cur ? cur + ' ' + words[i] : words[i];
+    if (t.length > per && cur){ lines.push(cur); cur = words[i]; } else { cur = t; }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function scenarios(card){
+  var found = [], txt = JSON.stringify(card||{}), m, re = /S-0\d/g;
+  while ((m = re.exec(txt))) if (found.indexOf(m[0]) < 0) found.push(m[0]);
+  return found;
+}
+
+/* ---------- header ---------- */
+document.title = data.title;
+document.getElementById('title').textContent = data.title;
+var q = document.getElementById('question');
+q.appendChild(h('strong', null, 'Question this answers: '));
+q.appendChild(document.createTextNode(data.question));
+document.getElementById('scope').textContent = data.scope || '';
+var srcHost = document.getElementById('sources');
+(data.sources||[]).forEach(function(s){ srcHost.appendChild(h('span','src',s)); });
+
+/* ---------- svg ---------- */
+var W = data.canvas.width, H = data.canvas.height;
+var svg = mk('svg', {viewBox:'0 0 '+W+' '+H, width:W, height:H, role:'img', 'aria-label':data.title});
+var defs = mk('defs');
+var seen = {};
+Object.keys(EKIND).forEach(function(k){
+  var col = EKIND[k];
+  if (seen[col]) return; seen[col] = 1;
+  var id = 'arw-' + k;
+  var m = mk('marker', {id:id, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'6.5', markerHeight:'6.5', orient:'auto-start-reverse'});
+  m.appendChild(mk('path', {d:'M 0 0 L 10 5 L 0 10 z', fill:col}));
+  defs.appendChild(m);
+  EKIND[k+'#marker'] = id;
+});
+svg.appendChild(defs);
+var gZone = mk('g'), gEdge = mk('g'), gNode = mk('g'), gTop = mk('g');
+svg.appendChild(gZone); svg.appendChild(gEdge); svg.appendChild(gNode); svg.appendChild(gTop);
+
+/* zones (runtime mode) */
+(data.zones||[]).forEach(function(z){
+  var col = z.accent === 'unity' ? 'var(--unity)' : z.accent === 'db' ? 'var(--db)' : 'var(--ros)';
+  var soft = z.accent === 'unity' ? 'var(--unity-soft)' : z.accent === 'db' ? 'var(--db-soft)' : 'var(--ros-soft)';
+  gZone.appendChild(mk('rect', {x:z.x, y:z.y, width:z.w, height:z.h, rx:12, fill:soft, opacity:'.5'}));
+  gZone.appendChild(mk('rect', {x:z.x, y:z.y, width:z.w, height:z.h, rx:12, fill:'none', stroke:col, 'stroke-width':1.5, 'stroke-dasharray':'3 4'}));
+  var t = mk('text', {x:z.x+16, y:z.y+26, class:'zone-label', fill:col}, z.label);
+  gZone.appendChild(t);
+  wrap(z.sublabel||'', z.w-32, 10.5).forEach(function(ln,i){
+    gZone.appendChild(mk('text', {x:z.x+16, y:z.y+44+i*13, class:'zone-sub'}, ln));
+  });
+});
+
+/* phase bands (roadmap mode) */
+(data.phases||[]).forEach(function(p){
+  var g = mk('g', {class:'phaseband'});
+  g.appendChild(mk('rect', {x:p.x, y:p.y, width:p.w, height:p.h,
+    fill: p.stretch ? 'var(--stretch-soft)' : '#fff',
+    stroke: p.stretch ? 'var(--stretch)' : 'var(--rule)',
+    'stroke-dasharray': p.stretch ? '5 4' : 'none'}));
+  g.appendChild(mk('text', {x:p.x+14, y:p.y+24, class:'p-label'}, p.label));
+  wrap(p.sublabel||'', p.w-28, 10.5).forEach(function(ln,i){
+    g.appendChild(mk('text', {x:p.x+14, y:p.y+41+i*13, class:'p-sub'}, ln));
+  });
+  gZone.appendChild(g);
+});
+
+/* rail = the single bridge edge */
+if (data.rail){
+  var r = data.rail, gr = mk('g', {class:'rail', 'data-edge':r.edgeId});
+  gr.appendChild(mk('rect', {x:r.x-10, y:r.y1, width:20, height:r.y2-r.y1}));
+  var mid = (r.y1+r.y2)/2;
+  gr.appendChild(mk('text', {x:r.x, y:mid, 'text-anchor':'middle',
+    transform:'rotate(-90 '+r.x+' '+mid+')', dy:'4'}, r.label));
+  gTop.appendChild(gr);
+  gr.addEventListener('click', function(){ focusEdge(r.edgeId); });
+}
+
+/* edges */
+var edgeEls = {};
+(data.edges||[]).forEach(function(e){
+  if (!e.path || e.path.length < 2) return;
+  var col = EKIND[e.kind] || '#4a5159';
+  var pts = e.path.map(function(p){ return p[0]+','+p[1]; }).join(' ');
+  var g = mk('g', {'data-edge':e.id});
+  var line = mk('polyline', {points:pts, class:'edge', stroke:col,
+    'marker-end':'url(#'+ (EKIND[e.kind+'#marker']||'arw-flow') +')',
+    'stroke-dasharray': (e.kind==='fallback'||e.kind==='stretch') ? '6 4' : 'none'});
+  if (e.bidir) line.setAttribute('marker-start', 'url(#'+(EKIND[e.kind+'#marker']||'arw-flow')+')');
+  g.appendChild(line);
+  if (e.label){
+    var segs = [], tot = 0;
+    for (var i=1;i<e.path.length;i++){
+      var dx = e.path[i][0]-e.path[i-1][0], dy = e.path[i][1]-e.path[i-1][1];
+      var L = Math.sqrt(dx*dx+dy*dy); segs.push(L); tot += L;
+    }
+    var target = tot/2, acc = 0, mx = e.path[0][0], my = e.path[0][1], horiz = true;
+    for (var j=0;j<segs.length;j++){
+      if (acc + segs[j] >= target){
+        var f = (target-acc)/segs[j];
+        mx = e.path[j][0] + (e.path[j+1][0]-e.path[j][0])*f;
+        my = e.path[j][1] + (e.path[j+1][1]-e.path[j][1])*f;
+        horiz = Math.abs(e.path[j+1][0]-e.path[j][0]) >= Math.abs(e.path[j+1][1]-e.path[j][1]);
+        break;
+      }
+      acc += segs[j];
+    }
+    var lines = wrap(e.label, horiz ? 300 : 190, 10.5);
+    lines.forEach(function(ln, i){
+      var t = mk('text', {x:mx, y:my - (horiz ? 7 : 0) - (lines.length-1-i)*12 + (horiz?0:4),
+        'text-anchor':'middle', class:'elabel'}, ln);
+      g.appendChild(t);
+    });
+  }
+  g.addEventListener('click', function(){ focusEdge(e.id); });
+  g.style.cursor = 'pointer';
+  gEdge.appendChild(g);
+  edgeEls[e.id] = g;
+});
+
+/* nodes */
+var nodeEls = {};
+(data.nodes||[]).forEach(function(n){
+  var km = KIND[n.kind] || KIND.main;
+  var g = mk('g', {class:'nodebox', 'data-node':n.id});
+  g.appendChild(mk('rect', {x:n.x, y:n.y, width:n.w, height:n.h, class:'body',
+    stroke:km.c, 'stroke-dasharray':km.dash||'none'}));
+  g.appendChild(mk('rect', {x:n.x, y:n.y, width:6, height:n.h, rx:3, fill:km.c}));
+
+  if (data.mode === 'roadmap'){
+    var bx = n.x + 30, by = n.y + n.h/2;
+    var bg = mk('g', {class:'seqbadge'});
+    bg.appendChild(mk('circle', {cx:bx, cy:by, r:13, fill:km.c}));
+    bg.appendChild(mk('text', {x:bx, y:by+4, 'text-anchor':'middle'}, n.seq));
+    g.appendChild(bg);
+    var tx = n.x + 54, avail = n.w - 68;
+    var tl = wrap(n.label, avail, 13.5);
+    var sc = scenarios(n.card);
+    var subLine = (n.milestone||'') + (sc.length ? '  ·  ' + sc.join(' ') : '');
+    var sl = wrap(subLine, avail, 9.8);
+    var totH = tl.length*17 + sl.length*12 + 4;
+    var sy = n.y + (n.h - totH)/2 + 13;
+    tl.forEach(function(ln,i){ g.appendChild(mk('text', {x:tx, y:sy+i*17, class:'n-title'}, ln)); });
+    sl.forEach(function(ln,i){ g.appendChild(mk('text', {x:tx, y:sy+tl.length*17+4+i*12, class:'n-sub', fill:km.c}, ln)); });
+  } else {
+    var cx = n.x + n.w/2, availr = n.w - 26;
+    var tlr = wrap(n.label, availr, 13.5);
+    var subr = km.sub ? wrap(km.sub, availr, 9.8) : [];
+    var totHr = tlr.length*17 + (subr.length ? subr.length*12 + 3 : 0);
+    var syr = n.y + (n.h - totHr)/2 + 13;
+    tlr.forEach(function(ln,i){ g.appendChild(mk('text', {x:cx, y:syr+i*17, 'text-anchor':'middle', class:'n-title'}, ln)); });
+    subr.forEach(function(ln,i){ g.appendChild(mk('text', {x:cx, y:syr+tlr.length*17+3+i*12, 'text-anchor':'middle', class:'n-sub', fill:km.c}, ln)); });
+  }
+  g.addEventListener('click', function(){ focusNode(n.id); });
+  gNode.appendChild(g);
+  nodeEls[n.id] = g;
+});
+document.getElementById('svghost').appendChild(svg);
+
+/* legend */
+var legHost = document.getElementById('legend');
+var legend = data.mode === 'roadmap'
+  ? [['var(--accent)','Build step on the main path'],['var(--ros)','Terminal step — the submission'],['var(--stretch)','Gated stretch, beyond M3 (ADR-006)']]
+  : [['var(--unity)','Unity process · C#'],['var(--ros)','ROS 2 graph · Python'],['var(--db)','MySQL + disk fallback'],['var(--bridge)','ROS-TCP bridge — one edge, contract in its card']];
+legend.forEach(function(l){
+  var s = h('span');
+  var sw = h('i','swatch'); sw.style.borderColor = l[0]; sw.style.background = l[0]; sw.style.opacity = '.85';
+  s.appendChild(sw); s.appendChild(document.createTextNode(l[1]));
+  legHost.appendChild(s);
+});
+legHost.appendChild(h('span', null, 'Click any node, edge label or step to highlight it and jump to its card.'));
+
+/* main path strip */
+if (data.mainPath && data.mainPath.length){
+  var host = document.getElementById('pathsec');
+  var hh = h('h2','sec','The episode, in order — one main path');
+  host.appendChild(hh);
+  var strip = h('div','path');
+  data.mainPath.forEach(function(s){
+    var d = h('div','pstep');
+    d.appendChild(h('div','pn','Step ' + s.step));
+    d.appendChild(h('div','pl', s.label));
+    d.appendChild(h('div','pd', s.detail));
+    d.appendChild(citeRow(s.cites, true));
+    d.addEventListener('click', function(){ highlight(s.nodes, []); });
+    strip.appendChild(d);
+  });
+  host.appendChild(strip);
+}
+
+function citeRow(cites, bare){
+  var c = h('div', 'cites' + (bare ? ' bare' : ''));
+  (cites||[]).forEach(function(x){ c.appendChild(h('span','cite',x)); });
+  return c;
+}
+function row(k, v, cls){
+  var r = h('div','row' + (cls ? ' ' + cls : ''));
+  r.appendChild(h('span','k',k));
+  if (Array.isArray(v)){
+    var ul = h('ul','list');
+    v.forEach(function(i){ ul.appendChild(h('li',null,i)); });
+    r.appendChild(ul);
+  } else {
+    r.appendChild(h('span','v',v));
+  }
+  return r;
+}
+
+/* node cards */
+var ncHost = document.getElementById('nodecards');
+(data.nodes||[]).forEach(function(n){
+  var km = KIND[n.kind] || KIND.main, c = n.card || {};
+  var card = h('div','card'); card.id = 'card-' + n.id;
+  var tag = h('span','tag', data.mode === 'roadmap'
+    ? ('Step ' + n.seq + ' · ' + (data.phases.filter(function(p){return p.id===n.phase;})[0]||{}).label + ' · ' + n.milestone)
+    : (km.sub || n.kind));
+  tag.style.background = km.s; tag.style.color = km.c;
+  card.appendChild(tag);
+  card.appendChild(h('h3', null, n.label));
+  if (c.responsibility) card.appendChild(row('Responsibility', c.responsibility));
+  if (c.language) card.appendChild(row('Language', c.language));
+  if (c.inputs) card.appendChild(row('Inputs', c.inputs));
+  if (c.outputs) card.appendChild(row('Outputs', c.outputs));
+  if (c.constraint) card.appendChild(row('Constrained by', c.constraint, 'note'));
+  if (c.builds) card.appendChild(row('What gets built', c.builds));
+  if (c.creates) card.appendChild(row('Files / packages it creates', c.creates));
+  if (c.gate) card.appendChild(row('Exit gate (numeric)', c.gate, 'warn'));
+  if (c.scenario) card.appendChild(row('Verified by scenario', c.scenario));
+  if (c.framing) card.appendChild(row('Framing', c.framing, 'note'));
+  if (c.why_first) card.appendChild(row('Why here in the order', c.why_first));
+  if (c.sequencing_note) card.appendChild(row('Sequencing note', c.sequencing_note, 'note'));
+  if (c.warning) card.appendChild(row('Not on the graded path', c.warning, 'warn'));
+  card.appendChild(citeRow(c.cites));
+  ncHost.appendChild(card);
+});
+
+/* edge cards */
+var ecHost = document.getElementById('edgecards');
+var withCards = (data.edges||[]).filter(function(e){ return e.card; });
+if (!withCards.length){ document.getElementById('edgesec-h').style.display='none'; }
+withCards.forEach(function(e){
+  var card = h('div','card'); card.id = 'card-' + e.id;
+  var col = EKIND[e.kind] || '#4a5159';
+  var tag = h('span','tag', e.kind === 'bridge' ? 'the bridge · single edge' : e.kind);
+  tag.style.background = 'var(--rule-2)'; tag.style.color = col;
+  card.appendChild(tag);
+  var names = {};
+  (data.nodes||[]).forEach(function(n){ names[n.id] = n.label; });
+  (data.zones||[]).forEach(function(z){ names[z.id] = z.label; });
+  names['rail'] = data.rail ? data.rail.label : 'bridge';
+  card.appendChild(h('h3', null, (names[e.from]||e.from) + '  →  ' + (names[e.to]||e.to)));
+  if (e.label) card.appendChild(row('On the diagram', e.label));
+  if (e.card.note) card.appendChild(row('What it carries', e.card.note));
+  if (e.card.contract) card.appendChild(row('Message contract', e.card.contract));
+  if (e.card.constraint) card.appendChild(row('Constrained by', e.card.constraint, 'note'));
+  card.appendChild(citeRow(e.card.cites));
+  ecHost.appendChild(card);
+});
+
+/* omissions */
+var omHost = document.getElementById('omissions');
+(data.omitted||[]).forEach(function(o){
+  var tr = document.createElement('tr');
+  var a = document.createElement('td'); a.textContent = o.item;
+  var b = document.createElement('td'); b.textContent = o.why;
+  var c = document.createElement('td'); c.appendChild(citeRow(o.cites, true));
+  tr.appendChild(a); tr.appendChild(b); tr.appendChild(c);
+  omHost.appendChild(tr);
+});
+
+document.getElementById('footer').textContent =
+  data.title + ' · ' + (data.nodes||[]).length + ' nodes · drawn only from the cited document set; nothing is implemented yet.';
+
+/* interaction */
+function clearAll(){
+  Object.keys(nodeEls).forEach(function(k){ nodeEls[k].classList.remove('hot','dim'); });
+  Object.keys(edgeEls).forEach(function(k){
+    edgeEls[k].classList.remove('dim');
+    var pl = edgeEls[k].querySelector('polyline'); if (pl) pl.classList.remove('hot');
+    Array.prototype.forEach.call(edgeEls[k].querySelectorAll('.elabel'), function(t){ t.classList.remove('hot'); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.card'), function(c){ c.classList.remove('hot'); });
+}
+function highlight(nodeIds, edgeIds){
+  clearAll();
+  Object.keys(nodeEls).forEach(function(k){
+    if (nodeIds.indexOf(k) >= 0) nodeEls[k].classList.add('hot'); else nodeEls[k].classList.add('dim');
+  });
+  Object.keys(edgeEls).forEach(function(k){
+    if (edgeIds.indexOf(k) >= 0){
+      var pl = edgeEls[k].querySelector('polyline'); if (pl) pl.classList.add('hot');
+      Array.prototype.forEach.call(edgeEls[k].querySelectorAll('.elabel'), function(t){ t.classList.add('hot'); });
+    } else { edgeEls[k].classList.add('dim'); }
+  });
+}
+function focusNode(id){
+  var touching = (data.edges||[]).filter(function(e){ return e.from === id || e.to === id; }).map(function(e){ return e.id; });
+  highlight([id], touching);
+  var card = document.getElementById('card-' + id);
+  if (card){ card.classList.add('hot'); card.scrollIntoView({behavior:'smooth', block:'center'}); }
+}
+function focusEdge(id){
+  var e = (data.edges||[]).filter(function(x){ return x.id === id; })[0];
+  highlight(e ? [e.from, e.to] : [], [id]);
+  var card = document.getElementById('card-' + id);
+  if (card){ card.classList.add('hot'); card.scrollIntoView({behavior:'smooth', block:'center'}); }
+}
+svg.addEventListener('click', function(ev){ if (ev.target === svg) clearAll(); });
+})();
+</script>
+</body>
+</html>

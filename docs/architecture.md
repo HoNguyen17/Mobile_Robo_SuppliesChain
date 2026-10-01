@@ -1,195 +1,350 @@
-# Architecture — UC6 Mobile Robot Warehouse System
+# Architecture: UC6 Warehouse Robot
 
-## 1. ROS 2 Node Graph (Stage A: single robot)
+**Reading guide:** §1 gives the big picture in five layers. §2–§4 zoom into each side. §5 is the interface contract. §6–§7 show runtime behaviour. §8–§11 are reference tables.
 
-| Node | Language | Responsibility | Touches MySQL? |
-|------|----------|-----------------|:---:|
-| `mission_orchestrator` | Python | Per-task FSM: navigate→shelf, dwell, apply profile, navigate→drop-off, dwell, report. | No |
-| `motion_profile_node` | Python | Maps item category to Nav2 runtime parameters via `ros2 param set`-equivalent service calls. | No |
-| `metrics_collector` | Python | Subscribes to collision/replan/clearance topics during the run; aggregates a run summary. | No |
-| `task_manager` | Python | Reads next task from MySQL at episode start; writes `runs`/`run_events` at episode end. | **Yes — the only node** |
-| `bt_navigator` | Python (Nav2 stock) | Executes the `navigate_to_pose` behaviour tree. | No |
-| `planner_server` | Python (Nav2 stock) | Global path planning (M2). | No |
-| `controller_server` | Python (Nav2 stock) | Local trajectory tracking/avoidance (M2/M3); hosts DWB or TEB (ADR-004). | No |
-| `behavior_server` / recoveries | Python (Nav2 stock) | Spin, back-up, wait, clear-costmap recoveries. [VERIFY] exact server name depends on the pinned distro (ADR-003). | No |
-| `global_costmap` / `local_costmap` | Python (Nav2 stock) | Maintain static+obstacle+inflation layers. | No |
-| `slam_toolbox` or `amcl` | Python (Nav2 stock) | Localisation, per the adapted M1 tutorial. [VERIFY] which of the two the tutorial uses. | No |
-| `ros_tcp_endpoint` | Python (Unity-Robotics-Hub) | ROS-side half of the Unity bridge. | No |
+---
 
-Unity-side, not ROS 2 nodes: the robot controller script, the Unity Robotics Hub `ROS-TCP-Connector`, the shelf/drop-off pose visualiser, and scripted NPC obstacle controllers (Stage A).
+## 1. The five layers
+
+```mermaid
+flowchart TB
+    subgraph SIM["① Simulation: Unity on Windows"]
+        direction LR
+        S1[Robot body<br/>diff-drive] ~~~ S2[LIDAR<br/>+ odometry] ~~~ S3[World<br/>shelves · items · NPCs] ~~~ S4[Clock]
+    end
+    subgraph BRIDGE["② Bridge"]
+        direction LR
+        B1[ROS-TCP-Connector<br/>Unity side] <-->|"TCP 127.0.0.1:10000"| B2[ros_tcp_endpoint<br/>ROS side]
+    end
+    subgraph NAV["③ Navigation: stock ROS Noetic, configured only"]
+        direction LR
+        N1[map_server] ~~~ N2[amcl] ~~~ N3[move_base]
+    end
+    subgraph APP["④ Application: our Python nodes"]
+        direction LR
+        A1[mission_orchestrator] ~~~ A2[motion_profile_node] ~~~ A3[metrics_collector] ~~~ A4[task_manager]
+    end
+    subgraph DATA["⑤ Data"]
+        D1[(MySQL 8<br/>Docker)]
+    end
+
+    SIM <--> BRIDGE
+    BRIDGE <--> NAV
+    NAV <--> APP
+    APP <--> DATA
+
+    classDef sim fill:#E8F0FE,stroke:#3B6FD8,color:#000
+    classDef br fill:#F1F3F4,stroke:#5F6368,color:#000
+    classDef nav fill:#E6F4EA,stroke:#2E8B57,color:#000
+    classDef app fill:#FFF4E5,stroke:#E08A00,color:#000
+    classDef db fill:#F3E8FD,stroke:#8E44AD,color:#000
+    class S1,S2,S3,S4 sim
+    class B1,B2 br
+    class N1,N2,N3 nav
+    class A1,A2,A3,A4 app
+    class D1 db
+```
+
+| Layer | Owns | Must never |
+|-------|------|------------|
+| ① Simulation | Physics, sensors, NPC motion, item attach/release, collision detection, `/clock` | Plan paths or decide where to go |
+| ② Bridge | Moving ROS messages between Windows and WSL | Contain logic |
+| ③ Navigation | Localisation, global + local planning, obstacle avoidance, recovery | Be modified in source; it is configured by YAML only |
+| ④ Application | The task sequence, category profiles, measuring runs, persistence | Plan paths itself |
+| ⑤ Data | Task catalog and run results | Be on the navigation path; an outage never blocks a run |
+
+**Dependency rule:** each layer talks only to its neighbours. The one exception is that `metrics_collector` and `mission_orchestrator` also listen to or call the simulation's topics and services, which pass through the bridge.
+
+---
+
+## 2. Unity side (Windows)
+
+| Component (C#) | Does | ROS interface |
+|----------------|------|---------------|
+| `DiffDriveController` | Moves the robot from `/cmd_vel`. Stops if no command arrives for 0.5 s. | sub `/cmd_vel` |
+| `OdometryPublisher` | Publishes the robot pose and velocity, plus the `odom → base_footprint` TF. | pub `/odom`, `/tf` |
+| `LaserScanPublisher` | 360-beam raycast LIDAR (LDS-01-like: 0.12–3.5 m, 5 Hz). | pub `/scan` |
+| `ClockPublisher` | Publishes simulation time ([ADR-009](ADR-009-simulation-clock.md)). | pub `/clock` |
+| `CollisionReporter` | Reports robot contacts with walls, shelves, obstacles and NPCs. | pub `/sim/collision` |
+| `ItemCarrier` | Attaches the item to the robot (re-parent) and releases it. | srv `/sim/attach_item`, `/sim/release_item` |
+| `ScenarioLoader` | Loads obstacle and NPC layout for a scenario and resets the robot pose. | srv `/sim/reset_scenario` |
+| `NpcMover` | Moves NPC workers on scripted waypoints. Not a ROS node. | none |
+
+The robot's physical model is the TurtleBot3 Waffle Pi URDF, imported with Unity's URDF Importer. The `base_footprint → base_link → base_scan` static TFs come from `robot_state_publisher` on the ROS side, not from Unity.
+
+---
+
+## 3. ROS side (WSL2)
+
+### Stock nodes: configured, never modified
+
+| Node | Package | Role |
+|------|---------|------|
+| `ros_tcp_endpoint` | `ros_tcp_endpoint` | ROS end of the Unity bridge |
+| `robot_state_publisher` | `robot_state_publisher` | Static robot TFs from the Waffle Pi URDF |
+| `map_server` | `map_server` | Serves the pre-built warehouse map |
+| `amcl` | `amcl` | Localisation: publishes the `map → odom` TF |
+| `move_base` | `move_base` | Global planner + local planner + costmaps + recovery |
+
+### Our nodes: Python 3, package `warehouse_mission`
+
+| Node | One job | Talks to MySQL? |
+|------|---------|:---------------:|
+| `mission_orchestrator` | Runs the episode state machine (§7) | No |
+| `motion_profile_node` | Applies a category's speed/margin profile to `move_base` | No |
+| `metrics_collector` | Measures one run and returns a summary | No |
+| `task_manager` | Reads tasks from and writes runs to MySQL | **Yes, the only one** |
+
+### Node graph
 
 ```mermaid
 flowchart LR
-  subgraph Unity["Unity Process — not ROS 2 nodes"]
-    direction TB
-    U_RC[Robot Controller script]
-    U_RTC[ROS-TCP-Connector]
-    U_PV[Shelf / Drop-off Pose Visualiser]
-    U_NPC[Scripted NPC Obstacle Controllers - Stage A]
-  end
-  subgraph ROS["ROS 2 Graph"]
-    direction TB
-    R_E[ros_tcp_endpoint]
-  end
-  U_RTC <-- TCP --> R_E
+    U["Unity<br/>(via ros_tcp_endpoint)"]
+
+    subgraph NAV["Navigation"]
+        MS[map_server] --> AM[amcl]
+        AM --> MB[move_base]
+        MS --> MB
+    end
+
+    subgraph APP["Application"]
+        MO[mission_orchestrator]
+        MP[motion_profile_node]
+        MC[metrics_collector]
+        TM[task_manager]
+    end
+
+    DB[(MySQL)]
+
+    U -- "/scan /odom /tf /clock" --> AM
+    U -- "/scan /odom" --> MB
+    MB -- "/cmd_vel" --> U
+
+    MO -- "MoveBase action" --> MB
+    MO -- "set_category" --> MP
+    MP -- "dynamic_reconfigure" --> MB
+    MO -- "attach / release / reset" --> U
+    MO -- "start_run / finish_run" --> MC
+    MO -- "get_next_task / report_run" --> TM
+    U -. "/odom /scan /sim/collision" .-> MC
+    MB -. "plan · recovery_status" .-> MC
+    TM <--> DB
+
+    classDef nav fill:#E6F4EA,stroke:#2E8B57,color:#000
+    classDef app fill:#FFF4E5,stroke:#E08A00,color:#000
+    classDef sim fill:#E8F0FE,stroke:#3B6FD8,color:#000
+    classDef db fill:#F3E8FD,stroke:#8E44AD,color:#000
+    class MS,AM,MB nav
+    class MO,MP,MC,TM app
+    class U sim
+    class DB db
 ```
 
-Full Stage A node graph:
+<sub>Solid = command/request. Dotted = passive listening (metrics only).</sub>
+
+`mission_orchestrator` is the only node that gives orders. Every other application node is a service it calls.
+
+---
+
+## 4. TF tree
 
 ```mermaid
-graph LR
-  subgraph Unity Process
-    U1[Robot Controller C#]
-    U2[ROS-TCP-Connector]
-    U3[NPC Obstacle Controllers C#]
-    U4[Item Re-parent/Release Handler]
-  end
-  subgraph ROS 2 Graph
-    E[ros_tcp_endpoint]
-    MO[mission_orchestrator]
-    MP[motion_profile_node]
-    MC[metrics_collector]
-    TM[task_manager]
-    BT[bt_navigator]
-    PS[planner_server]
-    CS[controller_server]
-    RS[behavior_server]
-    GC[global_costmap]
-    LC[local_costmap]
-    LOC[slam_toolbox / amcl]
-  end
-  DB[(MySQL)]
-
-  U2 <-- TCP --> E
-  E --- U1
-  E --- U3
-  E --- U4
-  MO -- navigate_to_pose --> BT
-  BT --> PS
-  BT --> CS
-  BT --> RS
-  PS --> GC
-  CS --> LC
-  LOC --> GC
-  LOC --> LC
-  MO -- set category --> MP
-  MP -- param set --> CS
-  MP -- param set --> LC
-  MO -- events --> MC
-  CS -- cmd_vel --> E
-  E -- odom/scan/tf --> LOC
-  MC -- run summary --> TM
-  TM <--> DB
-  TM -- next task --> MO
+flowchart LR
+    map -->|amcl| odom -->|Unity| base_footprint -->|robot_state_publisher| base_link -->|robot_state_publisher| base_scan
 ```
 
-## 2. Unity ↔ ROS Bridge Contract
+---
 
-Transport: Unity-Robotics-Hub `ROS-TCP-Connector` (Unity) ↔ `ROS-TCP-Endpoint` (ROS 2), one TCP connection per robot instance (see §5 for multi-robot).
+## 5. Interface contract
 
-| Purpose | Direction | Message type |
-|---------|-----------|--------------|
-| Velocity command | ROS → Unity | `geometry_msgs/Twist` on `/cmd_vel` |
-| Odometry | Unity → ROS | `nav_msgs/Odometry` on `/odom` |
-| LIDAR scan | Unity → ROS | `sensor_msgs/LaserScan` on `/scan` |
-| Transforms | Unity → ROS | `tf2_msgs/TFMessage` on `/tf`, `/tf_static` |
-| Pickup trigger (dwell complete at shelf) | ROS → Unity | custom `warehouse_msgs/PickupEvent` (item_id, robot_ns) |
-| Pickup acknowledged (re-parent done) | Unity → ROS | custom `warehouse_msgs/PickupAck` (item_id, success) |
-| Place trigger (dwell complete at drop-off) | ROS → Unity | custom `warehouse_msgs/PlaceEvent` (item_id, robot_ns) |
-| Place acknowledged (un-parent done) | Unity → ROS | custom `warehouse_msgs/PlaceAck` (item_id, success) |
-| Collision notification | Unity → ROS | custom `warehouse_msgs/CollisionEvent` (contact_point, other_tag, robot_ns) |
-
-Exact field-level message definitions are an implementation task, not specified here; names above are the contract graders should expect to see referenced in code. [VERIFY] against the Unity Robotics Hub example's actual default topic set before Phase 1, since the tutorial's own demo topics may differ in naming convention.
-
-## 3. Topic / Service / Action Tables
+Custom types live in the catkin package **`warehouse_msgs`**. Unity generates matching C# classes via *Robotics → Generate ROS Messages*.
 
 ### Topics
 
-| Name | Type | Publisher | Subscriber | Rate |
-|------|------|-----------|------------|------|
-| `/cmd_vel` | `geometry_msgs/Twist` | `controller_server` | Unity robot controller (via bridge) | Nav2 controller frequency, default 20 Hz [VERIFY] |
-| `/odom` | `nav_msgs/Odometry` | Unity robot controller (via bridge) | `slam_toolbox`/`amcl`, `local_costmap` | Unity physics tick, target 30–50 Hz |
-| `/scan` | `sensor_msgs/LaserScan` | Unity LIDAR sim (via bridge) | `global_costmap`, `local_costmap` | 5–10 Hz (typical TurtleBot3 LIDAR) [VERIFY] |
-| `/tf`, `/tf_static` | `tf2_msgs/TFMessage` | Unity + localisation node | all Nav2 nodes | event-driven |
-| `/mission/active_category` | custom `warehouse_msgs/CategoryUpdate` | `mission_orchestrator` | `motion_profile_node` | event-driven (per task) |
-| `/metrics/collision_event` | custom `warehouse_msgs/CollisionEvent` | Unity (via bridge) | `metrics_collector` | event-driven |
-| `/metrics/replan_event` | custom `warehouse_msgs/ReplanEvent` | `bt_navigator` (replan hook) | `metrics_collector` | event-driven |
-| `/metrics/clearance_sample` | custom `warehouse_msgs/ClearanceSample` | `local_costmap`-derived sampler in `metrics_collector` | `metrics_collector` (self) | fixed 2 Hz |
-| `/task/next_task_result` | custom `warehouse_msgs/TaskResult` | `mission_orchestrator` | `task_manager` | once per episode end |
+| Topic | Type | From → To | Rate |
+|-------|------|-----------|------|
+| `/cmd_vel` | `geometry_msgs/Twist` | move_base → Unity | 10 Hz (controller) |
+| `/odom` | `nav_msgs/Odometry` | Unity → amcl, move_base, metrics | 30 Hz |
+| `/scan` | `sensor_msgs/LaserScan` | Unity → amcl, move_base, metrics | 5 Hz |
+| `/tf` | `tf2_msgs/TFMessage` | Unity (`odom→base_footprint`), amcl (`map→odom`) | 30 Hz |
+| `/clock` | `rosgraph_msgs/Clock` | Unity → all nodes | 100 Hz |
+| `/sim/collision` | `warehouse_msgs/CollisionEvent` | Unity → metrics | on contact |
+| `/move_base/GlobalPlanner/plan` | `nav_msgs/Path` | move_base → metrics | per plan |
+| `/move_base/recovery_status` | `move_base_msgs/RecoveryStatus` | move_base → metrics | per recovery |
 
 ### Services
 
-| Name | Type | Server | Client | Notes |
-|------|------|--------|--------|-------|
-| `/task_manager/get_next_task` | custom `warehouse_srvs/GetNextTask` | `task_manager` | `mission_orchestrator` | Read-only MySQL query wrapped as a service call. |
-| `/motion_profile/set_category` | custom `warehouse_srvs/SetCategory` | `motion_profile_node` | `mission_orchestrator` | Triggers Nav2 param updates (§6). |
-| `/global_costmap/clear_entirely_global_costmap` | Nav2 stock `nav2_msgs/ClearEntireCostmap` | `global_costmap` | `behavior_server` (recovery) | Stock Nav2 recovery service. |
+| Service | Type | Server | Caller |
+|---------|------|--------|--------|
+| `/sim/reset_scenario` | `warehouse_msgs/ResetScenario` | Unity | runner / mission_orchestrator |
+| `/sim/attach_item` | `warehouse_msgs/AttachItem` | Unity | mission_orchestrator |
+| `/sim/release_item` | `warehouse_msgs/ReleaseItem` | Unity | mission_orchestrator |
+| `/task_manager/get_next_task` | `warehouse_msgs/GetNextTask` | task_manager | mission_orchestrator |
+| `/task_manager/report_run` | `warehouse_msgs/ReportRun` | task_manager | mission_orchestrator |
+| `/motion_profile/set_category` | `warehouse_msgs/SetCategory` | motion_profile_node | mission_orchestrator |
+| `/metrics/start_run` | `warehouse_msgs/StartRun` | metrics_collector | mission_orchestrator |
+| `/metrics/mark_leg` | `warehouse_msgs/MarkLeg` | metrics_collector | mission_orchestrator (at the start of each leg) |
+| `/metrics/finish_run` | `warehouse_msgs/FinishRun` | metrics_collector | mission_orchestrator |
 
-### Actions
+### Action
 
-| Name | Type | Server | Client | Notes |
-|------|------|--------|--------|-------|
-| `/navigate_to_pose` | `nav2_msgs/action/NavigateToPose` | `bt_navigator` | `mission_orchestrator` | Used for both shelf-pose and drop-off-pose legs. |
+| Action | Type | Server | Client |
+|--------|------|--------|--------|
+| `/move_base` | `move_base_msgs/MoveBaseAction` | move_base | mission_orchestrator |
 
-## 4. Nav2 Configuration Strategy
+The field-level definitions live in [`ros/src/warehouse_msgs/`](../ros/src/warehouse_msgs/). That package is the single source of truth, and each file is commented.
 
-Nav2 is configured via YAML parameter files layered on top of the adapted M1 tutorial defaults; no Nav2 source is modified.
+| Messages (`msg/`) | Services (`srv/`) |
+|-------------------|-------------------|
+| `Task`, `CollisionEvent`, `RunEvent`, `RunSummary` | `AttachItem`, `ReleaseItem`, `ResetScenario`, `GetNextTask`, `ReportRun`, `SetCategory`, `StartRun`, `MarkLeg`, `FinishRun` |
 
-| Layer | M1 | M2 | M3 |
-|-------|----|----|----|
-| Global planner | Stock (e.g. NavFn) at tutorial defaults | Tuned for static-obstacle costmap responsiveness | Unchanged from M2 |
-| Local planner/controller | Stock DWB at tutorial defaults | Tuned per ADR-004 candidate | Benchmark-selected (DWB or TEB), per ADR-004 |
-| Costmap obstacle layer | Disabled/minimal | Enabled, static obstacles only | Enabled, static + dynamic (LIDAR-observed) |
-| Recovery behaviours | Stock defaults | Stock defaults | Tuned: spin/back-up/wait timeouts reduced to keep replans responsive |
-| Category parameter overrides | None (single "standard" profile) | Applied at task start (§6) | Applied at task start (§6) |
+Allowed string values (categories, outcomes, fail reasons, event types, collision tags, legs) are **constants** in the messages, e.g. `Task.CATEGORY_FRAGILE` and `RunSummary.FAIL_TIMEOUT`. Use the constants in code instead of typing the strings.
 
-[VERIFY] Exact stock default file names and node names against whichever branch of the Unity Robotics Hub Nav2+SLAM example is pinned in Phase 0.
+---
 
-## 5. Costmap Layer Design
+## 6. One episode, step by step
 
-| Costmap | Layer | Source | Notes |
-|---------|-------|--------|-------|
-| Global | `static_layer` | Map produced by the M1 SLAM/mapping step | One map per scenario; regenerated if the warehouse layout changes. |
-| Global | `obstacle_layer` | `/scan` | Marks known static obstacles for global re-planning. |
-| Global | `inflation_layer` | Derived | `inflation_radius` set per active category profile (§6). |
-| Local | `obstacle_layer` | `/scan` (rolling window) | Drives short-horizon dynamic avoidance (M3). |
-| Local | `inflation_layer` | Derived | Same category-driven radius as global, kept in sync by `motion_profile_node`. |
+```mermaid
+sequenceDiagram
+    autonumber
+    participant MO as mission_orchestrator
+    participant TM as task_manager
+    participant MC as metrics_collector
+    participant MP as motion_profile_node
+    participant MB as move_base
+    participant U as Unity
 
-## 6. Category → Motion-Profile Parameter Mechanism
+    MO->>TM: get_next_task
+    TM-->>MO: task (item, category, shelf pose, drop-off pose)
+    MO->>MC: start_run
+    MO->>MP: set_category(Standard)
+    Note over MO,U: Shelf leg
+    MO->>MC: mark_leg(shelf)
+    MO->>MB: goal = shelf pose
+    MB->>U: /cmd_vel
+    U-->>MB: /scan · /odom
+    MB-->>MO: SUCCEEDED
+    MO->>U: attach_item (after dwell)
+    MO->>MP: set_category(item category)
+    Note over MO,U: Drop-off leg
+    MO->>MC: mark_leg(dropoff)
+    MO->>MB: goal = drop-off pose
+    MB->>U: /cmd_vel
+    U-->>MB: /scan · /odom
+    MB-->>MO: SUCCEEDED
+    MO->>U: release_item (after dwell)
+    MO->>MC: finish_run(success)
+    MC-->>MO: run summary
+    MO->>TM: report_run(summary)
+```
 
-`motion_profile_node` receives the active category on `/mission/active_category` and issues parameter updates to `controller_server` and both costmap inflation layers before `mission_orchestrator` sends the next `navigate_to_pose` goal. This is framed strictly as reinforcing obstacle avoidance (wider inflation and lower speed reduce collision risk for fragile/heavy items) — it is not a standalone feature (PRD G4).
+---
 
-| Category | `max_vel_x` (m/s) | `acc_lim_x` (m/s²) | `inflation_radius` (m) | Rationale |
-|----------|:--:|:--:|:--:|-----------|
-| Standard | 0.26 | 2.5 | 0.30 | Waffle Pi published nominal max linear velocity [VERIFY against the simulated URDF/diff-drive plugin limits, which may clamp lower in Unity]. |
-| Fragile | 0.10 | 2.5 (unchanged) | 0.50 | Low speed + large inflation minimises jostling/contact risk; acceleration left at nominal since jerk limiting is out of scope. |
-| Heavy | 0.15 | 1.0 | 0.35 | Reduced acceleration and a moderately widened inflation approximate a wider effective turning clearance without modelling payload dynamics. |
+## 7. Mission state machine (`mission_orchestrator`)
 
-These are tunable defaults with the stated basis above, applied identically in simulation regardless of measured item mass; a `weight_kg` column is retained in `items` for future refinement but is not read at runtime in the graded path.
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Idle
+    Idle --> ToShelf: task received
+    ToShelf --> AtShelf: goal reached
+    AtShelf --> ToDropoff: dwell done · item attached · profile set
+    ToDropoff --> AtDropoff: goal reached
+    AtDropoff --> Report: dwell done · item released
 
-Fail-safe: if the `/motion_profile/set_category` service call fails or times out, `controller_server` and costmap parameters remain at the **Fragile** values (most conservative), and a warning `run_event` is logged. This favours collision avoidance over throughput when the mechanism itself misbehaves.
+    ToShelf --> Report: fail / timeout
+    ToDropoff --> Report: fail / timeout
+    AtShelf --> Report: attach failed
+    Report --> Idle: run reported
+```
 
-## 7. Multi-Robot Namespacing and TF-Prefix Scheme
+Obstacle avoidance and recovery happen **inside** `ToShelf` and `ToDropoff`, handled by `move_base`. The orchestrator only sees the final `SUCCEEDED` / `ABORTED` and its own leg timeout.
 
-| Stage | Robots | Namespace | TF prefix | Gate to enter |
-|-------|--------|-----------|-----------|----------------|
-| A | 1 | `/robot1` | `robot1/` | Default; M3 baseline. |
-| B | +1 (2 total) | `/robot1`, `/robot2` | `robot1/`, `robot2/` | Stage A exit gate met (see `docs/milestones.md`). |
-| C | +1 (3 total) | `/robot1`…`/robot3` | `robot1/`…`robot3/` | Stage B exit gate met. |
+---
 
-Each robot runs a fully independent Nav2 stack (own `bt_navigator`, `planner_server`, `controller_server`, costmaps) under its namespace, per the standard Nav2 multi-robot pattern; `map`/`odom` frames are prefixed per robot except a single shared `map` frame used for global localisation consistency. [VERIFY] whether the pinned distro's Nav2 multi-robot launch pattern requires a shared or per-robot `map` frame.
+## 8. Navigation configuration
 
-**ROS-TCP-Endpoint bandwidth risk:** a single `ROS-TCP-Endpoint` instance is understood to serve one Unity↔ROS TCP connection. [VERIFY] whether one endpoint can multiplex multiple namespaced robots over that connection, or whether each robot's Unity instance/prefab needs its own endpoint process bound to a distinct port. Mitigation, gated by Stage: run one `ros_tcp_endpoint` per robot (ports incrementing from a base, e.g. 10000+n) if multiplexing is unsupported, documented and load-tested before entering Stage B.
+All settings are YAML files in `warehouse_bringup/config/`. See [ADR-008](ADR-008-navigation-stack.md) for why this stack was chosen.
 
-## 8. Failure-Mode Table
+| Part | Choice | Key settings |
+|------|--------|--------------|
+| Map | Static map built once with `gmapping`, saved by `map_saver` | `maps/warehouse.yaml`, resolution 0.05 m |
+| Localisation | `amcl` | `odom_model_type: diff`, initial pose set by the runner after each reset |
+| Global planner | `global_planner/GlobalPlanner` | `use_dijkstra: false` (A*), `planner_frequency: 0.0` (replan only when needed) |
+| Local planner | `DWAPlannerROS` **or** `TebLocalPlannerROS` | Chosen by benchmark ([ADR-004](ADR-004-local-planner.md)) |
+| Global costmap | `static_layer` + `obstacle_layer` (`/scan`) + `inflation_layer` | `update_frequency: 5` |
+| Local costmap | rolling 4 m × 4 m, `obstacle_layer` + `inflation_layer` | `update_frequency: 5`, `publish_frequency: 2` |
+| Recovery | `conservative_reset` → `rotate_recovery` → `aggressive_reset` | `max_planning_retries: 3` |
+| Footprint | Waffle Pi polygon `[[-0.205,-0.155],[-0.205,0.155],[0.077,0.155],[0.077,-0.155]]` | from `turtlebot3_navigation` |
 
-| Failure | Detection | Response | Blocks sim run? |
-|---------|-----------|----------|:---:|
-| MySQL unreachable at episode start | `task_manager` connection error | Fall back to last-cached task list / bundled default task; log warning (FR-16) | No |
-| MySQL unreachable at episode end | `task_manager` write error | Buffer run record to local disk; retry at next episode start | No |
-| Global plan fails | `planner_server` returns failure to `bt_navigator` | Trigger recovery behaviour, then retry planning | No (bounded retries, then abort with outcome=fail) |
-| Local controller stuck / oscillating | Recovery-behaviour timeout | Spin/back-up/wait, then clear costmap; if still stuck, abort with outcome=fail | No |
-| Dynamic obstacle intrusion mid-path | Local costmap obstacle detection | Trigger global re-plan; log `replan_event` | No |
-| Unity↔ROS TCP disconnect | `ros_tcp_endpoint` connection drop | Abort current run as outcome=fail; attempt auto-reconnect before next episode | Yes, for the in-flight run only |
-| `/motion_profile/set_category` service failure | Service call timeout in `mission_orchestrator` | Remain at Fragile (most conservative) parameters; log warning event (§6) | No |
-| Second/third robot TF or namespace collision (Stage B/C) | Duplicate TF warning / navigation instability | Fail the stage gate; ship the prior stage (FR-18/FR-19) | No (that stage is simply not shipped) |
+The static map contains **walls and shelves only**. Scenario obstacles and NPCs are **not** in the map; the robot must find them with its LIDAR. That is what M2 and M3 test.
+
+---
+
+## 9. Category motion profiles
+
+Stored in `warehouse_bringup/config/motion_profiles.yaml`, which is the single source of truth. The database only stores the category name.
+
+| Category | `max_vel_x` (m/s) | `acc_lim_x` (m/s²) | `inflation_radius` (m) | Idea |
+|----------|:----:|:----:|:----:|------|
+| **Standard** | 0.26 | 2.5 | 0.30 | Waffle Pi nominal top speed |
+| **Heavy** | 0.15 | 1.0 | 0.35 | Slow to accelerate and brake |
+| **Fragile** | 0.10 | 2.5 | 0.50 | Slow, with a wide safety margin |
+
+Rules:
+
+1. **Shelf leg:** always Standard, because the robot is empty.
+2. **Drop-off leg:** the item's category.
+3. `motion_profile_node` applies the profile via `dynamic_reconfigure` to the active local planner and to **both** costmaps' `inflation_layer`.
+4. **If applying fails:** revert to **Fragile** (the safest), log a `warning` event, and continue.
+
+---
+
+## 10. How each metric is measured (`metrics_collector`)
+
+| Metric | Measured as |
+|--------|-------------|
+| `collisions` | Count of `/sim/collision` messages. Unity debounces repeated contact with the same object to 1 s. |
+| `replans` | Per leg: number of `/move_base/GlobalPlanner/plan` messages − 1. With `planner_frequency: 0` this counts only replans that were actually needed. |
+| `recoveries` | Count of `/move_base/recovery_status` messages |
+| `min_clearance_m` | Minimum over the run of `min(scan.ranges) − 0.21 m`, where 0.21 m ≈ footprint radius. Sampled on each `/scan`. |
+| `path_length_m` | Sum of distances between consecutive `/odom` positions |
+| `baseline_m` | `‖start→shelf‖ + ‖shelf→drop-off‖` (straight lines) |
+| `path_ratio` | `path_length_m / baseline_m` |
+| `duration_s` | Sim time from dispatch to item release (or to failure) |
+| `dropoff_mean_speed_mps` | Mean of `/odom` linear speed during the **drop-off leg only**, since that leg uses the category profile |
+
+---
+
+## 11. Failure handling
+
+| Failure | Who notices | What happens | Run blocked? |
+|---------|-------------|--------------|:------------:|
+| MySQL down at start | `task_manager` | Returns the bundled default task, `from_fallback = true` | No |
+| MySQL down at end | `task_manager` | Writes summary to `~/.warehouse/pending/*.json`; uploads on next start | No |
+| No path / robot stuck | `move_base` | Recovery behaviours → then `ABORTED` → `outcome = fail`, `fail_reason = nav_aborted` | No |
+| Leg takes too long | `mission_orchestrator` | Cancels goal → `fail_reason = timeout` | No |
+| Attach/release fails | `mission_orchestrator` | `fail_reason = item_error` | No |
+| Profile can't be applied | `motion_profile_node` | Revert to Fragile, `warning` event | No |
+| Unity ↔ ROS link lost | `mission_orchestrator` (no `/clock` for 2 s) | `fail_reason = bridge_lost`; runner pauses until link returns | Current run only |
+
+---
+
+## 12. Code layout
+
+```text
+repo/
+├─ WarehouseProjectURP/                 Unity project (Windows)
+│  └─ Assets/Scripts/Robot/, Sim/, Ros/ C# components from §2
+└─ ros/src/                             catkin packages (built in WSL, see setup guide)
+   ├─ warehouse_msgs/                   .msg / .srv from §5
+   ├─ warehouse_bringup/                launch/, config/, maps/, rviz/
+   ├─ warehouse_mission/                the 4 Python nodes
+   └─ warehouse_eval/                   headless runner, CSV exporter, scenarios.yaml
+```
+
+One launch file starts everything on the ROS side:
+
+```bash
+roslaunch warehouse_bringup bringup.launch local_planner:=dwa
+```

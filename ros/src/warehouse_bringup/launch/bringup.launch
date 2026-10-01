@@ -1,0 +1,40 @@
+<!--
+  ROS side of the UC6 warehouse robot (P0).
+    roslaunch warehouse_bringup bringup.launch            # with RViz
+    roslaunch warehouse_bringup bringup.launch rviz:=false
+
+  Unity publishes /clock, /odom, /scan and odom -> base_footprint on /tf, and listens to /cmd_vel.
+  This file adds the bridge endpoint and the robot's static frames (base_footprint -> base_link -> base_scan).
+-->
+<launch>
+  <arg name="tcp_ip"   default="0.0.0.0" doc="Endpoint listen address. 0.0.0.0 so Windows can reach it via WSL localhost forwarding"/>
+  <arg name="tcp_port" default="10000"/>
+  <arg name="model"    default="waffle_pi" doc="TurtleBot3 model, matches the URDF imported into Unity"/>
+  <arg name="rviz"     default="true"/>
+
+  <!-- ADR-009: Unity owns the clock. Every node started after this line uses /clock. -->
+  <param name="/use_sim_time" value="true"/>
+
+  <!-- Bridge to Unity (ROS-TCP-Connector). Same node as ros_tcp_endpoint's endpoint.launch, but started with
+       python3 explicitly: its script says "#!/usr/bin/env python", and Ubuntu 20.04 has no "python" command
+       unless python-is-python3 is installed. -->
+  <node name="unity_endpoint" pkg="ros_tcp_endpoint" type="default_server_endpoint.py"
+        launch-prefix="python3" output="screen" respawn="true">
+    <param name="tcp_ip"   type="string" value="$(arg tcp_ip)"/>
+    <param name="tcp_port" type="int"    value="$(arg tcp_port)"/>
+  </node>
+
+  <!-- Robot model: same URDF as Unity, in true robot metres (Unity's 4x scale never reaches ROS, ADR-010) -->
+  <param name="robot_description"
+         command="$(find xacro)/xacro $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro"/>
+
+  <!-- Unity does not publish wheel angles yet; zeros let RViz draw the wheels -->
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher"/>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0"/>
+  </node>
+
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz"
+        args="-d $(find warehouse_bringup)/rviz/bringup.rviz"/>
+</launch>

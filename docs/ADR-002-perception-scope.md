@@ -1,16 +1,20 @@
-# ADR-002: Perception Scope — Known Shelf-Slot Coordinates, No ML Detection in the Graded Path
+# ADR-002: No ML Perception; Shelf Poses Come from the Catalog
+
+**Status:** Accepted
 
 ## Context
-Item classification and perception-driven detection are explicitly ungraded per the course brief; grading centres on obstacle-avoidance planning. Building an ML perception pipeline would consume time better spent on M1–M3.
+Item detection and classification are not graded. An ML pipeline (camera, dataset, model) would take time away from avoidance tuning.
 
 ## Decision
-Shelf-slot coordinates come from the item catalog (`shelf_slots`/`items` tables, `docs/data-model.md`), not from any runtime perception system. No ML-based detection sits on the graded navigation path. YOLOv8n may be prototyped only as an explicitly out-of-scope stretch goal, after the M3/Stage exit gates are met (PRD FR-21).
+The robot knows where every item is from the `shelf_slots` and `items` tables. The item's category is a catalog field, not something detected. The only sensor used for decisions is the **LIDAR**, and only for navigation.
 
 ## Consequences
-- The robot always knows where to go without a perception step, so navigation testing is not confounded by detection accuracy.
-- The category used for motion profiling (`docs/architecture.md` §6) is a catalog attribute, not an inferred one, which keeps that mechanism deterministic and reproducible across the N≥20 automated runs.
-- Any future YOLOv8n prototype must be demonstrably isolated from the graded control loop (e.g. a separate branch or a clearly labelled optional node) so it cannot be mistaken for part of the graded path during review.
+- Navigation results are never mixed up with detection errors.
+- Runs are deterministic and repeatable, which matters for N = 20 evidence.
+- Shelf-slot poses in the database must match the Unity scene; they are exported from the scene once ([data-model.md §4](data-model.md#4-seeding)).
 
-## Alternatives Rejected
-- **YOLOv8n or similar CNN-based shelf/item detection on the graded path:** rejected — ungraded, adds dependency and failure-mode surface area (model weights, inference latency, dataset), and risks diverting effort from obstacle-avoidance tuning, which is what is actually assessed.
-- **AprilTag/fiducial-based pose estimation:** rejected for the same reason — even a lightweight perception step is unnecessary complexity when catalog coordinates are sufficient and course-permitted.
+## Alternatives rejected
+| Option | Why not |
+|--------|---------|
+| YOLO / camera detection | Ungraded; adds a model, a dataset and new failure modes |
+| AprilTags | Still perception work that the catalog makes unnecessary |

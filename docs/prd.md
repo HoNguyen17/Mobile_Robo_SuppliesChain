@@ -1,140 +1,113 @@
-# PRD — UC6 Mobile Robot Warehouse System
+# PRD: UC6 Warehouse Robot
 
-**Course:** 61CSE326 · **Use case:** UC6 (Shopee-style e-commerce fulfilment, simulated in Unity)
-**Team size:** 4 · **Timeline:** 8 weeks · **Readers:** course graders, implementing team
+| | |
+|---|---|
+| **Course** | 61CSE326 · Use case UC6 (e-commerce fulfilment, simulated) |
+| **Team** | 4 students · 8 weeks |
+| **Stack** | Unity 2021.1 (URP) on Windows · ROS 1 Noetic in WSL2 Ubuntu 20.04 · MySQL 8 |
+| **Robots** | 1 × TurtleBot3 Waffle Pi |
 
 ---
 
-## 1. Problem Statement
+## 1. Problem
 
-A simulated warehouse must fulfil e-commerce pick-and-place tasks using an autonomous mobile robot while avoiding static and dynamic obstacles. Grading centres on the robot's obstacle-avoidance competence, demonstrated across three milestones (M1 tutorial adaptation, M2 static avoidance, M3 dynamic avoidance). Item identification and any perception-driven classification are course-mandated non-graded scaffolding and must not consume disproportionate design or implementation effort.
+A warehouse must move items from shelves to drop-off points using an autonomous mobile robot. The robot must not collide with **static obstacles** (boxes, pallets) or **moving obstacles** (scripted NPC workers).
+
+The course grades **obstacle avoidance**, in three milestones:
+
+| Milestone | Graded capability |
+|-----------|-------------------|
+| **M1** | The ROS navigation stack drives the robot to a goal in the Unity warehouse |
+| **M2** | Safe navigation around **static** obstacles |
+| **M3** | Safe navigation around **dynamic** obstacles |
 
 ## 2. Goals
 
-| # | Goal |
-|---|------|
-| G1 | Demonstrate a working Nav2-based navigation stack adapted from the Unity Robotics Hub tutorial (M1). |
-| G2 | Demonstrate quantifiably safe navigation around static obstacles (M2), with binary pass/fail metrics. |
-| G3 | Demonstrate quantifiably safe navigation around dynamic obstacles, including scripted NPCs and (where staged gates permit) other robots (M3). |
-| G4 | Reinforce obstacle-avoidance behaviour with category-aware motion profiles (fragile / standard / heavy), proven via measurable velocity differences — not presented as a standalone feature. |
-| G5 | Persist task and telemetry data reliably without that persistence ever gating or blocking a simulation run. |
-| G6 | Produce reproducible, numeric evidence (headless automated runs + a rehearsed manual demo) suitable for grading. |
+| ID | Goal |
+|----|------|
+| G1 | The robot reaches shelf and drop-off goals using the ROS 1 navigation stack (`move_base`). |
+| G2 | It avoids static obstacles, with numeric pass/fail evidence. |
+| G3 | It avoids moving NPCs, with numeric pass/fail evidence. |
+| G4 | Item category (Fragile / Standard / Heavy) changes speed and safety margin. This supports avoidance; it is not a separate feature. |
+| G5 | Every run is recorded (MySQL + CSV) without the database ever blocking the simulation. |
+| G6 | An automated runner produces N = 20 runs per scenario as grading evidence. |
 
-## 3. Explicit Non-Goals
+## 3. Non-goals
 
-| # | Non-goal | Rationale |
-|---|----------|-----------|
-| NG1 | ML-based item/shelf detection (e.g. YOLOv8n) in the graded path | Perception is ungraded; known shelf-slot coordinates are used instead (ADR-002). |
-| NG2 | Arm-based grasping or manipulation planning | TurtleBot3 Waffle Pi carries no arm; pickup is simulated via dwell + re-parent (ADR-001). |
-| NG3 | Rebuilding or replacing Nav2 internals | Nav2 is configured, not rebuilt. |
-| NG4 | C++ nodes or tooling | Python (ROS 2) and C# (Unity) only. |
-| NG5 | External diagramming tools | Mermaid, inline in markdown, only. |
-| NG6 | Treating item classification as a first-class feature | It exists only to parameterise motion profiles; see G4. |
+| ID | We will **not**… | Why |
+|----|------------------|-----|
+| NG1 | Detect items with ML or cameras | Ungraded. Shelf poses come from the catalog ([ADR-002](ADR-002-perception-scope.md)) |
+| NG2 | Grasp with an arm | The Waffle Pi has no arm. Pickup = dwell, then attach in Unity ([ADR-001](ADR-001-robot-platform.md)) |
+| NG3 | Write our own path planner | We configure `move_base`; we do not rebuild it ([ADR-008](ADR-008-navigation-stack.md)) |
+| NG4 | Run more than one robot | Descoped ([ADR-006](ADR-006-single-robot.md)) |
+| NG5 | Write C++ | ROS nodes in Python 3 (rospy); Unity scripts in C# |
 
-## 4. Actors
+## 4. Scope: one episode, end to end
 
-| Actor | Description |
-|-------|-------------|
-| Warehouse Robot (TurtleBot3 Waffle Pi) | Navigates to a shelf slot, dwells, "carries" the re-parented item, navigates to drop-off, dwells, releases. |
-| Scripted NPC Obstacle | Unity-driven moving obstacle used from M3 / Stage A onward; not a ROS node. |
-| Second / Third Robot | Independently navigating robots introduced at multi-robot Stage B / Stage C. |
-| Mission Orchestrator (ROS 2 node) | Drives the per-task navigation/pickup/drop-off state machine. |
-| Motion Profile Node (ROS 2 node) | Maps item category to Nav2 runtime parameters. |
-| Task Manager (ROS 2 node) | The single node permitted to touch MySQL; reads the task at episode start, writes telemetry at episode end. |
-| Metrics Collector (ROS 2 node) | Aggregates in-run events (collisions, replans, clearance samples) and hands a summary to Task Manager. |
-| Course Grader | Consumes milestone evidence: automated metrics + live/scripted demo. |
-| Implementing Team (4 students) | Builds and integrates the system against this PRD. |
+```mermaid
+flowchart LR
+    A([Get task]) --> B[Drive to shelf] --> C[Dwell +<br/>attach item] --> D[Apply category<br/>profile] --> E[Drive to<br/>drop-off] --> F[Dwell +<br/>release item] --> G([Report run])
 
-## 5. Functional Requirements
+    classDef graded fill:#E6F4EA,stroke:#2E8B57,color:#000
+    class B,E graded
+```
 
-| ID | Requirement | Notes |
-|----|-------------|-------|
-| FR-01 | Task Manager shall read the next pending task (item, drop-off pose) from MySQL at episode start. | If MySQL is unreachable, fall back per FR-16. |
-| FR-02 | Mission Orchestrator shall command Nav2 (`navigate_to_pose`) to the item's known shelf-slot pose. | Shelf pose sourced from catalog, not perception (ADR-002). |
-| FR-03 | Nav2's global planner shall produce a collision-free path to the shelf pose in the presence of static obstacles. | Graded: M2. |
-| FR-04 | Nav2's local planner/controller shall track the global path while avoiding static obstacles not present in the static map. | Graded: M2. |
-| FR-05 | Nav2's local planner/controller shall avoid dynamic obstacles (scripted NPCs, other robots) that intrude on the planned path. | Graded: M3. |
-| FR-06 | On planner/controller failure, Nav2 recovery behaviours (costmap clear, spin, back-up, wait) shall execute before an abort is declared. | Graded: M2/M3. |
-| FR-07 | On dynamic obstacle intrusion, the system shall trigger a global re-plan and record a `replan` event. | Graded: M3. |
-| FR-08 | On arrival within the shelf-pose tolerance, the robot shall dwell for a configured duration, after which Unity shall re-parent the item GameObject to the robot. | Ungraded (mechanical support). |
-| FR-09 | Before departing the shelf, Motion Profile Node shall apply the Nav2 parameter set for the item's category (fragile / standard / heavy). | Reinforces M2/M3 — not a standalone feature (G4). |
-| FR-10 | Mission Orchestrator shall command Nav2 to the task's drop-off pose with the category profile active, subject to the same static/dynamic avoidance requirements as FR-03–FR-07. | Graded: M2/M3. |
-| FR-11 | On arrival at the drop-off pose, the robot shall dwell for a configured duration, after which Unity shall release (un-parent) the item GameObject. | Ungraded (mechanical support). |
-| FR-12 | Metrics Collector shall record, for every run: collision events, replan events, periodic clearance samples, and the final goal outcome. | Ungraded (verification tooling), evidences M1–M3. |
-| FR-13 | Task Manager shall write one `runs` row and its associated `run_events` rows to MySQL in a single transaction at episode end. | Ungraded (infra); see ADR-005. |
-| FR-14 | A MySQL outage (at start or end of episode) shall never abort or block the simulation run. | Ungraded (reliability); see FR-16. |
-| FR-15 | The item catalog shall provide category, shelf-slot pose, and (optionally) weight for every item; no runtime ML inference is used to obtain these. | Ungraded; see ADR-002. |
-| FR-16 | On MySQL read failure at episode start, Task Manager shall fall back to the last-cached task list (or a bundled default task) and log a warning; on write failure at episode end, it shall buffer the record to local disk and retry on the next episode start. | Ungraded (reliability). |
-| FR-17 | Stage A shall run exactly one robot with scripted NPC obstacles only. | Graded: M3 baseline. |
-| FR-18 | Stage B shall add one independently-navigating second robot under its own namespace/TF prefix, gated on the Stage A exit criteria. | Beyond M3 (stretch, gated); see ADR-006. |
-| FR-19 | Stage C shall add a third independently-navigating robot, gated on the Stage B exit criteria. | Beyond M3 (stretch, gated); see ADR-006. |
-| FR-20 | A headless automated runner shall execute each test scenario N≥20 times and export a CSV of per-run metrics. | Ungraded (verification tooling), evidences M1–M3. |
-| FR-21 | YOLOv8n-based shelf/item detection may be prototyped only after the Stage/M3 exit gates are met, and shall never sit on the graded navigation path. | Explicitly out-of-scope stretch (NG1). |
+<sub>Green = graded path (navigation + avoidance). Everything else is supporting work.</sub>
 
-## 6. Non-Functional Requirements
+## 5. Functional requirements
+
+### Navigation (graded)
+
+| ID | Requirement | Milestone |
+|----|-------------|:---------:|
+| FR-01 | `mission_orchestrator` sends each leg's goal to `move_base` as a `MoveBaseAction`. | M1 |
+| FR-02 | The robot localises on a pre-built static map using AMCL. | M1 |
+| FR-03 | The global planner finds a path around obstacles present in the map. | M2 |
+| FR-04 | The local planner avoids static obstacles that are **not** in the map, seen by the LIDAR. | M2 |
+| FR-05 | The local planner avoids moving NPCs that cross the path. | M3 |
+| FR-06 | When stuck, `move_base` runs recovery behaviours (clear costmap, rotate) before failing the leg. | M2, M3 |
+
+### Mission and category profile (supporting)
 
 | ID | Requirement |
 |----|-------------|
-| NFR-01 | All ROS 2 nodes are implemented in Python; all Unity scripts are implemented in C#. No C++. |
-| NFR-02 | The Nav2 local planner (DWB or TEB) is selected by a benchmark-based criterion, not by preference (ADR-004). |
-| NFR-03 | Exactly one ROS 2 node (`task_manager`) performs MySQL I/O; no planner or control-loop node queries the database at runtime. |
-| NFR-04 | The system tolerates a MySQL outage without any change to navigation behaviour (FR-14/FR-16). |
-| NFR-05 | All diagrams are Mermaid, inline in markdown; no external diagramming tool output is checked in. |
-| NFR-06 | The ROS 2 distribution is pinned as a Phase 0 output, not assumed; see ADR-003 and the [VERIFY] list. |
-| NFR-07 | Category motion-profile parameters are hot-applicable per task without restarting Nav2 nodes. |
-| NFR-08 | Multi-robot namespacing/TF-prefixing introduces no cross-robot topic collisions at any staged level (A/B/C). |
-| NFR-09 | Every acceptance criterion is binary pass/fail with an attached number; no prose criteria (see §8). |
+| FR-07 | On arrival at the shelf, the robot dwells `dwell_s` seconds, then Unity attaches the item to the robot. |
+| FR-08 | Before the drop-off leg, `motion_profile_node` applies the item category's speed/margin profile. |
+| FR-09 | On arrival at the drop-off, the robot dwells, then Unity releases the item. |
+| FR-10 | If a leg fails or exceeds its timeout, the episode ends with `outcome = fail` and a `fail_reason`. |
 
-## 7. Traceability Table
+### Data and evidence (supporting)
 
-| Requirement | M1 | M2 | M3 | Ungraded |
-|-------------|:--:|:--:|:--:|:--------:|
-| FR-01 | ✔ | ✔ | ✔ | |
-| FR-02 | ✔ | ✔ | ✔ | |
-| FR-03 | | ✔ | | |
-| FR-04 | | ✔ | | |
-| FR-05 | | | ✔ | |
-| FR-06 | | ✔ | ✔ | |
-| FR-07 | | | ✔ | |
-| FR-08 | | | | ✔ |
-| FR-09 | | ✔ | ✔ | |
-| FR-10 | | ✔ | ✔ | |
-| FR-11 | | | | ✔ |
-| FR-12 | | | | ✔ |
-| FR-13 | | | | ✔ |
-| FR-14 | | | | ✔ |
-| FR-15 | | | | ✔ |
-| FR-16 | | | | ✔ |
-| FR-17 | | | ✔ | |
-| FR-18 | | | | ✔ (stretch) |
-| FR-19 | | | | ✔ (stretch) |
-| FR-20 | | | | ✔ |
-| FR-21 | | | | ✔ (stretch) |
-| NFR-01–NFR-09 | — | — | — | — (cross-cutting; see §6) |
+| ID | Requirement |
+|----|-------------|
+| FR-11 | `task_manager` reads the next pending task from MySQL at episode start. |
+| FR-12 | `metrics_collector` measures collisions, replans, recoveries, minimum clearance, path length, duration and mean speed. |
+| FR-13 | `task_manager` writes one `runs` row plus its `run_events` in a single transaction at episode end. |
+| FR-14 | If MySQL is down: at start, use a bundled default task; at end, save the record to a local JSON file and upload it later. The run is never blocked. |
+| FR-15 | The headless runner executes a scenario N times and exports a CSV per scenario. |
 
-## 8. Success Metrics
+## 6. Non-functional requirements
 
-All acceptance criteria are numeric and binary; see `docs/test-plan.md` for full scenario-by-scenario values. The defined metrics are:
+| ID | Requirement |
+|----|-------------|
+| NFR-01 | Our ROS nodes are Python 3 (rospy). Unity scripts are C#. No custom C++. |
+| NFR-02 | Only `task_manager` talks to MySQL. No navigation node ever waits on the database. |
+| NFR-03 | Category profiles change at runtime via `dynamic_reconfigure`, without restarting `move_base`. |
+| NFR-04 | Every acceptance criterion is a number with a pass/fail threshold. |
+| NFR-05 | Everything that ROS touches runs in WSL2 Ubuntu 20.04. Unity runs on Windows ([ADR-007](ADR-007-windows-wsl-environment.md)). |
+| NFR-06 | Diagrams are Mermaid, inline in Markdown. |
 
-| Metric | Unit | Definition |
-|--------|------|------------|
-| Collisions per run | count | Contact events between robot footprint and any obstacle/wall/robot during one run. |
-| Goal success rate | % over N≥20 runs | (runs reaching goal within pose tolerance) / N × 100. |
-| Minimum obstacle clearance | metres | Smallest recorded distance from robot footprint boundary to nearest obstacle during the run. |
-| Path length ratio | dimensionless | Actual travelled path length ÷ straight-line (Euclidean) start-to-goal distance. |
-| Time-to-goal | seconds | Elapsed time from task dispatch to goal-reached event. |
-| Replan count per run | count | Number of global re-plans triggered during the run. |
-| Mean linear velocity per category | m/s | Mean commanded linear velocity over a run, grouped by item category, used to prove FR-09 measurably changes robot behaviour. |
+## 7. Success criteria (headline)
 
-Example of the required criterion phrasing (see `docs/test-plan.md` for the full matrix):
-> "0 collisions across 20 consecutive runs in scenario S-02 (narrow corridor, static obstacles)."
+The full matrix is in [test-plan.md](test-plan.md). Each gate uses **N = 20 runs**.
 
-Milestone-level gates (headline numbers; full matrix in `docs/test-plan.md`):
+| Milestone | Scenario | Pass when |
+|-----------|----------|-----------|
+| **M1** | S-00 open room | success ≥ 90 % · 0 collisions |
+| **M2** | S-01 single box | success ≥ 95 % · 0 collisions · min clearance ≥ 0.15 m |
+| **M2** | S-02 corridor | success ≥ 90 % · 0 collisions · min clearance ≥ 0.10 m · path ratio ≤ 1.4 |
+| **M2** | S-03 dead end | success ≥ 85 % · 0 collisions |
+| **M3** | S-04 crossing NPC | success ≥ 85 % · ≤ 1 collision in 20 runs |
+| — | S-05 category speeds | mean speed Fragile < Heavy < Standard, each gap ≥ 0.03 m/s |
 
-| Milestone | Headline pass condition |
-|-----------|--------------------------|
-| M1 | Goal success rate ≥ 90% over N=20 in scenario S-00 (open room, no obstacles); 0 collisions. |
-| M2 | 0 collisions across 20 consecutive runs in scenario S-02; minimum clearance ≥ 0.15 m; path length ratio ≤ 1.3. |
-| M3 | Goal success rate ≥ 85% over N=20 in scenario S-04 (dynamic NPC); ≤1 collision per 20 runs; replan count recorded and non-zero on at least one intrusion event per run. |
-
-Basis for the above thresholds: 0.15 m clearance reflects the Waffle Pi footprint radius (~0.22 m half-diagonal) plus a conservative margin against the default Nav2 inflation radius; the M3 collision tolerance (≤1/20) reflects that dynamic-obstacle avoidance depends on reactive local-planner tuning rather than a fully deterministic global plan, unlike the static case. These are tunable defaults — see the risk register in `docs/milestones.md` for the process to revise them after Phase 2/3 dry runs.
+These thresholds are starting values. They may be revised once, after the first dry run of each phase, and the change must be written into [test-plan.md](test-plan.md) with the reason.

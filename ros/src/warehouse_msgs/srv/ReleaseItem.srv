@@ -1,0 +1,6 @@
+# /sim/release_item - served by Unity (ItemCarrier).
+# Un-parents the item at the drop-off after the dwell.
+int32 item_id
+---
+bool ok
+string error                       # "" when ok

@@ -1,0 +1,12 @@
+.DS_Store*
+*.swp
+.idea
+**.vsconfig
+*~
+*~~
+# Local secrets (MySQL passwords)
+infra/.env
+
+# Play mode test output
+WarehouseProjectURP/test_results.txt
+WarehouseProjectURP/nav_results.txt

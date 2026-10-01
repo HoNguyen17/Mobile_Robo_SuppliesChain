@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>warehouse_msgs</name>
+  <version>0.1.0</version>
+  <description>Messages and services for the UC6 warehouse robot (Unity bridge, mission, metrics, tasks). See docs/architecture.md section 5.</description>
+
+  <maintainer email="mr.nguyenhonguyen@gmail.com">honguyen17</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <exec_depend>message_runtime</exec_depend>
+</package>

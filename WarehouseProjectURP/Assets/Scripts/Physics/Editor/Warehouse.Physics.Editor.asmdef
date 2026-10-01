@@ -1,0 +1,18 @@
+{
+    "name": "Warehouse.Physics.Editor",
+    "references": [
+        "Warehouse.Physics",
+        "Warehouse.Robot"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
