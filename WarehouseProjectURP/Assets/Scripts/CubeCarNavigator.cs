@@ -238,16 +238,35 @@ public class CubeCarNavigator : MonoBehaviour
         return homePoint != null ? homePoint.position : spawnPosition;
     }
 
-    /// <summary>
-    /// Builds the grid, runs A* from the cube to 'destination' and stores the result
-    /// in 'corners'. Returns false (and logs why) if no route exists.
-    /// </summary>
-    private bool PlanPath(Vector3 destination)
-    {
-        corners = new Vector3[0];
-        cornerIndex = 0;
+    // ---- Read-only access to the occupancy grid (used by the ROS map publisher) ----
 
-        Vector3 start = transform.position;
+    /// <summary>Grid size in cells along Unity X.</summary>
+    public int GridWidth { get { return gridW; } }
+
+    /// <summary>Grid size in cells along Unity Z.</summary>
+    public int GridHeight { get { return gridH; } }
+
+    /// <summary>World (x, z) of the grid's minimum corner.</summary>
+    public Vector2 GridOriginXZ { get { return gridOrigin; } }
+
+    /// <summary>Blocked flags, index = iz * GridWidth + ix. Already inflated by Robot Radius.</summary>
+    public bool[] BlockedCells { get { return blocked; } }
+
+    /// <summary>
+    /// Builds the occupancy grid around the cube's current position WITHOUT planning a path.
+    /// Works even while this component is unticked. Returns false if the grid could not be built.
+    /// </summary>
+    public bool BuildGridForRos()
+    {
+        return BuildGrid(transform.position, transform.position);
+    }
+
+    /// <summary>
+    /// Steps 1-3 of planning: find obstacles, size the grid, mark blocked cells.
+    /// Returns false (and logs why) if the grid could not be built.
+    /// </summary>
+    private bool BuildGrid(Vector3 start, Vector3 destination)
+    {
         gridY = start.y;
 
         // 1. Find obstacles.
@@ -284,6 +303,22 @@ public class CubeCarNavigator : MonoBehaviour
         // 3. Mark blocked cells (obstacles inflated by the robot radius).
         blocked = new bool[gridW * gridH];
         foreach (Bounds b in obstacles) MarkBlocked(b);
+        return true;
+    }
+
+    /// <summary>
+    /// Builds the grid, runs A* from the cube to 'destination' and stores the result
+    /// in 'corners'. Returns false (and logs why) if no route exists.
+    /// </summary>
+    private bool PlanPath(Vector3 destination)
+    {
+        corners = new Vector3[0];
+        cornerIndex = 0;
+
+        Vector3 start = transform.position;
+
+        // Steps 1-3: obstacles -> grid -> blocked cells.
+        if (!BuildGrid(start, destination)) return false;
 
         // 4. Start cell = nearest free cell to the cube.
         int startCell = FindNearestFreeCell(start, null);
