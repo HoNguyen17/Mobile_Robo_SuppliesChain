@@ -24,17 +24,20 @@ A straight URDF import does **not** drive in Unity. Five separate problems had t
 | Links without `<inertial>` (camera, imu) get Unity's default **1 kg each** | ~4 kg of phantom weight ahead of the axle tips the 1.4 kg robot forward | Those links are set to 0.001 kg |
 | Unity scales colliders with the transform, but **not** mass, centre of mass or inertia | A 4x robot has 1/64 of the mass it should | mass x s^3, centre of mass x s, inertia x s^5, wheel torque x s^5 |
 
-Smaller decisions: speed ramps with an acceleration limit (1 m/s^2 linear, 3 rad/s^2 angular) so the robot never wheelies; friction of "slick" parts uses `Multiply` (Unity's `Minimum` loses to the floor's default `Average`); the wheel joint speed cap is raised from the importer's 7 rad/s to 100.
+Smaller decisions: speed ramps with an acceleration limit (1 m/s^2 linear, 3 rad/s^2 angular) so the robot never wheelies; friction of "slick" parts uses `Multiply` (Unity's `Minimum` loses to the floor's default `Average`); the wheel joint speed cap is raised from the importer's 7 rad/s to 100. **Holding brake** (added with ADR-011): once the command is zero and the speed ramp has reached zero, each wheel drive switches from pure velocity control to a position spring that reaches full motor torque at 2° (`WheelHold`, `holdWhenStopped`), like the holding torque of the real Dynamixel servos. Without it the idle robot crept about 1.6 mm/s (real) under the stronger gravity. A new command releases it immediately.
 
 ## Verification (Play Mode tests, `Assets/Tests/PlayMode/`)
-Run with **Window > General > Test Runner > PlayMode**. On the real `Warehouse` scene at scale 4:
+Run with **Window > General > Test Runner > PlayMode**. On the real `Warehouse` scene at scale 4, re-run on 2026-10-02 with the ADR-011 gravity (39.24 m/s² in Unity) and the holding brake:
 
 | Check | Result |
 |-------|--------|
 | Settle under gravity | level (`up.y = 1.00`), all contacts at y = 0.000 |
-| Forward, 0.2 m/s for 5 s | 0.95 m (expected ~0.98 after the speed ramp) |
-| Turn left, 1 rad/s for 3 s | -156 deg (expected -172 deg after the ramp), no drift |
-| Navigator mission (start -> shelf -> dwell -> home) | shelf reached at 38 s, home reached at 66 s, stops 0.6 m from `HomePoint`, never tips |
+| Forward, 0.2 m/s for 5 s | 0.94 m (expected ~0.98 after the speed ramp) |
+| Turn left, 1 rad/s for 3 s | -152 deg (expected -172 deg after the ramp), drift 0.003 m |
+| Navigator mission (start -> shelf -> dwell -> home) | shelf reached at 46 s, home reached at 108 s, stops 0.2 m (real) from `HomePoint`, never tips |
+| Idle 30 s with no command (holding brake) | 0.00 mm drift; then drives 0.35 m in 2 s at 0.2 m/s |
+
+At g = 9.81 (before ADR-011) the same checks gave 0.95 m forward and -156 deg turn.
 
 ## Consequences
 - Do not change the scale after building the ROS map, or the map and the world will disagree.

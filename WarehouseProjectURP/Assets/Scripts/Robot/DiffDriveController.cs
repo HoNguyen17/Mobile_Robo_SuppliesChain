@@ -52,6 +52,13 @@ public class DiffDriveController : MonoBehaviour
     public bool invertLeftWheel;
     public bool invertRightWheel;
 
+    [Tooltip("Lock the wheel positions once the robot is commanded to stop and has ramped down, like the " +
+             "holding torque of the real Dynamixel motors. Without it the robot slowly creeps when idle.")]
+    public bool holdWhenStopped = true;
+
+    [Tooltip("The holding brake reaches full motor torque at this many degrees of wheel rotation.")]
+    public float holdFullTorqueDeg = 2f;
+
     [Header("Contacts (the URDF import's colliders float / dig in, so they are rebuilt at start)")]
     [Tooltip("Replace wheel colliders with spheres, casters with frictionless spheres at wheel-bottom height, " +
              "and lift the chassis clear of the floor. Untick only for debugging.")]
@@ -102,6 +109,11 @@ public class DiffDriveController : MonoBehaviour
     private float lastCommandTime = float.NegativeInfinity;
     private float currentLinear;
     private float currentAngular;
+    private float holdStiffness;
+    private bool holding;
+
+    /// <summary>True while the holding brake locks the wheels.</summary>
+    public bool IsHolding => holding;
 
     void Awake()
     {
@@ -162,6 +174,15 @@ public class DiffDriveController : MonoBehaviour
         currentLinear = Mathf.MoveTowards(currentLinear, v, maxLinearAccel * dt);
         currentAngular = Mathf.MoveTowards(currentAngular, w, maxAngularAccel * dt);
 
+        bool hold = holdWhenStopped && WheelHold.ShouldHold(v, w, currentLinear, currentAngular);
+        if (hold != holding)
+        {
+            holding = hold;
+            SetHold(leftWheel, hold);
+            SetHold(rightWheel, hold);
+        }
+        if (holding) return;
+
         // Differential-drive kinematics: a left turn (w > 0) makes the right wheel faster.
         float leftRadPerSec = (currentLinear - currentAngular * wheelSeparation * 0.5f) / wheelRadius;
         float rightRadPerSec = (currentLinear + currentAngular * wheelSeparation * 0.5f) / wheelRadius;
@@ -183,6 +204,23 @@ public class DiffDriveController : MonoBehaviour
         {
             SetCommand(forward * maxLinearSpeed, turn * maxAngularSpeed);
         }
+    }
+
+    /// <summary>Lock the wheel at its current angle (position spring), or release it back to velocity control.</summary>
+    private void SetHold(ArticulationBody wheel, bool on)
+    {
+        ArticulationDrive drive = wheel.xDrive;
+        drive.targetVelocity = 0f;
+        if (on)
+        {
+            drive.stiffness = holdStiffness;
+            drive.target = wheel.jointPosition[0] * Mathf.Rad2Deg; // jointPosition is radians, the drive wants degrees
+        }
+        else
+        {
+            drive.stiffness = 0f;
+        }
+        wheel.xDrive = drive;
     }
 
     private static void SetWheelSpeed(ArticulationBody wheel, float radPerSec, bool invert)
@@ -220,6 +258,7 @@ public class DiffDriveController : MonoBehaviour
         // Velocity control: no spring (stiffness 0). Torque = damping x speed error, capped at forceLimit.
         // Damping is chosen so the cap is reached at ~50 deg/s of error, i.e. a firm but smooth motor.
         float torqueLimit = wheelTorqueLimit * Mathf.Pow(scale, 5f);
+        holdStiffness = WheelHold.Stiffness(torqueLimit, holdFullTorqueDeg);
         ArticulationDrive drive = wheel.xDrive;
         drive.stiffness = 0f;
         drive.damping = torqueLimit / 50f;

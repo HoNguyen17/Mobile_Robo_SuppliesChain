@@ -2,7 +2,8 @@
     "name": "RobotPlayModeTests",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Warehouse.Robot"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

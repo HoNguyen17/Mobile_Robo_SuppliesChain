@@ -389,7 +389,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -421,6 +421,7 @@ GameObject:
   - component: {fileID: 12413294}
   - component: {fileID: 12413293}
   - component: {fileID: 12413292}
+  - component: {fileID: 12413298}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -466,7 +467,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 12413290}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -554,6 +555,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 12413290}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &12413298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 12413290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &14327869
 GameObject:
   m_ObjectHideFlags: 0
@@ -941,6 +957,7 @@ GameObject:
   - component: {fileID: 20072934}
   - component: {fileID: 20072933}
   - component: {fileID: 20072932}
+  - component: {fileID: 20072938}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -986,7 +1003,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 20072930}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -1074,6 +1091,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 20072930}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &20072938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 20072930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &20648256
 GameObject:
   m_ObjectHideFlags: 0
@@ -2004,6 +2036,7 @@ GameObject:
   - component: {fileID: 42239711}
   - component: {fileID: 42239713}
   - component: {fileID: 42239712}
+  - component: {fileID: 42239714}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -2054,6 +2087,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &42239714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 42239710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &43537598
 GameObject:
   m_ObjectHideFlags: 0
@@ -2486,7 +2534,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -2608,7 +2656,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -2762,6 +2810,7 @@ GameObject:
   - component: {fileID: 59044055}
   - component: {fileID: 59044057}
   - component: {fileID: 59044056}
+  - component: {fileID: 59044058}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -2812,6 +2861,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &59044058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 59044054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &60526582
 GameObject:
   m_ObjectHideFlags: 0
@@ -4722,8 +4786,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b33f0bc2b78db642a758f07826d0dd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  labels:
-  - wall
+  labels: []
   useAutoLabeling: 0
   autoLabelingSchemeType: 
 --- !u!23 &88130661
@@ -6208,6 +6271,7 @@ GameObject:
   - component: {fileID: 115559259}
   - component: {fileID: 115559258}
   - component: {fileID: 115559257}
+  - component: {fileID: 115559263}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -6253,7 +6317,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 115559255}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -6341,6 +6405,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 115559255}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &115559263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115559255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &116634729
 GameObject:
   m_ObjectHideFlags: 0
@@ -6417,6 +6496,7 @@ GameObject:
   - component: {fileID: 122671098}
   - component: {fileID: 122671097}
   - component: {fileID: 122671096}
+  - component: {fileID: 122671102}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -6462,7 +6542,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 122671094}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -6551,6 +6631,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 122671094}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &122671102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 122671094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &123964768
 GameObject:
   m_ObjectHideFlags: 0
@@ -6804,6 +6899,7 @@ GameObject:
   - component: {fileID: 129743911}
   - component: {fileID: 129743910}
   - component: {fileID: 129743909}
+  - component: {fileID: 129743915}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -6849,7 +6945,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129743907}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -6937,6 +7033,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129743907}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &129743915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 129743907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &130609671
 GameObject:
   m_ObjectHideFlags: 0
@@ -8291,7 +8402,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -9430,6 +9541,7 @@ GameObject:
   - component: {fileID: 184067394}
   - component: {fileID: 184067393}
   - component: {fileID: 184067392}
+  - component: {fileID: 184067398}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -9475,7 +9587,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 184067390}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -9564,6 +9676,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 184067390}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &184067398
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 184067390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &185355150
 GameObject:
   m_ObjectHideFlags: 0
@@ -9742,6 +9869,7 @@ GameObject:
   - component: {fileID: 188174393}
   - component: {fileID: 188174392}
   - component: {fileID: 188174391}
+  - component: {fileID: 188174397}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -9787,7 +9915,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 188174389}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -9875,6 +10003,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 188174389}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &188174397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188174389}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &188836967
 GameObject:
   m_ObjectHideFlags: 0
@@ -11637,6 +11780,7 @@ GameObject:
   - component: {fileID: 244154849}
   - component: {fileID: 244154848}
   - component: {fileID: 244154847}
+  - component: {fileID: 244154853}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -11682,7 +11826,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 244154845}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8402
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -11770,6 +11914,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 244154845}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &244154853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 244154845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &247839921
 GameObject:
   m_ObjectHideFlags: 0
@@ -13082,6 +13241,7 @@ GameObject:
   - component: {fileID: 275489278}
   - component: {fileID: 275489277}
   - component: {fileID: 275489276}
+  - component: {fileID: 275489282}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -13127,7 +13287,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 275489274}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -13215,6 +13375,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 275489274}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &275489282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 275489274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &276545177
 GameObject:
   m_ObjectHideFlags: 0
@@ -13906,7 +14081,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -14037,6 +14212,7 @@ GameObject:
   - component: {fileID: 289586235}
   - component: {fileID: 289586234}
   - component: {fileID: 289586233}
+  - component: {fileID: 289586239}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -14082,7 +14258,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 289586231}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -14171,6 +14347,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 289586231}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &289586239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 289586231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &293085552
 GameObject:
   m_ObjectHideFlags: 0
@@ -16678,7 +16869,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -16835,7 +17026,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -17167,7 +17358,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -17422,6 +17613,7 @@ GameObject:
   - component: {fileID: 364982967}
   - component: {fileID: 364982966}
   - component: {fileID: 364982965}
+  - component: {fileID: 364982971}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -17467,7 +17659,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 364982963}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -17555,6 +17747,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 364982963}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &364982971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 364982963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &367320229
 GameObject:
   m_ObjectHideFlags: 0
@@ -17599,7 +17806,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -17951,6 +18158,7 @@ GameObject:
   - component: {fileID: 388624174}
   - component: {fileID: 388624173}
   - component: {fileID: 388624172}
+  - component: {fileID: 388624178}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -17996,7 +18204,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 388624170}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -18084,6 +18292,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 388624170}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &388624178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 388624170}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &394969770
 GameObject:
   m_ObjectHideFlags: 0
@@ -18099,6 +18322,7 @@ GameObject:
   - component: {fileID: 394969774}
   - component: {fileID: 394969773}
   - component: {fileID: 394969772}
+  - component: {fileID: 394969778}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -18144,7 +18368,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 394969770}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -18232,6 +18456,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 394969770}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &394969778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 394969770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &399538767
 GameObject:
   m_ObjectHideFlags: 0
@@ -18343,6 +18582,7 @@ GameObject:
   - component: {fileID: 402861791}
   - component: {fileID: 402861790}
   - component: {fileID: 402861789}
+  - component: {fileID: 402861795}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -18388,7 +18628,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 402861787}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -18476,6 +18716,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 402861787}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &402861795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 402861787}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &403382541
 GameObject:
   m_ObjectHideFlags: 0
@@ -18871,6 +19126,7 @@ GameObject:
   - component: {fileID: 417278218}
   - component: {fileID: 417278217}
   - component: {fileID: 417278216}
+  - component: {fileID: 417278222}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -18916,7 +19172,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 417278214}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -19004,6 +19260,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 417278214}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &417278222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 417278214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &417435481
 GameObject:
   m_ObjectHideFlags: 0
@@ -19766,6 +20037,7 @@ GameObject:
   - component: {fileID: 437738195}
   - component: {fileID: 437738194}
   - component: {fileID: 437738193}
+  - component: {fileID: 437738199}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -19811,7 +20083,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 437738191}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -19900,6 +20172,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 437738191}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &437738199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437738191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &438043019
 GameObject:
   m_ObjectHideFlags: 0
@@ -20562,6 +20849,7 @@ GameObject:
   - component: {fileID: 449679449}
   - component: {fileID: 449679448}
   - component: {fileID: 449679447}
+  - component: {fileID: 449679453}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -20607,7 +20895,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 449679445}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -20695,6 +20983,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 449679445}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &449679453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 449679445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &450313959
 GameObject:
   m_ObjectHideFlags: 0
@@ -20739,7 +21042,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -21343,7 +21646,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -21918,6 +22221,7 @@ GameObject:
   - component: {fileID: 471826984}
   - component: {fileID: 471826983}
   - component: {fileID: 471826982}
+  - component: {fileID: 471826988}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -21963,7 +22267,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 471826980}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -22051,6 +22355,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 471826980}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &471826988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471826980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &473571280
 GameObject:
   m_ObjectHideFlags: 0
@@ -22162,6 +22481,7 @@ GameObject:
   - component: {fileID: 478116662}
   - component: {fileID: 478116661}
   - component: {fileID: 478116660}
+  - component: {fileID: 478116666}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -22207,7 +22527,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 478116658}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -22295,6 +22615,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 478116658}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &478116666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 478116658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &478194801
 GameObject:
   m_ObjectHideFlags: 0
@@ -22339,7 +22674,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -22856,6 +23191,7 @@ GameObject:
   - component: {fileID: 496758240}
   - component: {fileID: 496758239}
   - component: {fileID: 496758238}
+  - component: {fileID: 496758244}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -22901,7 +23237,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 496758236}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -22989,6 +23325,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 496758236}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &496758244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 496758236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &497108320
 GameObject:
   m_ObjectHideFlags: 0
@@ -23338,6 +23689,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 508039914}
+  - component: {fileID: 508039915}
   m_Layer: 0
   m_Name: Warehouse
   m_TagString: Untagged
@@ -23362,6 +23714,21 @@ Transform:
   m_Father: {fileID: 1743192505}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &508039915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 508039913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 0
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &508066073
 GameObject:
   m_ObjectHideFlags: 0
@@ -24053,6 +24420,7 @@ GameObject:
   - component: {fileID: 524430951}
   - component: {fileID: 524430950}
   - component: {fileID: 524430949}
+  - component: {fileID: 524430955}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -24098,7 +24466,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 524430947}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -24186,6 +24554,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 524430947}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &524430955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 524430947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &525883492
 GameObject:
   m_ObjectHideFlags: 0
@@ -24277,7 +24660,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -24305,6 +24688,7 @@ GameObject:
   - component: {fileID: 528395304}
   - component: {fileID: 528395306}
   - component: {fileID: 528395305}
+  - component: {fileID: 528395307}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -24355,6 +24739,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &528395307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 528395303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &528619506
 GameObject:
   m_ObjectHideFlags: 0
@@ -25071,6 +25470,7 @@ GameObject:
   - component: {fileID: 547719757}
   - component: {fileID: 547719756}
   - component: {fileID: 547719755}
+  - component: {fileID: 547719761}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -25116,7 +25516,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 547719753}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -25204,6 +25604,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 547719753}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &547719761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 547719753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &547800495
 GameObject:
   m_ObjectHideFlags: 0
@@ -25264,6 +25679,7 @@ GameObject:
   - component: {fileID: 548797240}
   - component: {fileID: 548797239}
   - component: {fileID: 548797238}
+  - component: {fileID: 548797244}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -25309,7 +25725,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 548797236}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8402
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -25397,6 +25813,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 548797236}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &548797244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 548797236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &549461275
 GameObject:
   m_ObjectHideFlags: 0
@@ -25472,7 +25903,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -25504,6 +25935,7 @@ GameObject:
   - component: {fileID: 553100080}
   - component: {fileID: 553100079}
   - component: {fileID: 553100078}
+  - component: {fileID: 553100084}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -25549,7 +25981,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 553100076}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -25638,6 +26070,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 553100076}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &553100084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 553100076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &553297046
 GameObject:
   m_ObjectHideFlags: 0
@@ -25810,6 +26257,7 @@ GameObject:
   - component: {fileID: 554055657}
   - component: {fileID: 554055656}
   - component: {fileID: 554055655}
+  - component: {fileID: 554055661}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -25855,7 +26303,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 554055653}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -25943,6 +26391,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 554055653}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &554055661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554055653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &554520122
 GameObject:
   m_ObjectHideFlags: 0
@@ -26213,7 +26676,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -26931,7 +27394,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 583236472}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.23, y: -0.53, z: -1.18}
+  m_LocalPosition: {x: -23.476, y: 0, z: 25.292}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -27400,6 +27863,7 @@ GameObject:
   - component: {fileID: 604005232}
   - component: {fileID: 604005231}
   - component: {fileID: 604005230}
+  - component: {fileID: 604005236}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -27445,7 +27909,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 604005228}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -27534,6 +27998,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 604005228}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &604005236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 604005228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &604478625
 GameObject:
   m_ObjectHideFlags: 0
@@ -28078,6 +28557,7 @@ GameObject:
   - component: {fileID: 622738253}
   - component: {fileID: 622738252}
   - component: {fileID: 622738251}
+  - component: {fileID: 622738257}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -28123,7 +28603,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 622738249}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -28211,6 +28691,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 622738249}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &622738257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 622738249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &623881045
 GameObject:
   m_ObjectHideFlags: 0
@@ -28452,6 +28947,7 @@ GameObject:
   - component: {fileID: 627719448}
   - component: {fileID: 627719447}
   - component: {fileID: 627719446}
+  - component: {fileID: 627719452}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -28497,7 +28993,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 627719444}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -28586,6 +29082,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 627719444}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &627719452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 627719444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &630117349
 GameObject:
   m_ObjectHideFlags: 0
@@ -29224,6 +29735,7 @@ GameObject:
   - component: {fileID: 656339650}
   - component: {fileID: 656339649}
   - component: {fileID: 656339648}
+  - component: {fileID: 656339654}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -29269,7 +29781,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 656339646}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -29358,6 +29870,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 656339646}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &656339654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 656339646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &657460424
 GameObject:
   m_ObjectHideFlags: 0
@@ -30834,7 +31361,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -31027,7 +31554,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -31347,6 +31874,7 @@ GameObject:
   - component: {fileID: 692973289}
   - component: {fileID: 692973288}
   - component: {fileID: 692973287}
+  - component: {fileID: 692973293}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -31392,7 +31920,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 692973285}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -31481,6 +32009,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 692973285}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &692973293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692973285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &693082228
 GameObject:
   m_ObjectHideFlags: 0
@@ -32267,6 +32810,50 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 697542313}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &698772463
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 698772465}
+  - component: {fileID: 698772464}
+  m_Layer: 0
+  m_Name: RosClock
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &698772464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 698772463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4874723c2016ff4e9f70e10a5829312, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: /clock
+--- !u!4 &698772465
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 698772463}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &701158850
 GameObject:
   m_ObjectHideFlags: 0
@@ -33610,6 +34197,7 @@ GameObject:
   - component: {fileID: 721010301}
   - component: {fileID: 721010300}
   - component: {fileID: 721010299}
+  - component: {fileID: 721010305}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -33655,7 +34243,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 721010297}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -33743,6 +34331,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 721010297}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &721010305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 721010297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &721093143
 GameObject:
   m_ObjectHideFlags: 0
@@ -33787,7 +34390,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -33819,6 +34422,7 @@ GameObject:
   - component: {fileID: 721403026}
   - component: {fileID: 721403025}
   - component: {fileID: 721403024}
+  - component: {fileID: 721403030}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -33864,7 +34468,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 721403022}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -33953,6 +34557,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 721403022}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &721403030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 721403022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &722087261
 GameObject:
   m_ObjectHideFlags: 0
@@ -35995,6 +36614,7 @@ GameObject:
   - component: {fileID: 774266523}
   - component: {fileID: 774266522}
   - component: {fileID: 774266521}
+  - component: {fileID: 774266527}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -36040,7 +36660,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 774266519}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -36129,6 +36749,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 774266519}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &774266527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774266519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &778935206
 GameObject:
   m_ObjectHideFlags: 0
@@ -36144,6 +36779,7 @@ GameObject:
   - component: {fileID: 778935210}
   - component: {fileID: 778935209}
   - component: {fileID: 778935208}
+  - component: {fileID: 778935214}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -36189,7 +36825,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 778935206}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -36278,6 +36914,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 778935206}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &778935214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 778935206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &782617755
 GameObject:
   m_ObjectHideFlags: 0
@@ -37130,6 +37781,7 @@ GameObject:
   - component: {fileID: 812419477}
   - component: {fileID: 812419476}
   - component: {fileID: 812419475}
+  - component: {fileID: 812419481}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -37175,7 +37827,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812419473}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8402
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -37264,6 +37916,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812419473}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &812419481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812419473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &812469096
 GameObject:
   m_ObjectHideFlags: 0
@@ -37279,6 +37946,7 @@ GameObject:
   - component: {fileID: 812469100}
   - component: {fileID: 812469099}
   - component: {fileID: 812469098}
+  - component: {fileID: 812469104}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -37324,7 +37992,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812469096}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -37412,6 +38080,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 812469096}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &812469104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812469096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &813707017
 GameObject:
   m_ObjectHideFlags: 0
@@ -37571,7 +38254,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -37940,6 +38623,7 @@ GameObject:
   - component: {fileID: 827582117}
   - component: {fileID: 827582119}
   - component: {fileID: 827582118}
+  - component: {fileID: 827582120}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -37990,6 +38674,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &827582120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 827582116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &830048713
 GameObject:
   m_ObjectHideFlags: 0
@@ -39834,6 +40533,7 @@ GameObject:
   - component: {fileID: 876156068}
   - component: {fileID: 876156067}
   - component: {fileID: 876156066}
+  - component: {fileID: 876156072}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -39879,7 +40579,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 876156064}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -39967,6 +40667,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 876156064}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &876156072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 876156064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &876989356
 GameObject:
   m_ObjectHideFlags: 0
@@ -41047,6 +41762,7 @@ GameObject:
   - component: {fileID: 898562451}
   - component: {fileID: 898562450}
   - component: {fileID: 898562449}
+  - component: {fileID: 898562455}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -41092,7 +41808,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 898562447}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -41181,6 +41897,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 898562447}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &898562455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 898562447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &901466953
 GameObject:
   m_ObjectHideFlags: 0
@@ -42130,6 +42861,7 @@ GameObject:
   - component: {fileID: 919099131}
   - component: {fileID: 919099130}
   - component: {fileID: 919099129}
+  - component: {fileID: 919099135}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -42175,7 +42907,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919099127}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -42263,6 +42995,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919099127}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &919099135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919099127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &920936483
 GameObject:
   m_ObjectHideFlags: 0
@@ -43084,6 +43831,7 @@ GameObject:
   - component: {fileID: 941813690}
   - component: {fileID: 941813689}
   - component: {fileID: 941813688}
+  - component: {fileID: 941813694}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -43129,7 +43877,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 941813686}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -43217,6 +43965,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 941813686}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &941813694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941813686}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &942575614
 GameObject:
   m_ObjectHideFlags: 0
@@ -43325,6 +44088,7 @@ GameObject:
   - component: {fileID: 943216979}
   - component: {fileID: 943216978}
   - component: {fileID: 943216977}
+  - component: {fileID: 943216983}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -43370,7 +44134,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 943216975}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -43459,6 +44223,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 943216975}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &943216983
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 943216975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &945981242
 GameObject:
   m_ObjectHideFlags: 0
@@ -43597,6 +44376,7 @@ GameObject:
   - component: {fileID: 947003275}
   - component: {fileID: 947003277}
   - component: {fileID: 947003276}
+  - component: {fileID: 947003278}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -43647,6 +44427,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &947003278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 947003274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &951562191
 GameObject:
   m_ObjectHideFlags: 0
@@ -43662,6 +44457,7 @@ GameObject:
   - component: {fileID: 951562195}
   - component: {fileID: 951562194}
   - component: {fileID: 951562193}
+  - component: {fileID: 951562199}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -43707,7 +44503,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 951562191}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8402
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -43795,6 +44591,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 951562191}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &951562199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 951562191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &954355357
 GameObject:
   m_ObjectHideFlags: 0
@@ -43853,6 +44664,7 @@ GameObject:
   - component: {fileID: 956827411}
   - component: {fileID: 956827413}
   - component: {fileID: 956827412}
+  - component: {fileID: 956827414}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -43903,6 +44715,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &956827414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956827410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &957371030
 GameObject:
   m_ObjectHideFlags: 0
@@ -44043,7 +44870,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -44947,7 +45774,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -46513,6 +47340,7 @@ GameObject:
   - component: {fileID: 1009500471}
   - component: {fileID: 1009500473}
   - component: {fileID: 1009500472}
+  - component: {fileID: 1009500474}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -46563,6 +47391,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1009500474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1009500470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &1012976952
 GameObject:
   m_ObjectHideFlags: 0
@@ -46941,6 +47784,7 @@ GameObject:
   - component: {fileID: 1025962483}
   - component: {fileID: 1025962482}
   - component: {fileID: 1025962481}
+  - component: {fileID: 1025962487}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -46986,7 +47830,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1025962479}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -47074,6 +47918,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1025962479}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1025962487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1025962479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1028285143
 GameObject:
   m_ObjectHideFlags: 0
@@ -47214,7 +48073,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -47660,6 +48519,7 @@ GameObject:
   - component: {fileID: 1042891498}
   - component: {fileID: 1042891497}
   - component: {fileID: 1042891496}
+  - component: {fileID: 1042891502}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -47705,7 +48565,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1042891494}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -47793,6 +48653,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1042891494}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1042891502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1042891494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1043188901
 GameObject:
   m_ObjectHideFlags: 0
@@ -48280,6 +49155,7 @@ GameObject:
   - component: {fileID: 1054999726}
   - component: {fileID: 1054999725}
   - component: {fileID: 1054999724}
+  - component: {fileID: 1054999730}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -48325,7 +49201,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1054999722}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8402
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -48413,6 +49289,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1054999722}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1054999730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1054999722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1055354888
 GameObject:
   m_ObjectHideFlags: 0
@@ -48660,6 +49551,7 @@ GameObject:
   - component: {fileID: 1057761980}
   - component: {fileID: 1057761979}
   - component: {fileID: 1057761978}
+  - component: {fileID: 1057761984}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -48705,7 +49597,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1057761976}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -48794,6 +49686,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1057761976}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1057761984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1057761976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1062138718
 GameObject:
   m_ObjectHideFlags: 0
@@ -48905,6 +49812,7 @@ GameObject:
   - component: {fileID: 1065440376}
   - component: {fileID: 1065440375}
   - component: {fileID: 1065440374}
+  - component: {fileID: 1065440380}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -48950,7 +49858,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1065440372}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -49039,6 +49947,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1065440372}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1065440380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1065440372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1065851336
 GameObject:
   m_ObjectHideFlags: 0
@@ -49276,6 +50199,7 @@ GameObject:
   - component: {fileID: 1066679017}
   - component: {fileID: 1066679016}
   - component: {fileID: 1066679015}
+  - component: {fileID: 1066679021}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -49321,7 +50245,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1066679013}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -49410,6 +50334,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1066679013}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1066679021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1066679013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1067715229
 GameObject:
   m_ObjectHideFlags: 0
@@ -49502,6 +50441,7 @@ GameObject:
   - component: {fileID: 1069092103}
   - component: {fileID: 1069092102}
   - component: {fileID: 1069092101}
+  - component: {fileID: 1069092107}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -49547,7 +50487,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1069092099}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -49635,6 +50575,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1069092099}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1069092107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1069092099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1072125339
 GameObject:
   m_ObjectHideFlags: 8
@@ -49852,7 +50807,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -53604,6 +54559,7 @@ GameObject:
   - component: {fileID: 1162079645}
   - component: {fileID: 1162079644}
   - component: {fileID: 1162079643}
+  - component: {fileID: 1162079649}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -53649,7 +54605,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1162079641}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -53738,6 +54694,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1162079641}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1162079649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1162079641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1162859321
 GameObject:
   m_ObjectHideFlags: 0
@@ -53753,6 +54724,7 @@ GameObject:
   - component: {fileID: 1162859325}
   - component: {fileID: 1162859324}
   - component: {fileID: 1162859323}
+  - component: {fileID: 1162859329}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -53798,7 +54770,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1162859321}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -53886,6 +54858,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1162859321}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1162859329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1162859321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1163246171
 GameObject:
   m_ObjectHideFlags: 0
@@ -54034,6 +55021,7 @@ GameObject:
   - component: {fileID: 1173227146}
   - component: {fileID: 1173227145}
   - component: {fileID: 1173227144}
+  - component: {fileID: 1173227150}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -54079,7 +55067,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1173227142}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -54167,6 +55155,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1173227142}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1173227150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1173227142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1175636432
 GameObject:
   m_ObjectHideFlags: 0
@@ -54393,6 +55396,7 @@ GameObject:
   - component: {fileID: 1181849463}
   - component: {fileID: 1181849462}
   - component: {fileID: 1181849461}
+  - component: {fileID: 1181849467}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -54438,7 +55442,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1181849459}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -54526,6 +55530,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1181849459}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1181849467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1181849459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1183892612
 GameObject:
   m_ObjectHideFlags: 0
@@ -54921,6 +55940,7 @@ GameObject:
   - component: {fileID: 1189303991}
   - component: {fileID: 1189303990}
   - component: {fileID: 1189303989}
+  - component: {fileID: 1189303995}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -54966,7 +55986,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1189303987}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -55055,6 +56075,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1189303987}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1189303995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189303987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1190970774
 GameObject:
   m_ObjectHideFlags: 0
@@ -55169,6 +56204,7 @@ GameObject:
   - component: {fileID: 1192216305}
   - component: {fileID: 1192216304}
   - component: {fileID: 1192216303}
+  - component: {fileID: 1192216309}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -55214,7 +56250,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1192216301}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -55302,6 +56338,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1192216301}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1192216309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1192216301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1192426077
 GameObject:
   m_ObjectHideFlags: 0
@@ -56529,6 +57580,7 @@ GameObject:
   - component: {fileID: 1233702594}
   - component: {fileID: 1233702593}
   - component: {fileID: 1233702592}
+  - component: {fileID: 1233702598}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -56574,7 +57626,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1233702590}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -56663,6 +57715,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1233702590}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1233702598
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233702590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1234041810
 GameObject:
   m_ObjectHideFlags: 0
@@ -56945,7 +58012,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -56977,6 +58044,7 @@ GameObject:
   - component: {fileID: 1236212007}
   - component: {fileID: 1236212006}
   - component: {fileID: 1236212005}
+  - component: {fileID: 1236212011}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -57022,7 +58090,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1236212003}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -57110,6 +58178,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1236212003}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1236212011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236212003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1236699986
 GameObject:
   m_ObjectHideFlags: 0
@@ -57683,6 +58766,7 @@ GameObject:
   - component: {fileID: 1252076069}
   - component: {fileID: 1252076068}
   - component: {fileID: 1252076067}
+  - component: {fileID: 1252076073}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -57728,7 +58812,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1252076065}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -57816,6 +58900,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1252076065}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1252076073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1252076065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1252140498
 GameObject:
   m_ObjectHideFlags: 0
@@ -57860,7 +58959,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -59076,7 +60175,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -59283,7 +60382,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -59344,7 +60443,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -60487,6 +61586,7 @@ GameObject:
   - component: {fileID: 1322550887}
   - component: {fileID: 1322550886}
   - component: {fileID: 1322550885}
+  - component: {fileID: 1322550891}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -60532,7 +61632,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1322550883}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -60620,6 +61720,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1322550883}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1322550891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1322550883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1323339989
 GameObject:
   m_ObjectHideFlags: 0
@@ -60877,6 +61992,7 @@ GameObject:
   - component: {fileID: 1330529486}
   - component: {fileID: 1330529485}
   - component: {fileID: 1330529484}
+  - component: {fileID: 1330529490}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -60922,7 +62038,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1330529482}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -61010,6 +62126,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1330529482}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1330529490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1330529482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1332231903
 GameObject:
   m_ObjectHideFlags: 0
@@ -62213,7 +63344,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -62306,6 +63437,7 @@ GameObject:
   - component: {fileID: 1348875356}
   - component: {fileID: 1348875358}
   - component: {fileID: 1348875357}
+  - component: {fileID: 1348875359}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -62356,6 +63488,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1348875359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1348875355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &1348889132
 GameObject:
   m_ObjectHideFlags: 0
@@ -62595,7 +63742,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -64829,6 +65976,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1408596686}
+  - component: {fileID: 1408596687}
   m_Layer: 0
   m_Name: Stations
   m_TagString: Untagged
@@ -64875,6 +66023,21 @@ Transform:
   m_Father: {fileID: 1743192505}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1408596687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408596685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 4
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &1411263333
 GameObject:
   m_ObjectHideFlags: 0
@@ -65543,6 +66706,7 @@ GameObject:
   - component: {fileID: 1431653127}
   - component: {fileID: 1431653129}
   - component: {fileID: 1431653128}
+  - component: {fileID: 1431653130}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -65593,6 +66757,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1431653130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1431653126}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &1438262935
 GameObject:
   m_ObjectHideFlags: 0
@@ -66560,7 +67739,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -69714,6 +70893,7 @@ GameObject:
   - component: {fileID: 1527915891}
   - component: {fileID: 1527915890}
   - component: {fileID: 1527915889}
+  - component: {fileID: 1527915895}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -69759,7 +70939,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1527915887}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -69847,6 +71027,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1527915887}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1527915895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1527915887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1530460497
 GameObject:
   m_ObjectHideFlags: 0
@@ -70253,6 +71448,7 @@ GameObject:
   - component: {fileID: 1550125639}
   - component: {fileID: 1550125641}
   - component: {fileID: 1550125640}
+  - component: {fileID: 1550125642}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -70303,6 +71499,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1550125642
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1550125638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &1551443826
 GameObject:
   m_ObjectHideFlags: 0
@@ -70447,6 +71658,7 @@ GameObject:
   - component: {fileID: 1553431967}
   - component: {fileID: 1553431966}
   - component: {fileID: 1553431965}
+  - component: {fileID: 1553431971}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -70492,7 +71704,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1553431963}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -70581,6 +71793,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1553431963}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1553431971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553431963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1553633692
 GameObject:
   m_ObjectHideFlags: 0
@@ -71482,7 +72709,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -71750,6 +72977,7 @@ GameObject:
   - component: {fileID: 1572404138}
   - component: {fileID: 1572404140}
   - component: {fileID: 1572404139}
+  - component: {fileID: 1572404141}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -71800,6 +73028,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1572404141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1572404137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &1574646914
 GameObject:
   m_ObjectHideFlags: 0
@@ -71815,6 +73058,7 @@ GameObject:
   - component: {fileID: 1574646918}
   - component: {fileID: 1574646917}
   - component: {fileID: 1574646916}
+  - component: {fileID: 1574646922}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -71860,7 +73104,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1574646914}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -71949,6 +73193,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1574646914}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1574646922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1574646914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1574786333
 GameObject:
   m_ObjectHideFlags: 0
@@ -72716,6 +73975,7 @@ GameObject:
   - component: {fileID: 1588341816}
   - component: {fileID: 1588341815}
   - component: {fileID: 1588341814}
+  - component: {fileID: 1588341820}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -72761,7 +74021,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1588341812}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -72850,6 +74110,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1588341812}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1588341820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1588341812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1592685983
 GameObject:
   m_ObjectHideFlags: 0
@@ -75309,6 +76584,7 @@ GameObject:
   - component: {fileID: 1624612509}
   - component: {fileID: 1624612508}
   - component: {fileID: 1624612507}
+  - component: {fileID: 1624612513}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -75354,7 +76630,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1624612505}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -75442,6 +76718,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1624612505}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1624612513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1624612505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1624873864
 GameObject:
   m_ObjectHideFlags: 0
@@ -76442,6 +77733,9 @@ GameObject:
   - component: {fileID: 1642941365}
   - component: {fileID: 1642941367}
   - component: {fileID: 1642941364}
+  - component: {fileID: 1642941370}
+  - component: {fileID: 1642941369}
+  - component: {fileID: 1642941368}
   m_Layer: 0
   m_Name: turtlebot3_waffle_pi
   m_TagString: robot
@@ -76548,6 +77842,60 @@ MonoBehaviour:
   casterNameContains: caster
   commandTimeout: 0.5
   keyboardTeleop: 1
+--- !u!114 &1642941368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642941363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf02c4d123897844589826ba7c098e80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: /cmd_vel
+  takeOverFromUnityNavigator: 1
+--- !u!114 &1642941369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642941363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ddd2365a4d4b50478e38857c2939ce0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: /scan
+  frameId: base_scan
+  scanLinkName: base_scan
+  beams: 360
+  rangeMin: 0.12
+  rangeMax: 3.5
+  rateHz: 5
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967291
+--- !u!114 &1642941370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642941363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b021a984cb7c01b4f9be9566294176ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  odomTopic: /odom
+  tfTopic: /tf
+  odomFrame: odom
+  baseFrame: base_footprint
+  rateHz: 30
+  publishTf: 1
 --- !u!1 &1645142386
 GameObject:
   m_ObjectHideFlags: 0
@@ -77805,6 +79153,7 @@ GameObject:
   - component: {fileID: 1668884290}
   - component: {fileID: 1668884289}
   - component: {fileID: 1668884288}
+  - component: {fileID: 1668884294}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -77850,7 +79199,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1668884286}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -77938,6 +79287,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1668884286}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1668884294
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668884286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1669822431
 GameObject:
   m_ObjectHideFlags: 0
@@ -78591,7 +79955,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -79730,6 +81094,7 @@ GameObject:
   - component: {fileID: 1719527409}
   - component: {fileID: 1719527408}
   - component: {fileID: 1719527407}
+  - component: {fileID: 1719527413}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -79775,7 +81140,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1719527405}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -79863,6 +81228,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1719527405}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1719527413
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1719527405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1719670521
 GameObject:
   m_ObjectHideFlags: 0
@@ -80728,7 +82108,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -81161,6 +82541,7 @@ GameObject:
   - component: {fileID: 1753250056}
   - component: {fileID: 1753250055}
   - component: {fileID: 1753250054}
+  - component: {fileID: 1753250060}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -81206,7 +82587,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1753250052}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -81294,6 +82675,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1753250052}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1753250060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1753250052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1753390766
 GameObject:
   m_ObjectHideFlags: 0
@@ -82587,6 +83983,7 @@ GameObject:
   - component: {fileID: 1787565370}
   - component: {fileID: 1787565369}
   - component: {fileID: 1787565368}
+  - component: {fileID: 1787565374}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -82632,7 +84029,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1787565366}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -82720,6 +84117,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1787565366}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1787565374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1787565366}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1788101718
 GameObject:
   m_ObjectHideFlags: 0
@@ -83326,7 +84738,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -83581,6 +84993,7 @@ GameObject:
   - component: {fileID: 1816944939}
   - component: {fileID: 1816944938}
   - component: {fileID: 1816944937}
+  - component: {fileID: 1816944943}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -83626,7 +85039,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1816944935}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -83714,6 +85127,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1816944935}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1816944943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1816944935}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1820130329
 GameObject:
   m_ObjectHideFlags: 0
@@ -84049,7 +85477,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -84386,7 +85814,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -85135,6 +86563,7 @@ GameObject:
   - component: {fileID: 1865627048}
   - component: {fileID: 1865627047}
   - component: {fileID: 1865627046}
+  - component: {fileID: 1865627052}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -85180,7 +86609,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1865627044}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -85268,6 +86697,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1865627044}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1865627052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865627044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1866749974
 GameObject:
   m_ObjectHideFlags: 0
@@ -86120,7 +87564,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -86599,7 +88043,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -87158,7 +88602,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -87382,6 +88826,7 @@ GameObject:
   - component: {fileID: 1914440417}
   - component: {fileID: 1914440416}
   - component: {fileID: 1914440415}
+  - component: {fileID: 1914440421}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -87427,7 +88872,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1914440413}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -87515,6 +88960,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1914440413}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1914440421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1914440413}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1914933296
 GameObject:
   m_ObjectHideFlags: 0
@@ -87530,6 +88990,7 @@ GameObject:
   - component: {fileID: 1914933300}
   - component: {fileID: 1914933299}
   - component: {fileID: 1914933298}
+  - component: {fileID: 1914933304}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -87575,7 +89036,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1914933296}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -87664,6 +89125,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1914933296}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1914933304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1914933296}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1916387308
 GameObject:
   m_ObjectHideFlags: 0
@@ -87804,7 +89280,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -88083,6 +89559,7 @@ GameObject:
   - component: {fileID: 1925918272}
   - component: {fileID: 1925918274}
   - component: {fileID: 1925918273}
+  - component: {fileID: 1925918275}
   m_Layer: 0
   m_Name: ShelvingRackRandom(Clone)
   m_TagString: Shelf
@@ -88133,6 +89610,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3632afe95384638b7a1115c79d7814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1925918275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1925918271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 1
+  isStatic: 1
+  realMassKg: 15
 --- !u!1 &1925998717
 GameObject:
   m_ObjectHideFlags: 0
@@ -88451,6 +89943,7 @@ GameObject:
   - component: {fileID: 1932235056}
   - component: {fileID: 1932235055}
   - component: {fileID: 1932235054}
+  - component: {fileID: 1932235060}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -88496,7 +89989,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1932235052}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -88585,6 +90078,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1932235052}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1932235060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1932235052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1934000029
 GameObject:
   m_ObjectHideFlags: 0
@@ -90054,6 +91562,7 @@ GameObject:
   - component: {fileID: 1956650035}
   - component: {fileID: 1956650034}
   - component: {fileID: 1956650033}
+  - component: {fileID: 1956650039}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -90099,7 +91608,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1956650031}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -90187,6 +91696,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1956650031}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1956650039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1956650031}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1960766488
 GameObject:
   m_ObjectHideFlags: 0
@@ -90669,6 +92193,7 @@ GameObject:
   - component: {fileID: 1965215223}
   - component: {fileID: 1965215222}
   - component: {fileID: 1965215221}
+  - component: {fileID: 1965215227}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -90714,7 +92239,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1965215219}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8402
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -90803,6 +92328,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1965215219}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &1965215227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1965215219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &1965932184
 GameObject:
   m_ObjectHideFlags: 0
@@ -91039,7 +92579,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -91958,7 +93498,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -92019,7 +93559,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -93904,7 +95444,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -94283,7 +95823,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -95116,6 +96656,7 @@ GameObject:
   - component: {fileID: 2059411477}
   - component: {fileID: 2059411476}
   - component: {fileID: 2059411475}
+  - component: {fileID: 2059411481}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -95161,7 +96702,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2059411473}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.84015
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -95250,6 +96791,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2059411473}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &2059411481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2059411473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &2060255753
 GameObject:
   m_ObjectHideFlags: 0
@@ -96104,6 +97660,7 @@ GameObject:
   - component: {fileID: 2078432297}
   - component: {fileID: 2078432296}
   - component: {fileID: 2078432295}
+  - component: {fileID: 2078432301}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -96149,7 +97706,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2078432293}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -96237,6 +97794,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2078432293}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &2078432301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2078432293}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &2078475689
 GameObject:
   m_ObjectHideFlags: 0
@@ -96477,6 +98049,7 @@ GameObject:
   - component: {fileID: 2080856648}
   - component: {fileID: 2080856647}
   - component: {fileID: 2080856646}
+  - component: {fileID: 2080856652}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -96522,7 +98095,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2080856644}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84033
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -96610,6 +98183,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2080856644}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &2080856652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2080856644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &2080867406
 GameObject:
   m_ObjectHideFlags: 0
@@ -97202,6 +98790,7 @@ GameObject:
   - component: {fileID: 2103245250}
   - component: {fileID: 2103245249}
   - component: {fileID: 2103245248}
+  - component: {fileID: 2103245254}
   m_Layer: 0
   m_Name: box001(Clone)
   m_TagString: Untagged
@@ -97247,7 +98836,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2103245246}
   serializedVersion: 2
-  m_Mass: 5
+  m_Mass: 699.84045
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -97335,6 +98924,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2103245246}
   m_Mesh: {fileID: 3393460440347447982, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &2103245254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2103245246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &2103701861
 GameObject:
   m_ObjectHideFlags: 0
@@ -99554,6 +101158,7 @@ GameObject:
   - component: {fileID: 2138596675}
   - component: {fileID: 2138596674}
   - component: {fileID: 2138596673}
+  - component: {fileID: 2138596679}
   m_Layer: 0
   m_Name: box002(Clone)
   m_TagString: Untagged
@@ -99599,7 +101204,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138596671}
   serializedVersion: 2
-  m_Mass: 2
+  m_Mass: 699.8405
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -99688,6 +101293,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138596671}
   m_Mesh: {fileID: 8702659614552871817, guid: e783415d71fb07343bb01cc44db9d3dd, type: 3}
+--- !u!114 &2138596679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138596671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6208056a103a4f41a9a797015ef59b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: 2
+  isStatic: 0
+  realMassKg: 15
 --- !u!1 &2138773930
 GameObject:
   m_ObjectHideFlags: 0
@@ -100054,7 +101674,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
@@ -100214,7 +101834,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
