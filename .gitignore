@@ -4,3 +4,7 @@
 **.vsconfig
 *~
 *~~
+# ROS (cube_control)
+*.pyc
+__pycache__/
+*.bak
