@@ -1,8 +1,10 @@
 # Feature: Mobile Manipulator + Inventory Panel
 
-**Status:** Agreed (grilling session, 2026-10-01) · **Owner:** Nguyen · **Not started**
+**Status:** Agreed (grilling session, 2026-10-01) · **Owner:** Nguyen · **Not started** · re-aligned 2026-10-04
 
 This feature goes **beyond the graded plan** in [prd.md](../../prd.md). Obstacle avoidance (M1 → M3) still comes first. Nothing here may delay a phase gate.
+
+> **Re-alignment, 2026-10-04.** The project moved to a kinematic robot body, our own Python navigation and standard ROS messages ([ADR-012](../../ADR-012-custom-python-navigation.md), [ADR-013](../../ADR-013-kinematic-robot-body.md), [ADR-014](../../ADR-014-ros-interfaces.md)). Changed here: D0 (physics standard deferred), D5 and D8, the pick flow (R4), the interfaces (§4), the phase plan (§5), the open risks (§7), and the ADR number of the manipulator (012 → **015**). The scripted arm (D3) works unchanged with a kinematic body.
 
 ---
 
@@ -20,14 +22,14 @@ Today, picking an item means "drive to the shelf, wait (dwell), and the item jum
 | # | Topic | Decision |
 |---|-------|----------|
 | D1 | Priority | P0 publishers first. Cheap features in P1, the panel in P2, the arm only after the P3 gate |
-| D0 | Physics | Every object follows the physics standard ([ADR-011](../../ADR-011-physics-standard.md)): real kg typed in, Unity values derived. Box masses: Fragile 5, Standard 15, Heavy 30 kg |
+| D0 | Physics | **Deferred** together with [ADR-011](../../ADR-011-physics-standard.md): the robot body is kinematic, so the physics standard is not applied. The box masses stay as data (Fragile 5, Standard 15, Heavy 30 kg) and matter only if boxes become dynamic |
 | D2 | Robot | **One robot** (ADR-006 stays): TurtleBot3 Waffle Pi + OpenMANIPULATOR-X on a **lift mast** + a **tray** for one box. A two-robot "train" was considered and rejected (multi-robot navigation risk) |
 | D3 | Arm | **Scripted** in Unity: preset poses (reach, grip, lift, place). The box is attached by re-parenting. No MoveIt, no physical grasping |
 | D4 | Reach | Shelf layers in robot metres: layer0 = 0 m, layer1 = 0.30 m, layer2 = 0.61 m, layer3 = 0.91 m. The arm alone reaches about 0.55 m, so the **lift mast** makes all 4 layers reachable. **Fallback:** scale the robot up until it reaches every layer and the box fits on the tray |
-| D5 | Reach test | 1–2 day reach test in **P1, before the map is built** (the scale cannot change after that, [ADR-010](../../ADR-010-robot-scale.md)). It decides the final robot scale |
+| D5 | Reach test | 1–2 day reach test in **P1**. It decides the final robot scale. A later scale change stays cheap: Unity rebuilds the map at every Play and ROS sees robot metres ([ADR-010](../../ADR-010-robot-scale.md)) |
 | D6 | Panel | **In-game Unity panel** now. A web inventory dashboard (React + TS via rosbridge) is a future item |
 | D7 | Shelves | Shelves are **fixed** (the static map depends on them). The panel manages **boxes** only |
-| D8 | Data | Inventory lives in **MySQL**, reached through **ROS services**. Only `task_manager` touches MySQL ([ADR-005](../../ADR-005-mysql-database.md)). The panel is read-only when ROS is off |
+| D8 | Data | Inventory lives in **MySQL**, reached through **ROS topics with acknowledgements** ([ADR-014](../../ADR-014-ros-interfaces.md)). Only the `task_manager` class touches MySQL ([ADR-005](../../ADR-005-mysql-database.md)). The panel is read-only when ROS is off |
 | D9 | First fill | At first start the 144 slots are filled **randomly once with a fixed seed** and saved to the DB. Seed files (exact box per slot) can be loaded for test scenarios. The warehouse's own random box re-spawn (`ShelfBoxRandomizerShim`) is **turned off** so IDs never change |
 | D10 | Trip | **One box per trip** |
 | D11 | Drop-off | A small **table on the wall edge of the HomePoint tile** holds **2** boxes; when a third arrives, the oldest disappears. The DB keeps a `delivered` record for every box |
@@ -68,7 +70,7 @@ Today, picking an item means "drive to the shelf, wait (dwell), and the item jum
 
 ### R4. Pick flow (one task)
 
-1. The robot drives to the box's slot (shelf leg, `move_base`).
+1. The robot drives to the box's slot (shelf leg, planner and follower).
 2. The lift mast raises the arm to the slot's layer. The arm takes the box onto the tray.
 3. The robot drives to HomePoint (drop-off leg, with the box's category profile).
 4. The arm places the box on the drop-off table (max 2 boxes; the oldest disappears).
@@ -92,29 +94,31 @@ Today, picking an item means "drive to the shelf, wait (dwell), and the item jum
 
 ## 4. New interfaces (to design in detail later)
 
+There are no ROS services any more ([ADR-014](../../ADR-014-ros-interfaces.md)). Each call below becomes a command topic plus an acknowledgement, the same pattern as the `/sim/*` topics in [architecture.md §5](../../architecture.md#5-interface-contract).
+
 | Interface | Kind | Purpose |
 |-----------|------|---------|
-| `/inventory/list_boxes`, `/inventory/add_box`, `/inventory/update_box`, `/inventory/delete_box` | ROS services, server `task_manager` | Panel ↔ MySQL |
-| `/tasks/enqueue`, `/tasks/pause`, `/tasks/cancel` | ROS services | Panel → mission queue |
+| `/inventory/list_boxes`, `/inventory/add_box`, `/inventory/update_box`, `/inventory/delete_box` | Command topics + acknowledgement, handled by `task_manager` | Panel ↔ MySQL |
+| `/tasks/enqueue`, `/tasks/pause`, `/tasks/cancel` | Command topics + acknowledgement | Panel → mission queue |
 | `/tasks/status` | ROS topic | Task states for the panel |
-| `/sim/pick_item`, `/sim/place_item` | ROS services, server Unity | Replace `attach_item` / `release_item` once the arm exists |
+| `/sim/pick_item`, `/sim/place_item` | Command topics + `/sim/ack`, handled by Unity | Replace `attach_item` / `release_item` once the arm exists |
 | `slots`, `boxes` tables | MySQL | Extends `shelf_slots` / `items` in [schema.sql](../../schema.sql) |
 
 ## 5. Phase plan
 
 | When | Work |
 |------|------|
-| **P0** (now) | Unity `/odom`, `/scan`, `/clock` publishers + `/cmd_vel` subscriber; `warehouse_bringup` (not part of this feature, but everything needs it) |
+| **P0** (now) | The prototype's `/cube/pose`, `/map` and `/cmd_vel` scripts already exist; P1 adds the clock, the scale and the `/sim/*` topics; `warehouse_bringup` is adapted (not part of this feature, but everything needs it) |
 | **P1** | R1 IDs + labels · R2 boxes spawned from DB, randomizer off · R5 HomePoint marker · R6 camera 2 · **D5 reach test** |
 | **P2** | R3 in-game panel: inventory, queue, notifications |
-| **After P3 gate** | **ADR-012** (mobile manipulator, replaces ADR-001) · arm + lift mast + tray + drop-off table · R4 pick flow |
+| **After P3 gate** | **ADR-015** (mobile manipulator, replaces ADR-001) · arm + lift mast + tray + drop-off table · R4 pick flow |
 | **Future** | Web inventory dashboard (React + TS, rosbridge) |
 
 ## 6. Docs to update when this is built
 
-- New **ADR-012**: mobile manipulator; replaces ADR-001; updates PRD non-goal NG2.
+- New **ADR-015**: mobile manipulator; replaces ADR-001; updates PRD non-goal NG2. (ADR-012 to ADR-014 are taken by the 2026-10-04 re-alignment.)
 - [prd.md](../../prd.md): move "grasp with an arm" out of the non-goals.
-- [architecture.md](../../architecture.md): new services and topics (§4 above).
+- [architecture.md](../../architecture.md): new topics (§4 above).
 - [data-model.md](../../data-model.md) + [schema.sql](../../schema.sql): box and slot tables.
 - [CONTEXT.md](../../../CONTEXT.md): new words: **Rack**, **Slot address**, **Lift mast**, **Tray**, **Drop-off table**, **Panel**, **Queue**. "Attach" becomes "pick" once the arm exists.
 
@@ -122,7 +126,7 @@ Today, picking an item means "drive to the shelf, wait (dwell), and the item jum
 
 | Risk | Plan |
 |------|------|
-| Lift mast + arm upsets balance or physics at scale 4 | The D5 reach test re-runs the PlayMode drive tests with the extra mass |
+| Lift mast + arm upsets balance or physics | No longer a risk: the body is kinematic ([ADR-013](../../ADR-013-kinematic-robot-body.md)). If a physical body returns, re-run the drive tests with the extra mass |
 | Robot with mast does not fit between racks | Check footprint vs aisle width in the reach test |
-| A bigger robot (fallback) changes all navigation numbers | Decide in P1 before the map; update ADR-010 and test-plan |
+| A bigger robot (fallback) changes the footprint | The numbers stay in robot metres; only the footprint and `inflation_radius` need a re-check. Decide in P1; update ADR-010 and test-plan |
 | Feature work steals time from M2/M3 | Nothing in P2+ starts before that phase's gate passes |
