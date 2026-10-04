@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>warehouse_bringup</name>
+  <version>0.1.0</version>
+  <description>Starts the ROS side of the UC6 warehouse robot: Unity bridge endpoint, robot model and RViz. See docs/architecture.md.</description>
+
+  <maintainer email="mr.nguyenhonguyen@gmail.com">honguyen17</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>ros_tcp_endpoint</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>turtlebot3_description</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz</exec_depend>
+</package>
