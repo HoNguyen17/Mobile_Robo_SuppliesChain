@@ -7,6 +7,8 @@
 | **Stack** | Unity 2021.1 (URP) on Windows · ROS 1 Noetic in WSL2 Ubuntu 20.04 · MySQL 8 |
 | **Robots** | 1 × TurtleBot3 Waffle Pi |
 
+> **2026-10-04:** the navigation (our own Python planner), the robot body (kinematic) and the ROS interfaces (standard messages) changed. See [ADR-012](ADR-012-custom-python-navigation.md), [ADR-013](ADR-013-kinematic-robot-body.md) and [ADR-014](ADR-014-ros-interfaces.md). Requirement IDs are unchanged. The earlier `move_base` plan is on branch `Nguyen-planning`.
+
 ---
 
 ## 1. Problem
@@ -17,7 +19,7 @@ The course grades **obstacle avoidance**, in three milestones:
 
 | Milestone | Graded capability |
 |-----------|-------------------|
-| **M1** | The ROS navigation stack drives the robot to a goal in the Unity warehouse |
+| **M1** | Our ROS 1 navigation nodes drive the robot to a goal in the Unity warehouse. The course accepts a custom planner (confirmed by Nguyen, 2026-10-04) |
 | **M2** | Safe navigation around **static** obstacles |
 | **M3** | Safe navigation around **dynamic** obstacles |
 
@@ -25,7 +27,7 @@ The course grades **obstacle avoidance**, in three milestones:
 
 | ID | Goal |
 |----|------|
-| G1 | The robot reaches shelf and drop-off goals using the ROS 1 navigation stack (`move_base`). |
+| G1 | The robot reaches shelf and drop-off goals using our ROS 1 Python navigation nodes (A* planner + path follower, [ADR-012](ADR-012-custom-python-navigation.md)). |
 | G2 | It avoids static obstacles, with numeric pass/fail evidence. |
 | G3 | It avoids moving NPCs, with numeric pass/fail evidence. |
 | G4 | Item category (Fragile / Standard / Heavy) changes speed and safety margin. This supports avoidance; it is not a separate feature. |
@@ -38,7 +40,7 @@ The course grades **obstacle avoidance**, in three milestones:
 |----|------------------|-----|
 | NG1 | Detect items with ML or cameras | Ungraded. Shelf poses come from the catalog ([ADR-002](ADR-002-perception-scope.md)) |
 | NG2 | Grasp with an arm | The Waffle Pi has no arm. Pickup = dwell, then attach in Unity ([ADR-001](ADR-001-robot-platform.md)) |
-| NG3 | Write our own path planner | We configure `move_base`; we do not rebuild it ([ADR-008](ADR-008-navigation-stack.md)) |
+| NG3 | Use the stock navigation stack (`move_base`, AMCL, gmapping) | We use our own Python planner ([ADR-012](ADR-012-custom-python-navigation.md)). The stock stack stays on `Nguyen-planning` as a fallback |
 | NG4 | Run more than one robot | Descoped ([ADR-006](ADR-006-single-robot.md)) |
 | NG5 | Write C++ | ROS nodes in Python 3 (rospy); Unity scripts in C# |
 
@@ -60,19 +62,19 @@ flowchart LR
 
 | ID | Requirement | Milestone |
 |----|-------------|:---------:|
-| FR-01 | `mission_orchestrator` sends each leg's goal to `move_base` as a `MoveBaseAction`. | M1 |
-| FR-02 | The robot localises on a pre-built static map using AMCL. | M1 |
-| FR-03 | The global planner finds a path around obstacles present in the map. | M2 |
-| FR-04 | The local planner avoids static obstacles that are **not** in the map, seen by the LIDAR. | M2 |
-| FR-05 | The local planner avoids moving NPCs that cross the path. | M3 |
-| FR-06 | When stuck, `move_base` runs recovery behaviours (clear costmap, rotate) before failing the leg. | M2, M3 |
+| FR-01 | `mission_orchestrator` sends each leg's goal to the planner (`/move_base_simple/goal`) and receives the leg result (`/nav/leg_result`). | M1 |
+| FR-02 | The robot's pose is ground truth from Unity (`/cube/pose`). There is no localisation node. | M1 |
+| FR-03 | The global planner (A* on the raw map, inflated by the profile's `inflation_radius`) finds a path around obstacles present in the map. | M2 |
+| FR-04 | The planner avoids static obstacles that are **not** in the map, seen by the LIDAR (obstacle layer). | M2 |
+| FR-05 | The robot avoids moving NPCs that cross the path (stop and replan). | M3 |
+| FR-06 | When the path ahead is blocked, the follower stops and the planner replans (a recovery). If no path exists, the robot rotates in place and retries before failing the leg. | M2, M3 |
 
 ### Mission and category profile (supporting)
 
 | ID | Requirement |
 |----|-------------|
 | FR-07 | On arrival at the shelf, the robot dwells `dwell_s` seconds, then Unity attaches the item to the robot. |
-| FR-08 | Before the drop-off leg, `motion_profile_node` applies the item category's speed/margin profile. |
+| FR-08 | Before the drop-off leg, the mission node applies the item category's speed/margin profile (`max_lin`, `inflation_radius`). |
 | FR-09 | On arrival at the drop-off, the robot dwells, then Unity releases the item. |
 | FR-10 | If a leg fails or exceeds its timeout, the episode ends with `outcome = fail` and a `fail_reason`. |
 
@@ -90,9 +92,9 @@ flowchart LR
 
 | ID | Requirement |
 |----|-------------|
-| NFR-01 | Our ROS nodes are Python 3 (rospy). Unity scripts are C#. No custom C++. |
+| NFR-01 | Our ROS nodes are Python 3 (rospy) and use standard message types only. Unity scripts are C#. No custom C++, no custom messages. |
 | NFR-02 | Only `task_manager` talks to MySQL. No navigation node ever waits on the database. |
-| NFR-03 | Category profiles change at runtime via `dynamic_reconfigure`, without restarting `move_base`. |
+| NFR-03 | Category profiles change at runtime via ROS parameters, without restarting the planner or the follower. |
 | NFR-04 | Every acceptance criterion is a number with a pass/fail threshold. |
 | NFR-05 | Everything that ROS touches runs in WSL2 Ubuntu 20.04. Unity runs on Windows ([ADR-007](ADR-007-windows-wsl-environment.md)). |
 | NFR-06 | Diagrams are Mermaid, inline in Markdown. |

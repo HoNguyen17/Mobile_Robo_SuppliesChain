@@ -1,6 +1,6 @@
 # Data Model: UC6 Warehouse Robot
 
-MySQL 8 in Docker ([ADR-005](ADR-005-mysql-database.md)). Only `task_manager` reads or writes it. DDL: [schema.sql](schema.sql).
+MySQL 8 in Docker ([ADR-005](ADR-005-mysql-database.md)). Only the `task_manager` class (inside the `mission` node, [ADR-014](ADR-014-ros-interfaces.md)) reads or writes it. DDL: [schema.sql](schema.sql).
 
 ---
 
@@ -108,7 +108,7 @@ sequenceDiagram
 
 ## 4. Seeding
 
-A script `warehouse_eval/seed.py` creates the data:
+A script `ros1/warehouse_eval/seed.py` creates the data:
 
 | Command | Effect |
 |---------|--------|
@@ -116,4 +116,4 @@ A script `warehouse_eval/seed.py` creates the data:
 | `seed.py --scenario S-02 --runs 20` | Inserts 20 `pending` tasks for S-02 (called by the runner) |
 | `seed.py --reset-evidence` | Empties `runs`, `run_events` and `tasks`; keeps the catalog |
 
-Shelf-slot poses must match the Unity scene. The Unity lead exports them once from the scene to `warehouse_eval/shelf_slots.csv`, and the seed script reads that file.
+Shelf-slot poses must match the Unity scene. The Unity lead exports them once from the scene to `ros1/warehouse_eval/shelf_slots.csv`, and the seed script reads that file. The poses are in robot metres ([ADR-010](ADR-010-robot-scale.md)).

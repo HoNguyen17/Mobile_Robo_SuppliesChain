@@ -9,7 +9,7 @@ flowchart LR
     end
     subgraph WSL["WSL2 · Ubuntu 20.04"]
         E["ros_tcp_endpoint<br/>:10000"]
-        R["ROS Noetic<br/>move_base · amcl · our nodes"]
+        R["ROS Noetic<br/>our Python nodes"]
         D[("MySQL 8<br/>Docker :3307")]
     end
     U <-->|"127.0.0.1:10000<br/>(localhost forwarding)"| E
@@ -171,40 +171,32 @@ roscore
 
 ---
 
-## 4. Install the navigation packages
+## 4. Install the extra packages
 
 ```bash
 sudo apt install -y \
-  ros-noetic-navigation \
-  ros-noetic-teb-local-planner \
-  ros-noetic-gmapping \
-  ros-noetic-turtlebot3 \
-  ros-noetic-turtlebot3-msgs \
   python3-pymysql \
   python-is-python3
 ```
 
 | Package | Why |
 |---------|-----|
-| `navigation` | `move_base`, `amcl`, `map_server`, `global_planner`, `dwa_local_planner`, costmaps |
-| `teb-local-planner` | Second local-planner candidate ([ADR-004](ADR-004-local-planner.md)) |
-| `gmapping` | Build the warehouse map once |
-| `turtlebot3` | Waffle Pi URDF, meshes, reference nav configs |
 | `python3-pymysql` | MySQL driver for `task_manager` |
 | `python-is-python3` | Makes `python` mean `python3`. `ros_tcp_endpoint` starts with `#!/usr/bin/env python` and dies silently without it |
 
-✅ **Check:** both commands print a path.
+> The `navigation`, `teb-local-planner`, `gmapping` and `turtlebot3` packages are **not** needed: navigation is our own Python code ([ADR-012](ADR-012-custom-python-navigation.md)). Install `ros-noetic-turtlebot3-description` only if you have to rebuild the Waffle Pi model (step 7.4).
+
+✅ **Check:** this prints a version number.
 
 ```bash
-rospack find move_base
-rospack find teb_local_planner
+python3 -c "import pymysql; print(pymysql.__version__)"
 ```
 
 ---
 
 ## 5. Build the catkin workspace
 
-The repo stays on Windows, where Unity needs it. WSL **links** to its `ros/src` folder, and the build output stays on the Linux disk for speed.
+The repo stays on Windows, where Unity needs it. WSL **links** to its `ros1` folder, and the build output stays on the Linux disk for speed.
 
 ```bash
 # 5.1 Point REPO at your Windows clone (change the path!)
@@ -213,7 +205,7 @@ source ~/.bashrc
 
 # 5.2 Workspace with a link to our packages
 mkdir -p ~/catkin_ws/src
-ln -s "$REPO/ros/src" ~/catkin_ws/src/warehouse
+ln -s "$REPO/ros1" ~/catkin_ws/src/warehouse
 
 # 5.3 Unity's ROS endpoint (ROS 1 = main branch; pin to the connector version)
 cd ~/catkin_ws/src
@@ -227,7 +219,7 @@ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-> ⚠️ **Line endings.** Python files edited on Windows can get CRLF endings, which breaks `#!/usr/bin/env python3` in WSL. The repo's `.gitattributes` must contain `ros/** text eol=lf`. If a node fails with `python3\r: No such file`, run `dos2unix` on that file.
+> ⚠️ **Line endings.** Python files edited on Windows can get CRLF endings, which breaks `#!/usr/bin/env python3` in WSL. The repo's `.gitattributes` must contain `ros1/** text eol=lf`. If a node fails with `python3\r: No such file`, run `dos2unix` on that file.
 
 ✅ **Check:** this prints a path.
 
@@ -282,7 +274,7 @@ docker compose exec mysql mysql -uwarehouse -p warehouse -e "SHOW TABLES;"
 ## 7. Unity project (Windows)
 
 1. Open **Unity Hub → Add →** `WarehouseProjectURP`, with Unity **2021.1.11f1**.
-2. **Window → Package Manager → + → Add package from git URL**, and add both:
+2. The two ROS packages are already listed in `Packages/manifest.json`, so Unity downloads them on first open (Git must be installed). They are **not pinned yet**. P0 pins them to these tags (**Window → Package Manager → + → Add package from git URL**):
    ```text
    https://github.com/Unity-Technologies/ROS-TCP-Connector.git?path=/com.unity.robotics.ros-tcp-connector#v0.7.0
    https://github.com/Unity-Technologies/URDF-Importer.git?path=/com.unity.robotics.urdf-importer#v0.5.2
@@ -291,27 +283,10 @@ docker compose exec mysql mysql -uwarehouse -p warehouse -e "SHOW TABLES;"
    - Protocol: **ROS1**
    - ROS IP Address: **127.0.0.1**
    - ROS Port: **10000**
-4. **Import the Waffle Pi.** Run this in WSL:
-   ```bash
-   URDF_DIR="$REPO/WarehouseProjectURP/Assets/URDF"
-   mkdir -p ~/tb3_urdf "$URDF_DIR/turtlebot3_description" && cd ~/tb3_urdf
-   rosrun xacro xacro $(rospack find turtlebot3_description)/urdf/turtlebot3_waffle_pi.urdf.xacro > turtlebot3_waffle_pi.urdf
-   cp turtlebot3_waffle_pi.urdf "$URDF_DIR/"
-   cp -r $(rospack find turtlebot3_description)/meshes "$URDF_DIR/turtlebot3_description/"
-   ```
-   The layout **must** be exactly this. The importer resolves `package://turtlebot3_description/...` relative to the `.urdf` file's folder:
-   ```text
-   Assets/URDF/
-   ├─ turtlebot3_waffle_pi.urdf
-   └─ turtlebot3_description/meshes/{bases,sensors,wheels}/*.stl
-   ```
-   Then in Unity's **Project window** (bottom panel), open `Assets/URDF`, **right-click the `.urdf` file** → **Import Robot from Selected URDF file**. In the dialog, keep the defaults (Axis Type *Y Axis*, Mesh Decomposer *VHACD*) → **Import URDF**. The robot appears in the Hierarchy. Then:
-   - Move it to open floor (not inside a shelf).
-   - Remove the importer's keyboard **Controller** component if present.
-   - Uncheck **Immovable** on the base link's Articulation Body if it is set.
-   - Save the scene (`Ctrl+S`) and drag the robot into `Assets/Prefabs/` to make a prefab.
-   - ✅ **Check:** press Play; the robot rests on the floor without falling or jittering.
-5. **Custom messages** (needs `ros/src/warehouse_msgs`, a P0 task): top menu **Robotics → Generate ROS Messages…** → **Browse** to `ros/src/warehouse_msgs` → **Build msgs** / **Build srvs**. C# files are generated in `Assets/RosMessages/`. Do this again whenever a `.msg` or `.srv` changes.
+4. **The Waffle Pi model** is already in the repo (`Assets/URDF/`) and attached to the `Cube` as a visual child, scale 3.2 ([ADR-013](ADR-013-kinematic-robot-body.md)). There is nothing to import. Only if you have to rebuild it, follow *TurtleBot3 visual model* in [README_ROS1_Prototype.md](../README_ROS1_Prototype.md); that needs `ros-noetic-turtlebot3-description` in WSL and the *Strip Physics (Visual Only)* menu.
+   - ✅ **Check:** press Play; the robot (the Waffle Pi model on the `Cube`) stands on the floor and does not move.
+
+There are no custom ROS messages to generate: all interfaces use standard types ([ADR-014](ADR-014-ros-interfaces.md)).
 
 ---
 
@@ -323,11 +298,12 @@ docker compose exec mysql mysql -uwarehouse -p warehouse -e "SHOW TABLES;"
 | 2 | WSL terminal 2 | `roslaunch ros_tcp_endpoint endpoint.launch tcp_ip:=0.0.0.0 tcp_port:=10000` | `Starting server on 0.0.0.0:10000` |
 | 3 | PowerShell | `Test-NetConnection 127.0.0.1 -Port 10000` | `TcpTestSucceeded : True` |
 | 4 | Unity | Press **Play** | HUD arrows in the top-left turn blue (connected) |
-| 5 | WSL terminal 3 | `rostopic hz /clock` and `rostopic echo -n1 /scan` | Messages arrive |
-| 6 | WSL terminal 3 | `rostopic pub -r 10 /cmd_vel geometry_msgs/Twist '{linear: {x: 0.1}}'` | Robot drives forward in Unity |
-| 7 | WSL terminal 3 | `rviz` | RViz window opens on Windows via WSLg |
+| 5 | WSL terminal 3 | `rostopic hz /cube/pose` and `rostopic echo -n1 /map` | Messages arrive |
+| 6 | WSL terminal 3 | `rostopic pub -r 10 /cmd_vel geometry_msgs/Twist '{linear: {x: 0.1}}'` | The robot drives forward in Unity |
+| 7 | WSL terminal 3 | `rosrun cube_control astar_planner.py`, then `rosrun cube_control path_follower.py`, then send a goal as in [README_ROS1_Prototype.md](../README_ROS1_Prototype.md) | The robot drives to the goal |
+| 8 | WSL terminal 3 | `rviz` | RViz window opens on Windows via WSLg |
 
-When all 7 rows pass, the environment is ready. From then on you start everything with:
+When all 8 rows pass, the environment is ready. P0 adapts `bringup.launch` so that one command starts the endpoint, the planner and the follower:
 
 ```bash
 roslaunch warehouse_bringup bringup.launch
@@ -344,13 +320,13 @@ roslaunch warehouse_bringup bringup.launch
 | `usermod: group 'docker' does not exist` | Expected with Docker Desktop. Skip `usermod`; enable WSL integration instead (step 6.1). |
 | `failed to read …/infra/.env: key cannot contain a space` | `.env` has a non `KEY=value` line (e.g. a pasted command). Keep only the lines from `.env.example`. |
 | `ports are not available: exposing port TCP 127.0.0.1:3306` | Another MySQL already uses that port. Set `MYSQL_HOST_PORT` in `.env` to a free port (default 3307). |
-| TF "extrapolation into the future" errors | Check that `use_sim_time` is `true` (the bringup launch sets it) and that `/clock` is publishing. |
+| Nodes see time 0, or time jumps | From P1 on, check that `use_sim_time` is `true` (the bringup launch sets it) and that `/clock` is publishing. The prototype before P1 runs on wall-clock time. |
+| `Permission denied` on `rosrun` | `chmod +x` the script. Needs the `metadata` mount option (step 2b). |
 | `apt update` fails with a GPG / NO_PUBKEY error | You used an old `apt-key` guide. Redo step 3.1. |
 | Endpoint "starts" but nothing listens on 10000 (`ss -ltn` empty, not in `rosnode list`) | No `python` command. Run `sudo apt install python-is-python3` (step 4). `bringup.launch` works even without it. |
 | `python3\r: No such file or directory` | CRLF line endings. See the note in step 5. |
-| URDF import: `DirectoryNotFoundException … turtlebot3_description\turtlebot3_description\meshes` | The `.urdf` is one folder too deep. It must sit next to the `turtlebot3_description/` folder, not inside it (step 7.4). |
+| URDF import: `DirectoryNotFoundException … turtlebot3_description\turtlebot3_description\meshes` | The `.urdf` is one folder too deep. It must sit next to the `turtlebot3_description/` folder, not inside it (see *TurtleBot3 visual model* in README_ROS1_Prototype.md). |
 | Imported robot is **pink** | URP project, Built-in materials. Select `Assets/URDF/turtlebot3_description/Materials/*` → **Edit → Render Pipeline → Universal Render Pipeline → Upgrade Selected Materials to UniversalRP Materials**. |
-| Robot falls through the floor / jitters on Play | Floor needs a Collider; spawn the robot in open space, slightly above the floor (Y ≈ 0.05). |
 | RViz does not open | Run `wsl --update` (WSLg needs a recent WSL), then `wsl --shutdown`. |
 | Everything is slow | Raise `memory=` in `.wslconfig`. Close the Unity Scene view while running headless batches. |
 

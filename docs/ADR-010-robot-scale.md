@@ -14,7 +14,7 @@ The visual model of the robot (`turtlebot3_waffle_pi`, a child of `Cube`) is sca
 - The scale lives in one place, the Transform of the visual model. Scripts read `lossyScale.x` of that object. The `Cube` itself stays at scale 1, because its 1 m box is the footprint.
 
 ## Consequences
-- Because the body is kinematic, any scale is possible. 3.2 was chosen because the model then fits the 1 m footprint of the `Cube` (Robot Radius of 1 Unity unit, about 0.31 m in robot metres).
+- Because the body is kinematic, any scale is possible. 3.2 was chosen because the model then fits the 1 m footprint of the `Cube`, whose half-diagonal is about 0.22 m in robot metres.
 - Unity rebuilds the map at every Play, so a scale change does not invalidate a saved map. If the reach test of the manipulator feature changes the scale, only the model's Transform and the footprint need to follow.
 - The three ROS scripts of the prototype do not apply the scale yet. That is a P1 task ([milestones.md](milestones.md)).
 

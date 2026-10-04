@@ -1,6 +1,6 @@
 -- UC6 Warehouse Robot: MySQL 8 schema
 -- Loaded automatically by docker compose (/docker-entrypoint-initdb.d/).
--- Only the ROS node `task_manager` reads/writes this database at runtime.
+-- Only the `task_manager` class (inside the ROS node `mission`) reads/writes this database at runtime.
 -- See docs/data-model.md for the rules behind each table.
 
 SET NAMES utf8mb4;
@@ -10,7 +10,7 @@ SET NAMES utf8mb4;
 -- ---------------------------------------------------------------------------
 
 -- Category names only. Speed / margin values live in
--- ros/src/warehouse_bringup/config/motion_profiles.yaml (single source of truth).
+-- ros1/warehouse_bringup/config/motion_profiles.yaml (single source of truth).
 CREATE TABLE categories (
     category_id  TINYINT UNSIGNED NOT NULL,
     name         VARCHAR(16)      NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE runs (
     run_id                  INT UNSIGNED  NOT NULL AUTO_INCREMENT,
     task_id                 INT UNSIGNED  NOT NULL,
     scenario_id             VARCHAR(8)    NOT NULL,
-    local_planner           ENUM('dwa','teb') NOT NULL,
+    planner                 ENUM('astar') NOT NULL,
     outcome                 ENUM('success','fail') NOT NULL,
     fail_reason             ENUM('nav_aborted','timeout','item_error','bridge_lost') NULL,
     start_x                 DECIMAL(8,3)  NOT NULL,
@@ -89,7 +89,7 @@ CREATE TABLE runs (
     ended_at                TIMESTAMP(3)  NOT NULL,
     PRIMARY KEY (run_id),
     CONSTRAINT fk_runs_task FOREIGN KEY (task_id) REFERENCES tasks (task_id),
-    INDEX idx_runs_scenario (scenario_id, local_planner),
+    INDEX idx_runs_scenario (scenario_id, planner),
     CONSTRAINT chk_fail_reason CHECK (
         (outcome = 'success' AND fail_reason IS NULL) OR
         (outcome = 'fail'    AND fail_reason IS NOT NULL)

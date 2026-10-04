@@ -49,6 +49,8 @@ flowchart LR
 
 "Min clearance" is the worst single value across all 20 runs, not an average.
 
+**Clearance risk.** The planner inflates obstacles by a hard radius ([ADR-012](ADR-012-custom-python-navigation.md)). A path that hugs an obstacle keeps only `inflation_radius − 0.21 m`, which is 0.09 m for Standard, below the S-01 (0.15 m) and S-02 (0.10 m) thresholds. After the first S-01 dry run, either add a proximity cost to A* or use the one allowed threshold revision below.
+
 **Changing a threshold** is allowed once per scenario, after its first dry run. Record the old value, the new value and the reason in the change log at the bottom of this file.
 
 ---
@@ -60,12 +62,12 @@ How each metric is measured is defined in [architecture.md §10](architecture.md
 | Metric | Unit | Meaning |
 |--------|------|---------|
 | success rate | % | runs with `outcome = success` ÷ 20 |
-| collisions | count | Unity contacts between the robot and a wall, shelf, obstacle or NPC |
+| collisions | count | Unity overlaps between the robot and a wall, shelf, obstacle or NPC |
 | min clearance | m | closest LIDAR distance minus the robot radius |
 | path ratio | — | distance driven ÷ straight-line distance (shelf leg + drop-off leg) |
 | duration | s | from dispatch to item release |
 | replans | count | global replans beyond the first plan of each leg |
-| recoveries | count | `move_base` recovery behaviours triggered |
+| recoveries | count | stops caused by a blocked path, each followed by a replan |
 | drop-off mean speed | m/s | mean speed during the drop-off leg (where the category profile applies) |
 
 ---
@@ -77,7 +79,7 @@ flowchart TD
     A(["rosrun warehouse_eval run_scenario.py<br/>--scenario S-02 --runs 20"]) --> B[Seed 20 pending tasks for the scenario]
     B --> C{run i ≤ 20?}
     C -- yes --> D["/sim/reset_scenario<br/>(obstacles + robot start pose)"]
-    D --> E[Publish /initialpose to AMCL<br/>wait 2 s]
+    D --> E[Wait for /sim/ack<br/>retry once if missing]
     E --> F[mission_orchestrator runs one episode]
     F --> G{Episode ended<br/>or timeout?}
     G --> H[Check the run row was stored<br/>or buffered]
@@ -91,7 +93,7 @@ flowchart TD
 | Unity | Stays running (Play mode or a built player). The runner resets the scene between runs; it does not relaunch Unity. |
 | Per-leg timeout | `leg_timeout_s` from `scenarios.yaml` (default 90 s) |
 | Isolation | Each run gets its own `task` row, so `runs.task_id` identifies exactly one trial |
-| Local planner | `--local-planner dwa\|teb`, which is how the ADR-004 benchmark is run |
+| Reset | The runner publishes `/sim/reset_scenario` and waits for `/sim/ack`; if it does not come, it retries once ([architecture §11](architecture.md#11-failure-handling)) |
 
 ---
 
@@ -100,7 +102,7 @@ flowchart TD
 **`<scenario>_runs.csv`**: one row per run.
 
 ```text
-run_id, scenario_id, task_id, category, local_planner, outcome, fail_reason,
+run_id, scenario_id, task_id, category, planner, outcome, fail_reason,
 collisions, replans, recoveries, min_clearance_m, path_length_m, baseline_m,
 path_ratio, duration_s, dropoff_mean_speed_mps, started_at, ended_at
 ```
@@ -115,8 +117,8 @@ path_ratio, duration_s, dropoff_mean_speed_mps, started_at, ended_at
 |:-:|------|--------|
 | 1 | `docker compose up`, then `SELECT * FROM tasks LIMIT 5` | The data layer is live and separate |
 | 2 | Unity Play + `roslaunch warehouse_bringup bringup.launch` + RViz | The full stack comes up |
-| 3 | S-02 live, narrating the costmap and planned path in RViz | M2 |
-| 4 | S-04 live, narrating local avoidance as the NPC crosses | M3 |
+| 3 | S-02 live, narrating the map, the obstacle layer and the planned path in RViz | M2 |
+| 4 | S-04 live, narrating the stop and replan as the NPC crosses | M3 |
 | 5 | Fragile vs Standard back to back | Profiles change behaviour |
 | 6 | The `*_summary.csv` tables | The numbers behind every claim |
 | ↩ | If a live run misbehaves, play the recorded video of that scenario | The demo cannot be derailed |
