@@ -1,6 +1,8 @@
 # ADR-011: Physics Standard (Exact 4x Model of Earth)
 
-**Status:** Accepted (2026-10-01)
+**Status:** Deferred (2026-10-04) · accepted on 2026-10-01. The kinematic body ([ADR-013](ADR-013-kinematic-robot-body.md)) has no physics, so this standard is not applied on this branch. The code (`PhysicsStandard`, `PhysicalBody`, the Apply menu) and its tests are on `Nguyen-planning`.
+
+> The text below is kept as it was accepted. It becomes active again if a physical body or dynamic boxes are reintroduced.
 
 ## Context
 The robot is scaled 4x in Unity ([ADR-010](ADR-010-robot-scale.md)), and the warehouse matches it: in real metres (what ROS sees), it is a small warehouse with 0.30 m shelf layers and 0.28 m boxes. Before this ADR, physics values were whatever the imported assets happened to contain:

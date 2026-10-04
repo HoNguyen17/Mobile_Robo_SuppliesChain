@@ -19,7 +19,7 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 ├── CONTEXT.md                              ← glossary
 └── docs/
     ├── README.md                           ← start here (index + reading order)
-    ├── ADR-001 … ADR-009-*.md
+    ├── ADR-001 … ADR-014-*.md
     ├── prd.md
     ├── architecture.md
     ├── setup-windows-wsl.md
@@ -27,13 +27,13 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
     ├── milestones.md
     ├── data-model.md
     ├── schema.sql
-    ├── _archive/                           ← superseded docs (ROS 2 / Nav2 plan); do not use
+    ├── _archive/                           ← superseded docs (ROS 2 / Nav2 plan, move_base plan); do not use
     └── agents/
         ├── issue-tracker.md
         └── domain.md
 ```
 
-New ADRs continue the existing numbering (`ADR-010-…`) and live directly in `docs/`, not in a `docs/adr/` subfolder.
+New ADRs continue the existing numbering (next free number: `ADR-015-…`) and live directly in `docs/`, not in a `docs/adr/` subfolder.
 
 ## Use the glossary's vocabulary
 
@@ -45,4 +45,4 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-004 (local planner), but worth reopening because…_
+> _Contradicts ADR-012 (custom Python navigation), but worth reopening because…_

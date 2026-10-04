@@ -1,6 +1,8 @@
 # ADR-008: Navigation = move_base + AMCL + Static Map
 
-**Status:** Accepted · retires the Unity-side A* prototype (`CubeCarNavigator.cs`)
+**Status:** Archived 2026-10-04 · superseded by [ADR-012](../../ADR-012-custom-python-navigation.md). The Python planner it rejected is now the chosen approach, and `CubeCarNavigator.cs` stays in use as the map builder.
+
+> The text below is kept as it was accepted on 2026-10-02.
 
 ## Context
 The Unity prototype plans with A* inside Unity. With ROS required, planning must move to ROS. Otherwise ROS would just relay messages, and the graded avoidance would not be done by ROS at all. The ROS 1 standard for a differential-drive robot is the **navigation stack** (`move_base`).

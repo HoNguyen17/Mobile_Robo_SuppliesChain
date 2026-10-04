@@ -1,6 +1,8 @@
 # ADR-004: Local Planner: DWA vs TEB, Chosen by Benchmark
 
-**Status:** Accepted · the final pick is recorded here after P3
+**Status:** Archived 2026-10-04 · superseded by [ADR-012](../../ADR-012-custom-python-navigation.md). There is no DWA/TEB choice any more; the benchmark below was never run.
+
+> The text below is kept as it was accepted on 2026-10-02.
 
 ## Context
 M3 (moving NPCs) depends mostly on the local planner. Noetic ships two well-supported options:

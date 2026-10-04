@@ -1,6 +1,6 @@
 # ADR-007: Unity on Windows + ROS in WSL2
 
-**Status:** Accepted · supersedes the earlier "Ubuntu dual-boot on every machine" decision
+**Status:** Accepted · supersedes the earlier "Ubuntu dual-boot on every machine" decision · amended 2026-10-04 (no `move_base`, packages live in `ros1/`)
 
 ## Context
 The team develops on Windows, and the Unity project already works there. ROS Noetic needs Ubuntu 20.04. The Unity↔ROS link is plain TCP, so the two sides do not have to share an OS.
@@ -9,11 +9,11 @@ The team develops on Windows, and the Unity project already works there. ROS Noe
 
 | Runs on **Windows** | Runs in **WSL2 Ubuntu 20.04** |
 |---------------------|-------------------------------|
-| Unity 2021.1.11f1 (URP) | ROS Noetic, `ros_tcp_endpoint`, `move_base`, our nodes |
+| Unity 2021.1.11f1 (URP) | ROS Noetic, `ros_tcp_endpoint`, our Python nodes |
 | IDE / git, Docker Desktop (engine) | `docker compose` + MySQL (via WSL integration), headless runner, RViz (via WSLg) |
 
 - **Networking:** WSL `networkingMode=nat` + `localhostForwarding=true`, so Unity connects to `127.0.0.1:10000`. Mirrored mode was tried and rejected: the Hyper-V firewall dropped Windows → WSL connections even with an explicit allow rule (tested 2026-09-30).
-- **Code location:** one git clone on Windows. WSL symlinks `ros/src` into `~/catkin_ws/src`; build output stays on the Linux disk.
+- **Code location:** one git clone on Windows. WSL symlinks `ros1` into `~/catkin_ws/src`; build output stays on the Linux disk.
 - **Clock:** Unity publishes `/clock`, and ROS uses sim time ([ADR-009](ADR-009-simulation-clock.md)). This avoids clock differences between Windows and WSL.
 
 Step-by-step install: [setup-windows-wsl.md](setup-windows-wsl.md).
