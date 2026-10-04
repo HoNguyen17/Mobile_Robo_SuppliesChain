@@ -26,3 +26,11 @@ catkin_install_python(PROGRAMS
   scripts/path_follower.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+# Modules that astar_planner.py and path_follower.py import. They must sit next to the scripts.
+install(FILES
+  scripts/grid_planner.py
+  scripts/nav_common.py
+  scripts/path_tracker.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

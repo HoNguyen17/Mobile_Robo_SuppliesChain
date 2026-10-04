@@ -101,6 +101,20 @@ Start these in separate terminals, in this order:
 | `/map` | `nav_msgs/OccupancyGrid` | Unity to ROS | 1 Hz, `frame_id: map`, 0.5 m cells, 77 x 70 |
 | `/move_base_simple/goal` | `geometry_msgs/PoseStamped` | you to planner | Goal in the `map` frame |
 | `/planned_path` | `nav_msgs/Path` | planner to follower | Latched |
+| `/nav/cancel` | `std_msgs/Empty` | you to follower | Drops the current leg and stops the robot |
+| `/nav/leg_result` | `std_msgs/String` (JSON) | planner and follower to you | `{"outcome": "succeeded", "reason": ""}` when the goal is reached. `{"outcome": "aborted", "reason": "no_path"}` when the planner finds no path, `"cancelled"` after `/nav/cancel` |
+
+### Parameters
+
+| Parameter | Read by | Default | Meaning |
+|---|---|---|---|
+| `/nav/max_lin` | follower, at every control step | 0.5 | Speed limit in m/s |
+| `/nav/inflation_radius` | planner, at every plan | 0 | The planner keeps the robot centre this far from every obstacle (m). Leave it at 0 while Unity still inflates the map with Robot Radius |
+| `~snap_distance` | planner | 6.0 | How far a blocked start or goal may be moved to a free cell (m) |
+| `~print_map` | planner | true | Draw the plan as text in the log |
+| `~waypoint_tol` | follower | 0.3 | Arrival distance for waypoints before the last one (m) |
+
+Set one at run time with `rosparam set /nav/max_lin 0.2`.
 
 **Frame mapping (Unity to ROS):** ROS x = Unity Z, ROS y = -Unity X, ROS yaw = -Unity rotation Y. Units are metres and radians.
 
@@ -113,8 +127,19 @@ Start these in separate terminals, in this order:
 | `cmd_vel_publisher.py` | Open-loop 2 m square (no feedback) |
 | `go_to_goal.py` | Closed-loop P-controller to a single goal |
 | `map_viewer.py` | Prints `/map` as ASCII (`#` blocked, `.` free, `R` robot) |
-| `astar_planner.py` | 8-connected A* (octile heuristic) on `/map`; snaps an unreachable goal to the nearest free cell (up to about 6 m); smooths the path with line-of-sight |
-| `path_follower.py` | Follows `/planned_path` waypoint by waypoint at 20 Hz; stops on shutdown; ignores latched paths older than its own start |
+| `astar_planner.py` | On a goal: inflates `/map` by `/nav/inflation_radius`, snaps a blocked start or goal to the nearest free cell within `~snap_distance`, runs 8-connected A* (octile heuristic), smooths the path with an exact line-of-sight, publishes `/planned_path`. Reports `aborted` / `no_path` on `/nav/leg_result` when there is no path |
+| `path_follower.py` | Follows `/planned_path` waypoint by waypoint at 20 Hz within `/nav/max_lin`; stops when `/cube/pose` is older than 0.5 s; reports `succeeded` on arrival and `aborted` / `cancelled` after `/nav/cancel`; stops on shutdown; ignores a latched path that is older than its own start |
+
+The logic of these two nodes is in plain Python modules next to them, so it can be tested without ROS: `grid_planner.py` (map, inflation, A*, line of sight), `path_tracker.py` (path state and controller) and `nav_common.py` (result JSON, parameter checks). `catkin_make` runs the nodes through a wrapper, which is why both nodes add their own folder to `sys.path`; a new module next to them is found without extra setup.
+
+### Tests
+
+No ROS and no Unity needed. They run on Windows and in WSL:
+
+```bash
+cd ros1/cube_control
+python3 -m unittest discover -s test -v
+```
 
 ## Demo: plan and drive to a goal
 

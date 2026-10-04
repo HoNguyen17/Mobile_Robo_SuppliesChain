@@ -1,107 +1,134 @@
 #!/usr/bin/env python3
-import math
+"""path_follower: drives along /planned_path and reports how the leg ended.
+
+The path state and the controller are in path_tracker.py. This node only connects
+them to ROS.
+
+  in : /cube/pose, /planned_path, /nav/cancel, parameter /nav/max_lin
+  out: /cmd_vel, /nav/leg_result
+"""
+import os
+import sys
+import time
+from typing import Optional, Tuple
 
 import rospy
 from geometry_msgs.msg import Pose, Twist
 from nav_msgs.msg import Path
+from std_msgs.msg import Empty, String
 
-K_LIN = 0.5        # proportional gain, forward speed (final approach only)
-K_ANG = 1.5        # proportional gain, turning
-MAX_LIN = 0.5      # m/s
-MAX_ANG = 1.0      # rad/s
-TURN_FIRST = 0.5   # rad: if the heading error is bigger, turn in place first
-TOLERANCE = 0.1   # m: arrival tolerance at the FINAL waypoint
+# catkin_make runs this file through a wrapper in devel/lib, so the folder with the
+# modules next to it is not on sys.path by itself.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from nav_common import (  # noqa: E402
+    ABORTED,
+    CANCELLED,
+    SUCCEEDED,
+    finite_or,
+    leg_result,
+)
+from path_tracker import (  # noqa: E402
+    ARRIVED,
+    DRIVING,
+    STALE,
+    PathTracker,
+    yaw_from_quaternion,
+)
+
+MAX_LIN = 0.5  # m/s, used while /nav/max_lin is not set
 RATE_HZ = 20.0
-
-
-def clamp(v, lo, hi):
-    return max(lo, min(hi, v))
-
-
-def normalize(angle):
-    """Wrap an angle to [-pi, pi]."""
-    return math.atan2(math.sin(angle), math.cos(angle))
-
-
-def yaw_from_quaternion(q):
-    return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+POSE_TIMEOUT = 0.5  # s: with an older /cube/pose the robot stops
+LATCH_WINDOW = 3.0  # s: right after start, a path older than this node is ignored
 
 
 class PathFollower:
-    def __init__(self):
-        self.waypoint_tol = rospy.get_param('~waypoint_tol', 0.3)  # m, intermediate corners
-        self.pose = None
-        self.waypoints = []
-        self.index = 0
+    def __init__(self) -> None:
+        waypoint_tol = finite_or(rospy.get_param("~waypoint_tol", 0.3), 0.3, 0.0)
+        self.tracker = PathTracker(waypoint_tol, POSE_TIMEOUT)
+        self.latest: Optional[Tuple[Pose, rospy.Time]] = None  # replaced as one object
         self.start_time = rospy.Time.now()
+        self.start_wall = time.monotonic()
 
-        self.cmd_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-        rospy.Subscriber('/cube/pose', Pose, self.on_pose)
-        rospy.Subscriber('/planned_path', Path, self.on_path)
+        self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
+        self.result_pub = rospy.Publisher("/nav/leg_result", String, queue_size=10)
+        rospy.Subscriber("/cube/pose", Pose, self.on_pose)
+        rospy.Subscriber("/planned_path", Path, self.on_path)
+        rospy.Subscriber("/nav/cancel", Empty, self.on_cancel)
         rospy.on_shutdown(self.stop)
-        rospy.loginfo('path_follower ready (waypoint_tol=%.2f m). Waiting for a new path...',
-                      self.waypoint_tol)
+        rospy.loginfo(
+            "path_follower ready (waypoint_tol=%.2f m). Waiting for a new path...",
+            waypoint_tol,
+        )
 
-    def on_pose(self, msg):
-        self.pose = msg
+    # ---------------- callbacks ----------------
+    def on_pose(self, msg: Pose) -> None:
+        self.latest = (msg, rospy.Time.now())
 
-    def on_path(self, msg):
-        # /planned_path is latched: a path planned before this node started arrives immediately.
-        if msg.header.stamp < self.start_time:
-            rospy.loginfo('Ignoring an old (latched) path from before this node started.')
+    def on_path(self, msg: Path) -> None:
+        # /planned_path is latched, so a path planned before this node started
+        # arrives right after it connects. Drop that one. The check only runs in the
+        # first seconds: if Unity restarts its clock, new paths must not look old.
+        just_started = time.monotonic() - self.start_wall < LATCH_WINDOW
+        if just_started and msg.header.stamp < self.start_time:
+            rospy.loginfo("Ignoring an old (latched) path from before this start.")
             return
-        pts = [(p.pose.position.x, p.pose.position.y) for p in msg.poses]
-        if not pts:
+        points = [(p.pose.position.x, p.pose.position.y) for p in msg.poses]
+        if not points:
             return
-        self.waypoints = pts
-        # waypoint 0 is where the robot was when it planned, so head for waypoint 1.
-        self.index = 1 if len(pts) > 1 else 0
-        rospy.loginfo('New path with %d waypoints, heading for waypoint %d.',
-                      len(pts), self.index)
+        self.tracker.set_path(points)
+        rospy.loginfo("New path with %d waypoints.", len(points))
 
-    def stop(self):
+    def on_cancel(self, _msg: Empty) -> None:
+        if self.tracker.cancel():
+            self.stop()
+            self.report(ABORTED, CANCELLED)
+            rospy.loginfo("Leg cancelled.")
+
+    # ---------------- control loop ----------------
+    def step(self) -> None:
+        latest = self.latest
+        if latest is None or not self.tracker.active:
+            return  # publish nothing: Unity's 0.5 s watchdog keeps the cube still
+        pose, received = latest
+        # Read at every step: the mission changes it with the category profile.
+        max_lin = finite_or(rospy.get_param("/nav/max_lin", MAX_LIN), MAX_LIN, 0.0)
+        age = (rospy.Time.now() - received).to_sec()
+        pos = pose.position
+        cmd = self.tracker.step(
+            pos.x, pos.y, yaw_from_quaternion(pose.orientation), age, max_lin
+        )
+
+        if cmd.status == DRIVING:
+            twist = Twist()
+            twist.linear.x = cmd.linear
+            twist.angular.z = cmd.angular
+            self.cmd_pub.publish(twist)
+            rospy.loginfo_throttle(
+                2.0,
+                "driving: v=%.2f m/s w=%.2f rad/s at x=%.2f y=%.2f",
+                cmd.linear,
+                cmd.angular,
+                pos.x,
+                pos.y,
+            )
+        elif cmd.status == STALE:
+            self.stop()
+            rospy.logwarn_throttle(2.0, "No fresh /cube/pose: the robot is stopped.")
+        elif cmd.status == ARRIVED:
+            self.stop()
+            self.report(SUCCEEDED)
+            rospy.loginfo("Arrived at the goal: x=%.2f y=%.2f", pos.x, pos.y)
+
+    # ---------------- output ----------------
+    def stop(self) -> None:
         self.cmd_pub.publish(Twist())
 
-    def step(self):
-        if self.pose is None or self.index >= len(self.waypoints):
-            return  # nothing to do: publish nothing, Unity's 0.5 s watchdog keeps the cube still
-
-        x, y = self.pose.position.x, self.pose.position.y
-        yaw = yaw_from_quaternion(self.pose.orientation)
-        wx, wy = self.waypoints[self.index]
-        dx, dy = wx - x, wy - y
-        dist = math.hypot(dx, dy)
-        last = (self.index == len(self.waypoints) - 1)
-
-        if last:
-            if dist < TOLERANCE:
-                self.stop()
-                self.waypoints = []
-                rospy.loginfo('Arrived at the goal: x=%.2f y=%.2f', x, y)
-                return
-        elif dist < self.waypoint_tol:
-            rospy.loginfo('Reached waypoint %d of %d', self.index, len(self.waypoints) - 1)
-            self.index += 1
-            return  # the next loop chases the new waypoint
-
-        heading_err = normalize(math.atan2(dy, dx) - yaw)
-
-        cmd = Twist()
-        cmd.angular.z = clamp(K_ANG * heading_err, -MAX_ANG, MAX_ANG)
-        if abs(heading_err) > TURN_FIRST:
-            cmd.linear.x = 0.0                                # pivot on the spot
-        elif last:
-            cmd.linear.x = clamp(K_LIN * dist, 0.0, MAX_LIN)  # slow down towards the goal
-        else:
-            cmd.linear.x = MAX_LIN                            # keep flowing through corners
-        self.cmd_pub.publish(cmd)
-
-        rospy.loginfo_throttle(2.0, 'waypoint %d/%d: dist=%.2f m, heading error=%.2f rad',
-                               self.index, len(self.waypoints) - 1, dist, heading_err)
+    def report(self, outcome: str, reason: str = "") -> None:
+        self.result_pub.publish(String(data=leg_result(outcome, reason)))
 
 
-if __name__ == '__main__':
-    rospy.init_node('path_follower')
+if __name__ == "__main__":
+    rospy.init_node("path_follower")
     node = PathFollower()
     rate = rospy.Rate(RATE_HZ)
     try:

@@ -70,7 +70,7 @@ Every role has a named backup, so any two people can close a gate if someone is 
 - [ ] Unity: apply the robot scale in `CubePosePublisher`, `CubeCmdVelSubscriber` and `OccupancyGridPublisher`; `PoseStamped` with sim time; port `ClockPublisher`
 - [ ] Unity: raw map: set the grid builder's Robot Radius to 0 and add the `WallPanel` tag to the obstacle tags; remove the hello scaffolding (`HelloSubscriber`, `TestPublisher` and their scene objects)
 - [ ] Unity: `ItemCarrier`, `ScenarioLoader` (S-00), `CollisionReporter`; the `/sim/*` topics and `/sim/ack`
-- [ ] Nav: fix the prototype planner and follower: goal snap within a radius, line-of-sight that cannot miss a blocked corner, the follower reads a consistent path and checks that the pose is fresh, `/nav/cancel` and `/nav/leg_result`, inflation from `/nav/inflation_radius`. Keep the pure planning logic apart from `rospy` and cover it with `unittest`
+- [x] Nav: fix the prototype planner and follower: goal snap within a radius, line-of-sight that cannot miss a blocked corner, the follower reads a consistent path and checks that the pose is fresh, `/nav/cancel` and `/nav/leg_result`, inflation from `/nav/inflation_radius`. Keep the pure planning logic apart from `rospy` and cover it with `unittest` _(85 unit tests; also run on WSL against a stand-in for Unity. Not yet run with the real Unity scene)_
 - [ ] Mission: `warehouse_mission` with the `mission` node: orchestrator state machine, basic metrics, `task_manager` (get/report, JSON fallback) on a worker thread
 - [ ] Data: seed script; headless runner v1 + CSV export → S-00 × 20
 </details>
