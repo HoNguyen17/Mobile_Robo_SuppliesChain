@@ -13,6 +13,32 @@ The logic is in plain Python modules without `rospy`, so it is unit tested anywh
 `grid_planner.py` (map, inflation, A*, line of sight), `path_tracker.py` (path state and controller) and
 `nav_common.py` (result JSON, parameter checks, waiting for `/clock`).
 
+## Test Runner vs ROS: who drives the robot
+
+The robot can be moved in three separate ways. They do not depend on each other.
+
+| Way | What drives the wheels | Needs ROS | What a pass proves |
+|-----|------------------------|-----------|--------------------|
+| Unity Test Runner, EditMode | Nothing moves | No | Maths, physics standard, scene setup (`PhysicsStandardTests`, `PhysicalBodyTests`, `WheelHoldTests`, `WarehousePhysicsSceneTests`, `LaserScannerTests`, `MapGridMathTests`, `CollisionBookTests`, `RosConversionsTests`, `PublishTimerTests`) |
+| Unity Test Runner, PlayMode | Unity only: `DiffDriveController`, and the C# `TurtleBotNavigator` in `RobotNavigatorTests` (it calls `GoToTarget()`) | No | The Waffle Pi body, physics, map building and the built-in navigator work (`RobotDriveTests`, `RobotHoldTests`, `WarehouseMapTests`, `RobotNavigatorTests`). Nothing here tests a ROS node |
+| ROS run (this package) | `astar_planner` + `path_follower` publish `/cmd_vel`, Unity's `CmdVelSubscriber` passes it to `DiffDriveController` | Yes | The ROS navigation drives the same physical robot. `TurtleBotNavigator` is not used |
+
+```
+Unity                                   ROS (this package)
+/clock, /robot/pose, /map  ---------->  astar_planner  --/planned_path-->  path_follower
+DiffDriveController  <--- /cmd_vel ---------------------------------------'
+```
+
+Hand-over rule: the first `/cmd_vel` makes `CmdVelSubscriber` switch off `TurtleBotNavigator`, so the two never
+fight over the wheels (and `autoStart` is off in the scene). ROS takes only one thing from the navigator: the
+HomePoint and target-shelf coordinates that `RobotPosePublisher` prints in the Unity Console, which you send as goals.
+
+So a green Test Runner means the Unity side is right, not that ROS navigation works. The ROS side is covered by the
+unit tests below (no Unity) and by the integrated run in [RUN_STEPS.txt](RUN_STEPS.txt) (Unity Play + `bringup.launch`):
+HomePoint, target shelf, HomePoint, five runs in a row, each leg `succeeded`, stop within 0.15 m of the goal, nothing on
+`/sim/collision`. That run was done and reported clean by the project owner on 2026-10-05
+([ADR-015](../../docs/ADR-015-physical-waffle-pi-body.md)). Neither check replaces the other.
+
 ## Topics and parameters
 
 | Topic | Type | Direction |
