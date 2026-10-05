@@ -1,0 +1,23 @@
+<!--
+  Navigation nodes of ADR-012: the planner and the follower, with the default values (no per-category profiles yet).
+    roslaunch turtlebot_control navigation.launch
+  Needs the bridge to Unity (ros_tcp_endpoint) and Unity's /clock, which is why simulation time is on.
+  warehouse_bringup includes this file.
+-->
+<launch>
+  <arg name="snap_distance"    default="2.0"  doc="How far a blocked start or goal may be moved to a free cell (m)"/>
+  <arg name="max_lin"          default="0.26" doc="Speed limit (m/s): the Waffle Pi's top speed"/>
+  <arg name="inflation_radius" default="0.35" doc="The robot centre stays this far from every obstacle (m). The footprint reaches 0.257 m"/>
+  <arg name="print_map"        default="false" doc="Draw each plan as text in the log (only for small maps)"/>
+
+  <param name="/use_sim_time" value="true"/>
+  <param name="/nav/max_lin" value="$(arg max_lin)"/>
+  <param name="/nav/inflation_radius" value="$(arg inflation_radius)"/>
+
+  <node pkg="turtlebot_control" type="astar_planner.py" name="astar_planner" output="screen">
+    <param name="snap_distance" value="$(arg snap_distance)"/>
+    <param name="print_map" value="$(arg print_map)"/>
+  </node>
+
+  <node pkg="turtlebot_control" type="path_follower.py" name="path_follower" output="screen"/>
+</launch>
