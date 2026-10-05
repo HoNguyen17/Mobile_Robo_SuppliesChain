@@ -8,11 +8,15 @@ Every claim we make to the grader is backed by **20 automated runs per scenario*
 
 All scenarios use one robot, the same static map (walls + shelves), and a fixed start pose. Obstacles are placed by Unity's `ScenarioLoader` and are **not** in the map.
 
+- **Sizes are in robot metres** (the box, the corridor width). Unity builds them at scale 4 ([ADR-010](ADR-010-robot-scale.md)): a 0.5 m box is 2 Unity units. The robot radius is 0.257 m: the Waffle Pi footprint reaches that far from the wheel axis centre.
+- **Collisions are physical** ([ADR-015](ADR-015-physical-waffle-pi-body.md)). A wall or shelf stops the robot, and `CollisionReporter` records the contact for the metrics. The robot can also slide or tip.
+- **Only static bodies are in the map.** A dynamic box lying in an aisle is not in the map, the same as a scenario obstacle. The robot has to find it with the LIDAR (obstacle layer, P2), so until that exists it can drive into it.
+
 | ID | Name | Setup | Tests | Milestone |
 |----|------|-------|-------|:---------:|
 | **S-00** | Open room | No extra obstacles. Standard item. | Basic navigation | M1 |
 | **S-01** | Single box | One 0.5 m box on the straight line between shelf and drop-off | Static avoidance | M2 |
-| **S-02** | Corridor | 1.0 m wide corridor (≈ 3× robot width) with boxes along both sides | Precise static avoidance | M2 |
+| **S-02** | Corridor | 1.0 m wide corridor (about 2× the 0.514 m footprint diameter) with boxes along both sides | Precise static avoidance | M2 |
 | **S-03** | Dead end | A box row closes the short route; the robot must back out and take the long route | Recovery + replanning | M2 |
 | **S-04** | Crossing NPC | An NPC walks across the robot's path at 0.5 m/s, every 8 s | Dynamic avoidance | M3 |
 | **S-05** | Category speeds | Same route as S-00; 20 runs each of Fragile, Standard and Heavy (60 total) | Profile changes behaviour | supports G4 |
@@ -41,7 +45,7 @@ flowchart LR
 | ID | Success rate | Collisions (total over 20) | Min clearance | Path ratio | Other |
 |----|:-----:|:-----:|:-----:|:-----:|-------|
 | S-00 | ≥ 90 % | 0 | — | ≤ 1.3 | — |
-| S-01 | ≥ 95 % | 0 | ≥ 0.15 m | ≤ 1.5 | — |
+| S-01 | ≥ 95 % | 0 | ≥ 0.15 m | ≤ 1.5 | open: see Clearance risk |
 | S-02 | ≥ 90 % | 0 | ≥ 0.10 m | ≤ 1.4 | — |
 | S-03 | ≥ 85 % | 0 | ≥ 0.10 m | — | recoveries ≥ 1 in ≥ 15 of 20 runs (proves the recovery path is exercised) |
 | S-04 | ≥ 85 % | ≤ 1 | — | — | replans and recoveries are **reported, not gated** |
@@ -49,7 +53,7 @@ flowchart LR
 
 "Min clearance" is the worst single value across all 20 runs, not an average.
 
-**Clearance risk.** The planner inflates obstacles by a hard radius ([ADR-012](ADR-012-custom-python-navigation.md)). A path that hugs an obstacle keeps only `inflation_radius − 0.21 m`, which is 0.09 m for Standard, below the S-01 (0.15 m) and S-02 (0.10 m) thresholds. After the first S-01 dry run, either add a proximity cost to A* or use the one allowed threshold revision below.
+**Clearance risk (open).** The planner inflates obstacles by a hard radius ([ADR-012](ADR-012-custom-python-navigation.md)). The footprint reaches 0.257 m from the wheel axis centre, so a path that hugs an obstacle keeps only `inflation_radius − 0.257 m`. At the planner default of 0.35 m that is about 0.09 m; a smaller profile value leaves less. This is below the S-01 threshold (0.15 m), so **S-01 cannot pass with plain inflation at 0.35 m**, and S-02 (0.10 m) falls just short too. The first S-01 dry run must decide between a cost near obstacles in A* and a threshold fix (the one allowed revision below). The thresholds stay as they are until then.
 
 **Changing a threshold** is allowed once per scenario, after its first dry run. Record the old value, the new value and the reason in the change log at the bottom of this file.
 
@@ -62,8 +66,8 @@ How each metric is measured is defined in [architecture.md §10](architecture.md
 | Metric | Unit | Meaning |
 |--------|------|---------|
 | success rate | % | runs with `outcome = success` ÷ 20 |
-| collisions | count | Unity overlaps between the robot and a wall, shelf, obstacle or NPC |
-| min clearance | m | closest LIDAR distance minus the robot radius |
+| collisions | count | physical contacts between the robot and a wall, shelf, obstacle or NPC, reported by Unity's `CollisionReporter` (debounced to 1 s per object, floor contact ignored) |
+| min clearance | m | closest LIDAR distance minus the robot radius (0.257 m) |
 | path ratio | — | distance driven ÷ straight-line distance (shelf leg + drop-off leg) |
 | duration | s | from dispatch to item release |
 | replans | count | global replans beyond the first plan of each leg |

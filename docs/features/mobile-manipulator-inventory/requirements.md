@@ -4,7 +4,7 @@
 
 This feature goes **beyond the graded plan** in [prd.md](../../prd.md). Obstacle avoidance (M1 → M3) still comes first. Nothing here may delay a phase gate.
 
-> **Re-alignment, 2026-10-04.** The project moved to a kinematic robot body, our own Python navigation and standard ROS messages ([ADR-012](../../ADR-012-custom-python-navigation.md), [ADR-013](../../ADR-013-kinematic-robot-body.md), [ADR-014](../../ADR-014-ros-interfaces.md)). Changed here: D0 (physics standard deferred), D5 and D8, the pick flow (R4), the interfaces (§4), the phase plan (§5), the open risks (§7), and the ADR number of the manipulator (012 → **015**). The scripted arm (D3) works unchanged with a kinematic body.
+> **Re-alignment, 2026-10-04.** The project moved to our own Python navigation and standard ROS messages ([ADR-012](../../ADR-012-custom-python-navigation.md), [ADR-014](../../ADR-014-ros-interfaces.md)), with the physical TurtleBot3 Waffle Pi at scale 4 as the robot body ([ADR-015](../../ADR-015-physical-waffle-pi-body.md)). Changed here: D0 (the physics standard is active again), D4 and D5 (scale), D8, the pick flow (R4), the interfaces (§4), the phase plan (§5), the open risks (§7), and the ADR number of the manipulator (012 → **016**). The scripted arm (D3) is unchanged, but the body is physical, so the mass and centre of mass of the mast and arm matter (§7).
 
 ---
 
@@ -22,11 +22,11 @@ Today, picking an item means "drive to the shelf, wait (dwell), and the item jum
 | # | Topic | Decision |
 |---|-------|----------|
 | D1 | Priority | P0 publishers first. Cheap features in P1, the panel in P2, the arm only after the P3 gate |
-| D0 | Physics | **Deferred** together with [ADR-011](../../ADR-011-physics-standard.md): the robot body is kinematic, so the physics standard is not applied. The box masses stay as data (Fragile 5, Standard 15, Heavy 30 kg) and matter only if boxes become dynamic |
+| D0 | Physics | **Active again** with the physical body ([ADR-011](../../ADR-011-physics-standard.md), [ADR-015](../../ADR-015-physical-waffle-pi-body.md)): gravity 39.24 m/s² in Unity, `PhysicalBody` on the shell, stations, 12 racks (static) and 81 boxes (dynamic). Box masses (real): Fragile 5, Standard 15, Heavy 30 kg |
 | D2 | Robot | **One robot** (ADR-006 stays): TurtleBot3 Waffle Pi + OpenMANIPULATOR-X on a **lift mast** + a **tray** for one box. A two-robot "train" was considered and rejected (multi-robot navigation risk) |
 | D3 | Arm | **Scripted** in Unity: preset poses (reach, grip, lift, place). The box is attached by re-parenting. No MoveIt, no physical grasping |
-| D4 | Reach | Shelf layers in robot metres: layer0 = 0 m, layer1 = 0.30 m, layer2 = 0.61 m, layer3 = 0.91 m. The arm alone reaches about 0.55 m, so the **lift mast** makes all 4 layers reachable. **Fallback:** scale the robot up until it reaches every layer and the box fits on the tray |
-| D5 | Reach test | 1–2 day reach test in **P1**. It decides the final robot scale. A later scale change stays cheap: Unity rebuilds the map at every Play and ROS sees robot metres ([ADR-010](../../ADR-010-robot-scale.md)) |
+| D4 | Reach | Shelf layers in robot metres: layer0 = 0 m, layer1 = 0.30 m, layer2 = 0.61 m, layer3 = 0.91 m. The arm alone reaches about 0.55 m, so the **lift mast** makes all 4 layers reachable. **Fallback:** scale the robot up until it reaches every layer and the box fits on the tray (see D5 for what a scale change costs) |
+| D5 | Reach test | 1–2 day reach test in **P1**. It decides the final robot scale. Only scale 4 is verified for the physical robot (at scale 1 it pivots weakly), so a different scale needs the drive tests re-run and the map and the world re-checked ([ADR-010](../../ADR-010-robot-scale.md)). Unity rebuilds the map from the colliders at every Play, so a saved map never goes stale, and ROS sees robot metres |
 | D6 | Panel | **In-game Unity panel** now. A web inventory dashboard (React + TS via rosbridge) is a future item |
 | D7 | Shelves | Shelves are **fixed** (the static map depends on them). The panel manages **boxes** only |
 | D8 | Data | Inventory lives in **MySQL**, reached through **ROS topics with acknowledgements** ([ADR-014](../../ADR-014-ros-interfaces.md)). Only the `task_manager` class touches MySQL ([ADR-005](../../ADR-005-mysql-database.md)). The panel is read-only when ROS is off |
@@ -82,7 +82,7 @@ Today, picking an item means "drive to the shelf, wait (dwell), and the item jum
 |----|-------------|
 | R5.1 | HomePoint is on the floor tile `Floor01(Clone)` at **(-23.48, 0, 25.29)** (Unity world), in the corner of the warehouse, clear of all racks |
 | R5.2 | It is marked with a **glowing coloured square** on the floor |
-| R5.3 | It is the robot's park position at start and end, and the unload station |
+| R5.3 | It is the robot's park position at start and end, and the unload station. (Today the robot spawns about 6 m from it, see [ADR-015](../../ADR-015-physical-waffle-pi-body.md).) |
 
 ### R6. Camera 2
 
@@ -108,15 +108,15 @@ There are no ROS services any more ([ADR-014](../../ADR-014-ros-interfaces.md)).
 
 | When | Work |
 |------|------|
-| **P0** (now) | The prototype's `/cube/pose`, `/map` and `/cmd_vel` scripts already exist; P1 adds the clock, the scale and the `/sim/*` topics; `warehouse_bringup` is adapted (not part of this feature, but everything needs it) |
+| **P0** (now) | The body pivot ([ADR-015](../../ADR-015-physical-waffle-pi-body.md)) is written: `/clock`, `/robot/pose`, `/map`, `/cmd_vel` and `/sim/collision` in Unity, `turtlebot_control` and `warehouse_bringup` on the ROS side (not part of this feature, but everything needs it). The Unity Editor tests and the acceptance run passed (reported by the user, 2026-10-05). P1 adds the other `/sim/*` topics with `mission` |
 | **P1** | R1 IDs + labels · R2 boxes spawned from DB, randomizer off · R5 HomePoint marker · R6 camera 2 · **D5 reach test** |
 | **P2** | R3 in-game panel: inventory, queue, notifications |
-| **After P3 gate** | **ADR-015** (mobile manipulator, replaces ADR-001) · arm + lift mast + tray + drop-off table · R4 pick flow |
+| **After P3 gate** | **ADR-016** (mobile manipulator, replaces ADR-001) · arm + lift mast + tray + drop-off table · R4 pick flow |
 | **Future** | Web inventory dashboard (React + TS, rosbridge) |
 
 ## 6. Docs to update when this is built
 
-- New **ADR-015**: mobile manipulator; replaces ADR-001; updates PRD non-goal NG2. (ADR-012 to ADR-014 are taken by the 2026-10-04 re-alignment.)
+- New **ADR-016**: mobile manipulator; replaces ADR-001; updates PRD non-goal NG2. (ADR-012 to ADR-015 are taken by the 2026-10-04 re-alignment and the body pivot.)
 - [prd.md](../../prd.md): move "grasp with an arm" out of the non-goals.
 - [architecture.md](../../architecture.md): new topics (§4 above).
 - [data-model.md](../../data-model.md) + [schema.sql](../../schema.sql): box and slot tables.
@@ -126,7 +126,7 @@ There are no ROS services any more ([ADR-014](../../ADR-014-ros-interfaces.md)).
 
 | Risk | Plan |
 |------|------|
-| Lift mast + arm upsets balance or physics | No longer a risk: the body is kinematic ([ADR-013](../../ADR-013-kinematic-robot-body.md)). If a physical body returns, re-run the drive tests with the extra mass |
+| Lift mast + arm upsets balance | Back, because the body is physical again ([ADR-015](../../ADR-015-physical-waffle-pi-body.md)): the mass and centre of mass of the mast and arm affect tipping and grip. `DiffDriveController` scales the URDF masses (mass × s³, centre of mass × s, inertia × s⁵) and sets links without URDF inertia data to 0.001 kg, so the new parts need the same treatment. Re-run the drive and tipping tests with the extra mass |
 | Robot with mast does not fit between racks | Check footprint vs aisle width in the reach test |
-| A bigger robot (fallback) changes the footprint | The numbers stay in robot metres; only the footprint and `inflation_radius` need a re-check. Decide in P1; update ADR-010 and test-plan |
+| A bigger robot (fallback) changes the footprint | The Waffle Pi reaches 0.257 m from the wheel axis centre and the default `/nav/inflation_radius` is 0.35 m, about 0.09 m of clearance ([ADR-015](../../ADR-015-physical-waffle-pi-body.md)). A bigger robot needs both re-checked, plus the drive tests and the map and world (D5). Decide in P1; update ADR-010 and test-plan |
 | Feature work steals time from M2/M3 | Nothing in P2+ starts before that phase's gate passes |

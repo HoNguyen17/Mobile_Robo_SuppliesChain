@@ -13,7 +13,7 @@ The team develops on Windows, and the Unity project already works there. ROS Noe
 | IDE / git, Docker Desktop (engine) | `docker compose` + MySQL (via WSL integration), headless runner, RViz (via WSLg) |
 
 - **Networking:** WSL `networkingMode=nat` + `localhostForwarding=true`, so Unity connects to `127.0.0.1:10000`. Mirrored mode was tried and rejected: the Hyper-V firewall dropped Windows → WSL connections even with an explicit allow rule (tested 2026-09-30).
-- **Code location:** one git clone on Windows. WSL symlinks `ros1` into `~/catkin_ws/src`; build output stays on the Linux disk.
+- **Code location:** one git clone on Windows. WSL symlinks the packages `turtlebot_control` and `warehouse_bringup` of `ros1` into `~/nav_ws/src`; build output stays on the Linux disk. `~/catkin_ws` holds `ros_tcp_endpoint`, and anything else already in it stays untouched ([setup guide §5](setup-windows-wsl.md#5-build-the-catkin-workspaces)).
 - **Clock:** Unity publishes `/clock`, and ROS uses sim time ([ADR-009](ADR-009-simulation-clock.md)). This avoids clock differences between Windows and WSL.
 
 Step-by-step install: [setup-windows-wsl.md](setup-windows-wsl.md).

@@ -1,8 +1,6 @@
 # ADR-011: Physics Standard (Exact 4x Model of Earth)
 
-**Status:** Deferred (2026-10-04) · accepted on 2026-10-01. The kinematic body ([ADR-013](ADR-013-kinematic-robot-body.md)) has no physics, so this standard is not applied on this branch. The code (`PhysicsStandard`, `PhysicalBody`, the Apply menu) and its tests are on `Nguyen-planning`.
-
-> The text below is kept as it was accepted. It becomes active again if a physical body or dynamic boxes are reintroduced.
+**Status:** Accepted 2026-10-01 · deferred 2026-10-04 by [ADR-013](_archive/2026-10-04-kinematic-cube-plan/ADR-013-kinematic-robot-body.md) (kinematic Cube, no physics) · active again since 2026-10-04 by [ADR-015](ADR-015-physical-waffle-pi-body.md)
 
 ## Context
 The robot is scaled 4x in Unity ([ADR-010](ADR-010-robot-scale.md)), and the warehouse matches it: in real metres (what ROS sees), it is a small warehouse with 0.30 m shelf layers and 0.28 m boxes. Before this ADR, physics values were whatever the imported assets happened to contain:
@@ -65,5 +63,5 @@ The Heavy box equals the Waffle Pi's maximum payload (30 kg, ROBOTIS spec). Box 
 ## Consequences
 - Every new physics object needs a `PhysicalBody` (the scene test fails otherwise). For boxes, use the category mass.
 - Things fall 4x faster in Unity units than they look like they should. That is correct: in real metres they fall like on Earth.
-- The ADR-010 PlayMode results were measured with g = 9.81 and **must be re-run**. More grip should only help, but tuning may change.
+- The ADR-010 PlayMode results were first measured with g = 9.81 and re-run on 2026-10-02 with this gravity (see [ADR-010](ADR-010-robot-scale.md)). After the physics scripts and tests came back into this branch, the Edit Mode and Play Mode tests (the Edit Mode tests named above included) were re-run in the Unity Editor on 2026-10-05 and are green (reported by the user, no figures).
 - `WorldScale` and the robot root scale must stay equal. The scene test checks this.

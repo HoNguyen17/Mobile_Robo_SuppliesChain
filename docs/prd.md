@@ -5,9 +5,9 @@
 | **Course** | 61CSE326 · Use case UC6 (e-commerce fulfilment, simulated) |
 | **Team** | 4 students · 8 weeks |
 | **Stack** | Unity 2021.1 (URP) on Windows · ROS 1 Noetic in WSL2 Ubuntu 20.04 · MySQL 8 |
-| **Robots** | 1 × TurtleBot3 Waffle Pi |
+| **Robots** | 1 × TurtleBot3 Waffle Pi (physical body in Unity, scale 4) |
 
-> **2026-10-04:** the navigation (our own Python planner), the robot body (kinematic) and the ROS interfaces (standard messages) changed. See [ADR-012](ADR-012-custom-python-navigation.md), [ADR-013](ADR-013-kinematic-robot-body.md) and [ADR-014](ADR-014-ros-interfaces.md). Requirement IDs are unchanged. The earlier `move_base` plan is on branch `Nguyen-planning`.
+> **2026-10-04:** the navigation (our own Python planner), the ROS interfaces (standard messages) and the robot body (the physical Waffle Pi at scale 4) changed. See [ADR-012](ADR-012-custom-python-navigation.md), [ADR-014](ADR-014-ros-interfaces.md) and [ADR-015](ADR-015-physical-waffle-pi-body.md). Requirement IDs are unchanged. The earlier `move_base` plan is on branch `Nguyen-planning`.
 
 ---
 
@@ -63,7 +63,7 @@ flowchart LR
 | ID | Requirement | Milestone |
 |----|-------------|:---------:|
 | FR-01 | `mission_orchestrator` sends each leg's goal to the planner (`/move_base_simple/goal`) and receives the leg result (`/nav/leg_result`). | M1 |
-| FR-02 | The robot's pose is ground truth from Unity (`/cube/pose`). There is no localisation node. | M1 |
+| FR-02 | The robot's pose is ground truth from Unity (`/robot/pose`, `PoseStamped` in robot metres on sim time). There is no localisation node. | M1 |
 | FR-03 | The global planner (A* on the raw map, inflated by the profile's `inflation_radius`) finds a path around obstacles present in the map. | M2 |
 | FR-04 | The planner avoids static obstacles that are **not** in the map, seen by the LIDAR (obstacle layer). | M2 |
 | FR-05 | The robot avoids moving NPCs that cross the path (stop and replan). | M3 |

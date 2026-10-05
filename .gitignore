@@ -4,10 +4,14 @@
 **.vsconfig
 *~
 *~~
-# ROS (cube_control)
+# ROS (ros1 packages)
 *.pyc
 __pycache__/
 *.bak
 
 # Local secrets (MySQL passwords)
 infra/.env
+
+# Local tool folders (Claude Code worktrees, session hand-off notes)
+.claude/
+_claude/

@@ -25,6 +25,7 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 | **Run** | The stored record of one episode (`runs` row + `run_events`). The data word. |
 | **Outcome** | `success` or `fail` of an episode. If `fail`, there is also a **fail reason**. |
 | **Leg** | One planner goal. Every episode has two: the **shelf leg** and the **drop-off leg**. |
+| **Leg result** | How a leg ended, as JSON on `/nav/leg_result`: `succeeded`, or `aborted` with the reason `no_path` or `cancelled`. Sent by the planner and the follower to the mission. It is not the episode **outcome**. |
 
 ### Items
 | Term | Meaning |
@@ -39,17 +40,19 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 ### Navigation
 | Term | Meaning |
 |------|---------|
-| **Static map** | Walls + shelves, built by Unity at Play and sent raw (not inflated). Scenario obstacles are **not** in it. |
+| **Static map** | Walls + shelves: the static bodies of the warehouse. Unity builds it at every Play and sends it as the **raw map**. Scenario obstacles and dynamic boxes are **not** in it. |
+| **Raw map** | The occupancy grid on `/map`: 0.05 m cells, frame `map`, 1 Hz, not inflated. Built from the static `PhysicalBody` colliders in a height band of 0.03 to 1.0 m above the robot base. Rebuilt from the colliders at every Play. |
+| **Inflated map** | The planner's own copy of the raw map, with every obstacle grown by `inflation_radius`, cached per radius. The raw map is never changed. |
 | **Static obstacle** | A non-moving obstacle not in the map (boxes). Tested in M2. |
 | **NPC** | A Unity-scripted moving person. Not a ROS node. Tested in M3. |
-| **Inflation** | The planner keeps the robot centre at least `inflation_radius` away from every obstacle. A hard limit, set by the motion profile. |
+| **Inflation** | The planner keeps the robot centre at least `inflation_radius` away from every obstacle. A hard limit, set by the motion profile. Default 0.35 m, which is about 9 cm more than the **footprint**. |
 | **Global plan** | A* path over the whole map (`astar_planner`). |
 | **Obstacle layer** | Cells marked blocked from what the emulated LIDAR sees, on top of the static map. |
 | **Follower** | `path_follower`: drives along the global plan and stops when the way ahead is blocked. |
 | **Replan** | A new global plan made because the robot was blocked. |
 | **Recovery** | The follower stops because the path ahead is blocked and the planner replans; if no path exists, the robot rotates in place and retries. One stop + replan is one recovery. |
-| **Clearance** | Closest LIDAR distance minus the robot radius. |
-| **Collision** | A Unity contact between the robot and a wall, shelf, obstacle or NPC. What the grade punishes. |
+| **Clearance** | Closest LIDAR distance minus the footprint radius (0.257 m). |
+| **Collision** | A Unity contact between the robot and a wall, shelf, obstacle or NPC. What the grade punishes. `CollisionReporter` publishes it on `/sim/collision`; floor contacts are ignored. |
 
 ### Verification
 | Term | Meaning |
@@ -63,8 +66,11 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 |------|---------|
 | **Bridge** | Unity ROS-TCP-Connector ↔ `ros_tcp_endpoint`, over `127.0.0.1:10000`. |
 | **Sim time** | The time published by Unity on `/clock`. All ROS nodes use it. |
-| **Robot metres** | Unity units divided by the robot scale (3.2). Every length, speed and range on the ROS side uses them. |
-| **Kinematic body** | The robot is the Unity object `Cube`, moved by its transform. No physics, no wheel dynamics. A Waffle Pi model is attached for looks only. |
+| **Robot metres** | Unity units divided by the robot scale (4): 1 robot metre = 4 Unity units ([ADR-010](docs/ADR-010-robot-scale.md)). Every length, speed and range on the ROS side uses them. ROS `x` = Unity `Z` / 4, ROS `y` = −Unity `X` / 4. |
+| **Physical body** | The robot is the TurtleBot3 Waffle Pi model with `ArticulationBody` wheels, driven by `DiffDriveController` from `/cmd_vel` ([ADR-015](docs/ADR-015-physical-waffle-pi-body.md)). It can slide or tip, and static shelves and walls stop it. Not the `PhysicalBody` component, which tags warehouse objects for the physics standard. |
+| **Physics standard** | The one set of physical rules for the Unity scene: gravity 39.24 m/s² (4 × 9.81), real densities and friction, a `PhysicalBody` on the shell, stations, racks (static) and boxes (dynamic). Applied by *Robotics > Warehouse > Apply Physics Standard* ([ADR-011](docs/ADR-011-physics-standard.md)). |
+| **Ground-truth pose** | The true robot pose on `/robot/pose` (`PoseStamped`, frame `map`, 30 Hz, stamp = sim time), and the TF `map` → `base_footprint`. Read from the simulated body, not estimated. The planner and the follower use it, not `/odom`. |
+| **Footprint** | The circle around the wheel-axis centre that holds the Waffle Pi: radius 0.257 m. Used for clearance and for the closed-loop tests. |
 
 ## Words to avoid
 
@@ -76,3 +82,4 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 | result / status of an episode | outcome | `status` belongs to `tasks` |
 | Nav2, Stage A/B/C, namespace | — | Removed: we use ROS 1 and one robot |
 | move_base, AMCL, costmap, DWA, TEB | planner, follower, obstacle layer | Not used: we run our own Python navigation ([ADR-012](docs/ADR-012-custom-python-navigation.md)) |
+| Cube, kinematic body | physical body, the robot | The kinematic `Cube` was dropped on 2026-10-04 ([ADR-015](docs/ADR-015-physical-waffle-pi-body.md)) |
