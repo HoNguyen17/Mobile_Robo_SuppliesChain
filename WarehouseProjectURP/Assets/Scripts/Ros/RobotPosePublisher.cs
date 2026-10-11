@@ -36,6 +36,13 @@ public class RobotPosePublisher : MonoBehaviour
     private PublishTimer timer;
     private uint seq;
 
+    void Awake()
+    {
+        if (GetComponent<ItemCarrier>() == null) gameObject.AddComponent<ItemCarrier>();
+        if (GetComponent<ScenarioLoader>() == null) gameObject.AddComponent<ScenarioLoader>();
+        if (GetComponent<PathVisualizer>() == null) gameObject.AddComponent<PathVisualizer>();
+    }
+
     void Start()
     {
         drive = GetComponent<DiffDriveController>();

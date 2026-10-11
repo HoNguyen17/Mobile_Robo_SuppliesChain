@@ -16,6 +16,7 @@ from grid_planner import (
     inflate,
     line_of_sight,
     nearest_free,
+    overlay_obstacles,
     plan,
     plan_inflated,
     reachable_from,
@@ -253,6 +254,25 @@ class InflatedMapsTest(unittest.TestCase):
     def test_the_result_is_the_same_as_inflating_directly(self):
         grid = self.one_block()
         self.assertEqual(blocked_cells(InflatedMaps(grid).get(1.6)), blocked_cells(inflate(grid, 1.6)))
+
+
+class OverlayObstaclesTest(unittest.TestCase):
+    def test_empty_points_returns_original_grid(self):
+        grid = make_grid(["....", "...."])
+        self.assertIs(overlay_obstacles(grid, []), grid)
+
+    def test_marks_cells_as_occupied(self):
+        grid = make_grid(["....", "...."])
+        # Grid res is 1.0, origin (0, 0)
+        updated = overlay_obstacles(grid, [(0.5, 0.5), (2.5, 1.5)])
+        self.assertIn((0, 0), blocked_cells(updated))
+        self.assertIn((2, 1), blocked_cells(updated))
+        self.assertEqual(len(blocked_cells(updated)), 2)
+
+    def test_points_outside_grid_are_ignored(self):
+        grid = make_grid(["....", "...."])
+        updated = overlay_obstacles(grid, [(-5.0, -5.0), (100.0, 100.0)])
+        self.assertEqual(len(blocked_cells(updated)), 0)
 
 
 def warehouse_grid(size=300, res=0.05):

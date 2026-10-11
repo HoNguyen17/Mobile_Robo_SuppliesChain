@@ -38,7 +38,10 @@
     <param name="publish_frequency" type="double" value="50.0"/>
   </node>
 
+  <arg name="mission"  default="false" doc="Start the mission node of warehouse_mission"/>
+
   <include if="$(arg nav)" file="$(find turtlebot_control)/launch/navigation.launch"/>
+  <include if="$(arg mission)" file="$(find warehouse_mission)/launch/mission.launch"/>
 
   <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz"
         args="-d $(find warehouse_bringup)/rviz/bringup.rviz"/>

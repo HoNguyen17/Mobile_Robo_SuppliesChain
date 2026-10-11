@@ -14,10 +14,10 @@
   <param name="/nav/max_lin" value="$(arg max_lin)"/>
   <param name="/nav/inflation_radius" value="$(arg inflation_radius)"/>
 
-  <node pkg="turtlebot_control" type="astar_planner.py" name="astar_planner" output="screen">
+  <node pkg="turtlebot_control" type="astar_planner.py" name="astar_planner" output="screen" respawn="true">
     <param name="snap_distance" value="$(arg snap_distance)"/>
     <param name="print_map" value="$(arg print_map)"/>
   </node>
 
-  <node pkg="turtlebot_control" type="path_follower.py" name="path_follower" output="screen"/>
+  <node pkg="turtlebot_control" type="path_follower.py" name="path_follower" output="screen" respawn="true"/>
 </launch>

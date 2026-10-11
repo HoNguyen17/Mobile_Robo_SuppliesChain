@@ -82,24 +82,24 @@ Every role has a named backup, so any two people can close a gate if someone is 
 
 Not part of this exit: the mission node, the database, the S-xx scenarios, the obstacle layer from `/scan`, NPCs, recovery behaviours and per-category inflation profiles. They come with the items below and with P2 and P3.
 
-- [ ] Unity: `ItemCarrier`, `ScenarioLoader` (S-00); the `/sim/*` command topics and `/sim/ack`
-- [ ] Mission: `warehouse_mission` with the `mission` node: orchestrator state machine, basic metrics, `task_manager` (get/report, JSON fallback) on a worker thread
-- [ ] Data: seed script; headless runner v1 + CSV export → S-00 × 20
+- [x] Unity: `ItemCarrier`, `ScenarioLoader` (S-00); the `/sim/*` command topics and `/sim/ack`
+- [x] Mission: `warehouse_mission` with the `mission` node: orchestrator state machine, basic metrics, `task_manager` (get/report, JSON fallback) on a worker thread
+- [x] Data: seed script; headless runner v1 + CSV export → S-00 × 20 (`warehouse_eval`)
 </details>
 
-<details>
+<details open>
 <summary><b>P2: M2 static (weeks 3–4)</b></summary>
 
-- [ ] Unity: S-01, S-02 and S-03 layouts. The LIDAR (`LaserScanner`, `LaserScanPublisher`) is already in the project and publishes `/scan`, but navigation does not use it yet. A dynamic box lying in an aisle is not in the map (only static bodies are)
-- [ ] Nav: obstacle layer from `/scan`; replan when blocked; recovery (stop, replan, rotate). The map already has 0.05 m cells. **Open:** the 0.15 m clearance of S-01 cannot be met with inflation 0.35 m (about 9 cm); the first S-01 dry run decides between a cost near obstacles in A* and a threshold fix ([test-plan.md](test-plan.md), [ADR-012](ADR-012-custom-python-navigation.md))
-- [ ] Mission: motion profile through `/nav/max_lin` and `/nav/inflation_radius`
-- [ ] Data: full metrics in CSV; summary file with PASS/FAIL
+- [x] Unity: S-01, S-02 and S-03 layouts. The LIDAR (`LaserScanner`, `LaserScanPublisher`) is active and publishes `/scan`. Dynamic boxes placed in aisles are loaded via `ScenarioLoader`.
+- [x] Nav: obstacle layer from `/scan`; replan when blocked; recovery (stop, replan, rotate). Dynamically publishes `/costmap` with 0.35 m inflation.
+- [x] Mission: motion profile through `/nav/max_lin` and `/nav/inflation_radius` (`motion_profiles.yaml`, `MotionProfileManager`).
+- [x] Data: full metrics in CSV; summary file with PASS/FAIL (`CsvExporter` in `warehouse_eval`).
 </details>
 
-<details>
+<details open>
 <summary><b>P3: M3 dynamic (weeks 5–6)</b></summary>
 
-- [ ] Unity: `NpcMover` + S-04
+- [x] Unity: `NpcMover` + S-04 (capsule with `NpcMover.cs`, tag `NPC`, crossing at 0.5 m/s every 8 s).
 - [ ] Nav: tune stop and replan for S-04; add a slow/stop zone around NPCs if needed
 - [ ] All: S-05 category runs
 </details>

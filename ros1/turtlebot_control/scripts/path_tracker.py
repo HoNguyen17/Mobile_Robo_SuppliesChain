@@ -6,7 +6,7 @@ own threads, so every read or change of the path goes through one lock.
 import math
 import threading
 from dataclasses import dataclass
-from typing import Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 # Robot metres, seconds, radians. The starting values come from TurtleBotNavigator, which
 # drives the physical Waffle Pi in Unity (heading gain 2, pivot at 45 degrees, waypoint 0.15 m),
@@ -32,6 +32,8 @@ class Command:
     linear: float  # m/s
     angular: float  # rad/s
     status: str
+    remaining_dist: float = 0.0
+    is_last: bool = False
 
 
 _IDLE = Command(0.0, 0.0, IDLE)
@@ -57,10 +59,14 @@ def yaw_from_quaternion(q) -> float:
 
 class PathTracker:
     def __init__(
-        self, waypoint_tol: float = WAYPOINT_TOL, pose_timeout: float = 0.5
+        self,
+        waypoint_tol: float = WAYPOINT_TOL,
+        pose_timeout: float = 0.5,
+        final_tol: float = FINAL_TOL,
     ) -> None:
         self.waypoint_tol = waypoint_tol  # m, for waypoints before the last
         self.pose_timeout = pose_timeout  # s, the oldest pose that is still trusted
+        self.final_tol = final_tol  # m, the goal counts as reached inside this distance
         self._lock = threading.Lock()
         self._waypoints: Tuple[Point, ...] = ()
         self._index = 0
@@ -68,6 +74,11 @@ class PathTracker:
     @property
     def active(self) -> bool:
         return bool(self._waypoints)
+
+    def arrive(self) -> None:
+        """Mark current path as arrived/completed and clear waypoints."""
+        with self._lock:
+            self._waypoints = ()
 
     def set_path(self, points: Sequence[Point]) -> None:
         """Follow a new path. An empty path is ignored."""
@@ -102,7 +113,7 @@ class PathTracker:
                 wx, wy = self._waypoints[self._index]
                 dist = math.hypot(wx - x, wy - y)
                 if self._index == last:
-                    if dist < FINAL_TOL:
+                    if dist < self.final_tol:
                         self._waypoints = ()
                         return _ARRIVED
                     break
@@ -119,4 +130,71 @@ class PathTracker:
             linear = clamp(K_LIN * dist, 0.0, max_lin)  # slow down towards the goal
         else:
             linear = max_lin  # keep flowing through corners
-        return Command(linear, angular, DRIVING)
+        return Command(
+            linear, angular, DRIVING, remaining_dist=dist if is_last else -1.0, is_last=is_last
+        )
+
+
+def check_frontal_obstacle(
+    ranges: Sequence[float],
+    angle_min: float,
+    angle_inc: float,
+    range_min: float,
+    range_max: float,
+    stop_dist: float = 0.60,
+    corridor_half_width: float = 0.22,
+    min_dist: float = 0.18,
+) -> Optional[float]:
+    """Check if any laser beam hits an obstacle directly in the robot's forward path.
+
+    Returns the distance (in metres) to the closest obstacle in the forward corridor,
+    or None if the corridor is clear.
+    A hit is inside the corridor if min_dist < x_r < stop_dist and abs(y_r) <= corridor_half_width,
+    where x_r is forward and y_r is lateral in robot frame.
+    """
+    closest = None
+    for i, r in enumerate(ranges):
+        if not math.isfinite(r) or r < range_min or r > range_max:
+            continue
+        angle = normalize(angle_min + i * angle_inc)
+        x_r = r * math.cos(angle)
+        y_r = r * math.sin(angle)
+        if min_dist < x_r < stop_dist and abs(y_r) <= corridor_half_width:
+            if closest is None or r < closest:
+                closest = r
+    return closest
+
+
+def check_flank_obstacle(
+    ranges: Sequence[float],
+    angle_min: float,
+    angle_inc: float,
+    range_min: float,
+    range_max: float,
+    side_dist: float = 0.28,
+    forward_min: float = -0.20,
+    forward_max: float = 0.35,
+) -> Optional[Tuple[float, float]]:
+    """Check if any obstacle is dangerously close to the robot's side flanks.
+
+    Returns (distance, y_r) for the closest point inside the flank box:
+    forward_min <= x_r <= forward_max and abs(y_r) <= side_dist.
+    y_r > 0 means the obstacle is on the left flank; y_r < 0 means on the right flank.
+    Returns None if no obstacle is within the flank box.
+    """
+    closest = None
+    closest_yr = 0.0
+    for i, r in enumerate(ranges):
+        if not math.isfinite(r) or r < range_min or r > range_max:
+            continue
+        angle = normalize(angle_min + i * angle_inc)
+        x_r = r * math.cos(angle)
+        y_r = r * math.sin(angle)
+        if forward_min <= x_r <= forward_max and abs(y_r) <= side_dist:
+            if closest is None or r < closest:
+                closest = r
+                closest_yr = y_r
+    if closest is not None:
+        return closest, closest_yr
+    return None
+

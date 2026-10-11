@@ -1,0 +1,13 @@
+<launch>
+  <arg name="scenario_id" default="S-00" />
+  <arg name="auto_start" default="false" />
+  <arg name="dwell_time_s" default="3.0" />
+  <arg name="leg_timeout_s" default="90.0" />
+
+  <node pkg="warehouse_mission" type="mission_node.py" name="mission" output="screen" respawn="true">
+    <param name="scenario_id" value="$(arg scenario_id)" />
+    <param name="auto_start" value="$(arg auto_start)" />
+    <param name="dwell_time_s" value="$(arg dwell_time_s)" />
+    <param name="leg_timeout_s" value="$(arg leg_timeout_s)" />
+  </node>
+</launch>

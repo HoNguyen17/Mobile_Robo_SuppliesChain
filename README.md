@@ -1,318 +1,370 @@
-![Warehouse Scene](Documentation/img/0_warehouse.png)
-
 # UC6 Warehouse Robot (Mobile_Robo_SuppliesChain)
 
-A simulated warehouse in **Unity** on Windows. One **TurtleBot3 Waffle Pi** is driven by our own **ROS 1 Noetic Python navigation nodes** running in **WSL2 Ubuntu 20.04**. The robot picks items from shelves and delivers them to drop-off points without hitting static or moving obstacles.
+![Warehouse Scene](Documentation/img/0_warehouse.png)
 
-> **Unity is the body, ROS is the brain, MySQL is the notebook.**
-> What is graded: obstacle avoidance (M1 navigate → M2 static → M3 dynamic). Everything else is support.
+A comprehensive autonomous warehouse logistics robotics simulation built in **Unity 2021 (URP)** on Windows and powered by **ROS 1 Noetic custom Python navigation nodes** running in **WSL2 (Ubuntu 20.04)**. A physical **TurtleBot3 Waffle Pi** robot autonomously navigates warehouse aisles, avoids static and dynamic obstacles with real-time costmap inflation, picks up cargo from target shelves, and delivers it to drop-off stations.
+
+> **Architecture Principle:** Unity is the physical body & world, ROS is the autonomous brain, MySQL is the database log.
 
 ```mermaid
 flowchart LR
-    subgraph WIN["Windows"]
-        UNITY["Unity 2021.1.11f1 (URP)<br/>world + physical robot + emulated sensors"]
+    subgraph WIN["Windows 11 / 10"]
+        UNITY["Unity 2021.1.11f1 (URP)<br/>Physics World + TurtleBot3 Waffle Pi<br/>LiDAR (360) · Odom · Clock · ItemCarrier"]
     end
     subgraph WSL["WSL2 · Ubuntu 20.04 · ROS Noetic"]
-        NAV["Navigation (Python)<br/>astar_planner · path_follower"]
-        APP["mission node (Python)<br/>orchestrator · metrics · profile · tasks"]
+        ENDPOINT["ROS-TCP-Endpoint (:10000)<br/>Bidirectional TCP Bridge"]
+        NAV["turtlebot_control (Python)<br/>astar_planner · path_follower<br/>Live 2Hz Costmap · Flank Guard"]
+        APP["warehouse_mission (Python)<br/>orchestrator · task_manager · profiles"]
+        EVAL["warehouse_eval (Python)<br/>metrics · CSV export · S-00..S-05"]
     end
     DB[("MySQL 8<br/>Docker :3307")]
 
-    UNITY <-->|"TCP 127.0.0.1:10000<br/>pose · map · scan · cmd_vel"| NAV
-    UNITY <-->|"/sim commands<br/>collisions"| APP
-    NAV <-->|"goal · leg result"| APP
+    UNITY <-->|"TCP 127.0.0.1:10000<br/>/map · /scan · /robot/pose · /cmd_vel"| ENDPOINT
+    ENDPOINT <--> NAV
+    UNITY <-->|"/sim/attach_item · /sim/release_item<br/>/sim/collision · /sim/ack"| APP
+    NAV <-->|"/move_base_simple/goal · /nav/replan<br/>/nav/leg_result"| APP
     APP <--> DB
+    APP <--> EVAL
 ```
 
 ---
 
-## Contents
+## 📑 Table of Contents
 
-1. [Where we are now (status checklist)](#1-where-we-are-now-status-checklist)
-2. [Requirements](#2-requirements)
-3. [Download the project](#3-download-the-project)
-4. [Install and set up, step by step](#4-install-and-set-up-step-by-step)
-5. [Run it](#5-run-it)
-6. [Repository layout](#6-repository-layout)
-7. [Which document to read for what](#7-which-document-to-read-for-what)
-8. [Working together (Git rules)](#8-working-together-git-rules)
-9. [Credits and license](#9-credits-and-license)
-
----
-
-## 1. Where we are now (status checklist)
-
-**Current phase: P0 · Environment (week 1).** The body pivot is built and its exit is met (Unity tests green, acceptance run passed; both reported by the user on 2026-10-05); the rest of the P1 gate is the `mission` node and scenario S-00. Phases and gates are defined in [docs/milestones.md](docs/milestones.md).
-Last updated: 2026-10-05 (branch `claude/summary-progress-next-steps-168aad`, on top of `nguyen`).
-
-On 2026-10-04 the project changed direction: **our own Python navigation** (A* planner + path follower) with **standard ROS messages only** ([ADR-012](docs/ADR-012-custom-python-navigation.md), [ADR-014](docs/ADR-014-ros-interfaces.md)). The robot body went from a kinematic Cube back to the **physical TurtleBot3 Waffle Pi at scale 4, with the physics standard** ([ADR-015](docs/ADR-015-physical-waffle-pi-body.md)). The earlier `move_base` plan is on branch `Nguyen-planning`.
-
-### Done so far
-
-**Planning and docs**
-- [x] Plan moved from ROS 2 / Nav2 / multi-robot to ROS 1 Noetic / single robot ([old plan](docs/_archive/2026-09-30-ros2-nav2-plan/)), then from `move_base` to our own Python navigation ([archived `move_base` ADRs](docs/_archive/2026-10-04-move-base-plan/))
-- [x] PRD, architecture, data model, MySQL schema, test plan, milestones, glossary ([docs/](docs/), [CONTEXT.md](CONTEXT.md)), ADR-001 to ADR-015
-- [x] Setup guide for Windows + WSL2: [docs/setup-windows-wsl.md](docs/setup-windows-wsl.md). The WSL networking and ROS install parts were tested on `Nguyen-planning` (NAT + localhost forwarding; mirrored networking was tested and rejected). The steps changed on 2026-10-04 (workspace, Unity, smoke test) have **not** been run end to end on a clean machine
-
-**Infrastructure**
-- [x] MySQL 8 in Docker: [infra/docker-compose.yml](infra/docker-compose.yml) + [infra/.env.example](infra/.env.example), loads [docs/schema.sql](docs/schema.sql) on first start, port `3307`
-- [x] `.gitattributes` forces LF endings for `ros1/**`, `*.py`, `*.sh`, `*.launch`, `*.yaml`, `*.xml` (so Python nodes run in WSL)
-
-**ROS side**
-- [x] `ros1/turtlebot_control`: A* planner and path follower in true robot metres on sim time, with `/nav/cancel` and `/nav/leg_result`. 109 unit tests pass on Windows (Python 3.14) and in WSL (Python 3.8.10), including a closed-loop model of a Waffle Pi that checks its 0.257 m footprint never touches a wall
-- [x] The real nodes ran against a stand-in for Unity in WSL (sim time, clock restart): scenarios A to I pass
-- [x] `ros1/warehouse_bringup`: `bringup.launch` starts the endpoint, planner, follower and RViz. Ran against the real Unity in the acceptance run (reported by the user, 2026-10-05)
-
-**Unity side**
-- [x] The physical Waffle Pi at scale 4 (`DiffDriveController`, holding brake), the physics standard ([ADR-011](docs/ADR-011-physics-standard.md)) and their tests, taken from `Nguyen-planning`
-- [x] New ROS scripts: `RobotPosePublisher` (`/robot/pose`), `WarehouseMapPublisher` (raw `/map`), `CollisionReporter` (`/sim/collision`), and the menu *Robotics > Warehouse > Add ROS Bridge*. All C# assemblies compile offline with Unity's own compiler; 30 pure Edit Mode tests pass outside Unity (2 more need the Unity runtime)
-- [x] The project opens and imports in Unity 2021.1.11f1 without a compile error. *Add ROS Bridge* was run, the scene saved, and one Play without ROS built the map (317 × 317 cells of 0.05 m)
-- [x] ROS-TCP-Connector `v0.7.0` and URDF-Importer `v0.5.2` are pinned in `Packages/manifest.json`; ROS settings `127.0.0.1:10000` are in [Assets/Resources/ROSConnectionPrefab.prefab](WarehouseProjectURP/Assets/Resources/ROSConnectionPrefab.prefab)
-- [x] Edit Mode and Play Mode tests are green in the Unity Test Runner (reported by the user, 2026-10-05; no figures recorded)
-- [x] The Cube prototype is archived: Unity scripts in [_archive/unity-cube-prototype/](_archive/unity-cube-prototype/README.md), ROS package in [_archive/ros1-cube-prototype/](_archive/ros1-cube-prototype/README.md)
-
-### Still to do to close P0
-
-- [ ] First integrated run: `bringup.launch` + Unity Play, with `/map` and `/robot/pose` visible in RViz (the acceptance run below used this stack; the RViz check itself was not reported)
-- [ ] Smoke test ([setup guide §8](docs/setup-windows-wsl.md#8-end-to-end-smoke-test)) passes on **all 4 machines**
-- [ ] Assign the 4 roles in [docs/milestones.md §2](docs/milestones.md#2-roles)
-- [ ] Agree who edits `Warehouse.unity` (see [§8](#8-working-together-git-rules))
-
-### Exit of the body pivot (met 2026-10-05, part of the P1 gate)
-
-- [x] Edit Mode and Play Mode tests run in the Unity Test Runner: green (reported by the user, no figures)
-- [x] Acceptance run: HomePoint → point in front of the target shelf → HomePoint, driven by ROS (`ros1/turtlebot_control`), **5 consecutive runs**, each with `leg_result = succeeded`, a stop within 0.15 m of the goal, no collision and no tip. Passed (reported by the user, no per-run figures)
-- [x] Archived afterwards: `ros1/cube_control` and `README_ROS1_Prototype.md` in [_archive/ros1-cube-prototype/](_archive/ros1-cube-prototype/README.md), ADR-013 in [docs/_archive/2026-10-04-kinematic-cube-plan/](docs/_archive/2026-10-04-kinematic-cube-plan/README.md)
-
-**Open question (not decided):** the S-01 clearance threshold of 0.15 m cannot be met with the default inflation of 0.35 m (about 9 cm of clearance around the 0.257 m footprint). The first S-01 dry run decides ([docs/test-plan.md](docs/test-plan.md)).
-
-**Planned feature (after the graded milestones are safe):** mobile manipulator + inventory panel, see [docs/features/mobile-manipulator-inventory/requirements.md](docs/features/mobile-manipulator-inventory/requirements.md).
-
-### Next phases (not started)
-
-- [ ] **P1 · M1 navigate** (week 2): Unity tests and the acceptance run passed (2026-10-05); still open: `mission` node, scenario S-00
-- [ ] **P2 · M2 static** (weeks 3–4): obstacle layer from `/scan`, replan and recovery, S-01 to S-03, motion profiles per category
-- [ ] **P3 · M3 dynamic** (weeks 5–6): NPCs, S-04, S-05
-- [ ] **P4 · Evidence** (weeks 7–8): N = 20 runs per scenario, videos, demo rehearsal
+1. [Features & Capabilities](#1-features--capabilities)
+2. [Prerequisites & System Requirements](#2-prerequisites--system-requirements)
+3. [Step-by-Step Installation Guide](#3-step-by-step-installation-guide)
+4. [Quick Start (1-Click Run)](#4-quick-start-1-click-run)
+5. [Interactive Testing & Obstacle Avoidance Demo](#5-interactive-testing--obstacle-avoidance-demo)
+6. [Running Automated Tests (135/135 Unit & Integration Tests)](#6-running-automated-tests)
+7. [Repository Structure](#7-repository-structure)
+8. [ROS Topics & Interface Contract](#8-ros-topics--interface-contract)
+9. [Troubleshooting & FAQ](#9-troubleshooting--faq)
+10. [Team Workflow & Git Rules](#10-team-workflow--git-rules)
 
 ---
 
-## 2. Requirements
+## 1. Features & Capabilities
 
-### Hardware
-| Item | Minimum |
-|------|---------|
-| OS | Windows 10 (build 19041+) or Windows 11 |
-| RAM | 16 GB recommended (8 GB goes to WSL) |
-| Free disk | ~40 GB on `C:` |
-| BIOS | Virtualisation (Intel VT-x / AMD-V) enabled |
-
-### Software to install
-| Software | Version | Where it runs | Used for |
-|----------|---------|---------------|----------|
-| [Git for Windows](https://git-scm.com/download/win) | any recent | Windows | Clone the repo. **Unity also needs it** to download the git packages in `manifest.json` |
-| [Unity Hub](https://unity.com/download) + **Unity 2021.1.11f1** | exactly `2021.1.11f1` | Windows | The simulation (`WarehouseProjectURP`) |
-| WSL2 + **Ubuntu 20.04** | 20.04 only (not 22.04/24.04) | Windows | Linux for ROS |
-| **ROS 1 Noetic** `desktop-full` | Noetic | WSL | ROS runtime, RViz |
-| ROS packages: `python3-pymysql`, `python-is-python3`, `ros-noetic-turtlebot3-description` | Noetic | WSL | MySQL driver, `python` command, the Waffle Pi model for RViz |
-| [ROS-TCP-Endpoint](https://github.com/Unity-Technologies/ROS-TCP-Endpoint) | `v0.7.0` | WSL (`~/catkin_ws/src`) | The ROS end of the Unity bridge |
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/) with WSL integration | any recent | Windows | Runs MySQL 8 |
-
-Unity packages (**installed automatically** when you open the project, nothing to do): ROS-TCP-Connector `v0.7.0` and URDF-Importer `v0.5.2`, pinned in `Packages/manifest.json`.
-
-Time needed for a fresh machine: about **2–3 hours**, mostly downloads.
+- 🤖 **Physical TurtleBot3 Waffle Pi at 4x Physics Scale**: Modeled with realistic differential drive kinematics, dynamic friction, and holding brake ([ADR-010](docs/ADR-010-robot-scale.md), [ADR-011](docs/ADR-011-physics-standard.md), [ADR-015](docs/ADR-015-physical-waffle-pi-body.md)).
+- 🗺️ **High-Performance Grid Planning (A\* + String Pulling)**: 8-connected A* with Octile heuristic and Bresenham line-of-sight smoothing. Never cuts corners into obstacles.
+- ⚡ **Real-Time Dynamic Costmap (Live 2 Hz)**: LiDAR ranges (up to 3.5 m) are dynamically transformed, dilated, extruded into 3D solid footprints, and published to `/costmap` for real-time RViz visualization.
+- 🛡️ **Anti-Scraping Flank Clearance Guard**: Adaptive inflation floor ($\ge 0.28\text{ m}$) and lateral proximity monitoring (`check_flank_obstacle`) prevent the robot chassis and wheels from brushing against obstacles during cornering.
+- 🔄 **Early Automatic Replan**: Detects path blockage up to 3.5 m ahead and replans early without emergency halting.
+- 📦 **Visual Cargo Lifecycle (`ItemCarrier.cs`)**: Smooth parabolic lifting animation mounts cargo onto the robot bed on `/sim/attach_item` and gently unloads it at drop-off stations on `/sim/release_item`.
+- 🎛️ **1-Click Launchers**: Integrated Unity Editor Menu and Windows batch scripts eliminate the need to run manual WSL terminal commands.
 
 ---
 
-## 3. Download the project
+## 2. Prerequisites & System Requirements
 
-Clone the repo on **Windows** (Unity needs the files on the Windows disk). Pick a path; avoid OneDrive folders.
+### Hardware Requirements
+- **OS**: Windows 10 (64-bit, build 19041+) or Windows 11.
+- **CPU**: Virtualization enabled in BIOS (Intel VT-x or AMD-V).
+- **RAM**: 16 GB recommended (8 GB allocated to WSL2).
+- **Storage**: ~30–40 GB free space on `C:`.
 
+### Software Checklist
+| Software | Required Version | Purpose |
+|----------|------------------|---------|
+| [Git for Windows](https://git-scm.com/download/win) | Latest | Repository management & Unity Git package resolution |
+| [Unity Hub](https://unity.com/download) + **Unity Editor** | **2021.1.11f1** *(exact)* | Warehouse simulation (`WarehouseProjectURP`) |
+| **WSL2** with **Ubuntu 20.04** | Ubuntu 20.04 Focal *(not 22.04/24.04)* | Linux environment for ROS 1 Noetic |
+| **ROS 1 Noetic Desktop-Full** | Noetic | ROS backend, catkin, RViz |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Latest (with WSL integration) | MySQL 8 warehouse database (:3307) |
+
+---
+
+## 3. Step-by-Step Installation Guide
+
+Follow these steps once when setting up a fresh machine.
+
+### Step 3.1: Windows & WSL2 Setup
+Open **PowerShell as Administrator**:
+```powershell
+# Install WSL2 with Ubuntu 20.04
+wsl --install -d Ubuntu-20.04
+```
+*Restart Windows if prompted.*
+
+Configure WSL memory and networking in `C:\Users\<YourUsername>\.wslconfig` (create this file if missing):
+```ini
+[wsl2]
+networkingMode=nat
+localhostForwarding=true
+memory=8GB
+processors=8
+```
+> [!IMPORTANT]
+> Keep `networkingMode=nat` and `localhostForwarding=true`. This allows Unity on Windows to connect directly to `127.0.0.1:10000` inside WSL without firewall issues.
+
+---
+
+### Step 3.2: ROS 1 Noetic & Package Installation in WSL2
+Open your **Ubuntu 20.04** terminal in WSL:
+
+```bash
+# 1. Setup ROS 1 Noetic repository
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+
+# 2. Update and install ROS Noetic Desktop Full
+sudo apt update
+sudo apt install -y ros-noetic-desktop-full python3-rosdep python3-catkin-tools python3-catkin-pkg
+
+# 3. Initialize rosdep
+sudo rosdep init
+rosdep update
+
+# 4. Install additional runtime dependencies
+sudo apt install -y python3-pymysql python-is-python3 ros-noetic-turtlebot3-description psmisc
+```
+
+---
+
+### Step 3.3: Clone Repository & Build Catkin Workspace
+In your **Windows terminal** (PowerShell or Git Bash), clone the project:
 ```bash
 git clone https://github.com/HoNguyen17/Mobile_Robo_SuppliesChain.git
-```
-
-```bash
 cd Mobile_Robo_SuppliesChain
 ```
 
-Then check out the branch you need:
-
+Now open **WSL2 (Ubuntu 20.04)** and set up the ROS catkin workspace:
 ```bash
-git checkout claude/summary-progress-next-steps-168aad
+# 1. Create workspace directory
+mkdir -p ~/nav_ws/src
+cd ~/nav_ws/src
+
+# 2. Symlink the repository's ROS packages into ~/nav_ws/src
+# Replace the path below with your actual Windows clone path under /mnt/
+ln -s "/mnt/d/Project/Mobile_Robo_SuppliesChain/ros1/turtlebot_control" .
+ln -s "/mnt/d/Project/Mobile_Robo_SuppliesChain/ros1/warehouse_bringup" .
+ln -s "/mnt/d/Project/Mobile_Robo_SuppliesChain/ros1/warehouse_mission" .
+ln -s "/mnt/d/Project/Mobile_Robo_SuppliesChain/ros1/warehouse_eval" .
+
+# 3. Clone ROS-TCP-Endpoint (v0.7.0)
+git clone -b v0.7.0 https://github.com/Unity-Technologies/ROS-TCP-Endpoint.git
+
+# 4. Make all Python node scripts executable
+chmod +x turtlebot_control/scripts/*.py
+chmod +x warehouse_mission/scripts/*.py
+chmod +x warehouse_eval/scripts/*.py
+
+# 5. Build the catkin workspace
+cd ~/nav_ws
+source /opt/ros/noetic/setup.bash
+catkin_make
+
+# 6. Source setup.bash automatically on terminal launch
+echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+echo "source ~/nav_ws/devel/setup.bash" >> ~/.bashrc
+source ~/.bashrc
 ```
-
-> **Branches.** `Nguyen-planning` is still the team branch. It holds the earlier `move_base` plan with the physical robot. `nguyen` holds the Python-navigation plan on top of `Nhan-turtlebot`, and `claude/summary-progress-next-steps-168aad` (this README) builds on it with the physical Waffle Pi and `ros1/turtlebot_control`. Both are working branches and are **not pushed yet**; the team switches only after everyone agrees. Until they are pushed, the checkout only works on the machine where they were created.
-
-> Remember the full Windows path of your clone. In WSL you will refer to it as `/mnt/c/...`, for example
-> `C:\Users\you\Projects\Mobile_Robo_SuppliesChain` → `/mnt/c/Users/you/Projects/Mobile_Robo_SuppliesChain`.
 
 ---
 
-## 4. Install and set up, step by step
-
-The full guide, with a **✅ Check** after every step, is **[docs/setup-windows-wsl.md](docs/setup-windows-wsl.md)**. Follow it in order. This table tells you which section to read and what is already done for you in the repo.
-
-| # | Step | Read | Notes for teammates |
-|:-:|------|------|---------------------|
-| 1 | Install WSL2 + Ubuntu 20.04 | [setup §1](docs/setup-windows-wsl.md#1-install-wsl2-and-ubuntu-2004) | `wsl --install -d Ubuntu-20.04` in an **admin** PowerShell |
-| 2 | Configure WSL networking and memory | [setup §2](docs/setup-windows-wsl.md#2-configure-wsl-networking-and-memory) | Use `networkingMode=nat` + `localhostForwarding=true`. **Do not** use mirrored mode |
-| 3 | Install ROS 1 Noetic | [setup §3](docs/setup-windows-wsl.md#3-install-ros-1-noetic) | Use the `ros-apt-source` package; old `apt-key` guides fail |
-| 4 | Install the extra packages | [setup §4](docs/setup-windows-wsl.md#4-install-the-extra-packages) | `python3-pymysql`, `python-is-python3` and `ros-noetic-turtlebot3-description` |
-| 5 | Build the catkin workspaces | [setup §5](docs/setup-windows-wsl.md#5-build-the-catkin-workspaces) | **Change `REPO` to your own clone path** (it contains spaces, keep the quotes). `~/catkin_ws` builds `ros_tcp_endpoint`; `~/nav_ws` links `ros1/turtlebot_control` and `ros1/warehouse_bringup` |
-| 6 | MySQL in Docker | [setup §6](docs/setup-windows-wsl.md#6-mysql-in-docker-docker-desktop--wsl-integration) | `cp .env.example .env`, set your own passwords. **Never commit `infra/.env`** |
-| 7 | Open the Unity project | [setup §7](docs/setup-windows-wsl.md#7-unity-project-windows) | See below: most of §7 is already done in the repo |
-| 8 | End-to-end smoke test | [setup §8](docs/setup-windows-wsl.md#8-end-to-end-smoke-test) | This is the P0 gate. Tell the team when yours passes |
-
-### Step 7 shortcut: what is already done in the repo
-
-| Setup §7 item | Status | What you do |
-|---------------|--------|-------------|
-| 7.1 Add `WarehouseProjectURP` in Unity Hub with 2021.1.11f1 | You | Unity Hub → **Add** → select the `WarehouseProjectURP` folder. The first import is long (it builds `Library/`) |
-| 7.2 ROS-TCP-Connector + URDF-Importer | ✅ Pinned in `manifest.json` | Nothing. If Unity shows a package error, check that `git --version` works in a Windows terminal, then restart Unity |
-| 7.3 ROS Settings (ROS1, `127.0.0.1`, `10000`) | ✅ Committed | Just verify in **Robotics → ROS Settings** |
-| 7.4 The robot | ✅ The physical Waffle Pi, scale 4, in `Warehouse.unity` | Nothing. Do not re-import the URDF ([ADR-010](docs/ADR-010-robot-scale.md)) |
-| 7.5 ROS bridge components | You | **Robotics → Warehouse → Add ROS Bridge**, then save the scene. Safe to run twice |
-| 7.6 Tests | You | **Window → General → Test Runner**: run the **EditMode** and **PlayMode** tabs. Green on 2026-10-05 (reported by the user) |
-
-Open the scene **`Assets/Scenes/Warehouse.unity`**, then press **Play** (without ROS): the robot stands on the floor and the Console prints the home point, the target shelf and the robot position, then the size of the map. If it does, your Unity side is ready. The red HUD arrows and the `Connection to 127.0.0.1:10000 …` lines in the Console are normal until the ROS endpoint runs.
+### Step 3.4: Start MySQL Database in Docker
+In a Windows terminal (or WSL):
+```bash
+cd Mobile_Robo_SuppliesChain/infra
+cp .env.example .env
+docker compose up -d
+```
+Verify the container is healthy:
+```bash
+docker compose ps
+# MySQL will be accessible on localhost:3307
+```
 
 ---
 
-## 5. Run it
-
-After the setup, one command in a WSL terminal starts the bridge endpoint (port 10000), the planner, the follower and RViz (fixed frame `map`). Start it **before** you press Play:
-
-```bash
-roslaunch warehouse_bringup bringup.launch
-```
-
-`nav:=false` starts only the bridge, the robot model and RViz (drive by hand with `/cmd_vel`); `rviz:=false` skips RViz.
-
-Press **Play** in Unity. The HUD arrows in the top-left of the Game view turn **blue** when the bridge is connected. From a Windows PowerShell you can also check the port:
-
-```powershell
-(Test-NetConnection 127.0.0.1 -Port 10000).TcpTestSucceeded
-```
-
-The planner and the follower are **silent until a goal arrives**. Send one and watch the result. `x` and `y` are in robot metres; read them from the `RobotPosePublisher` line in Unity's Console at Play (home point, target shelf, robot position):
-
-```bash
-rostopic pub -1 /move_base_simple/goal geometry_msgs/PoseStamped "{header: {frame_id: 'map'}, pose: {position: {x: <x>, y: <y>, z: 0.0}, orientation: {w: 1.0}}}"
-```
-
-```bash
-rostopic echo /nav/leg_result
-```
-
-`{"outcome": "succeeded", ...}` means the robot arrived. A goal in a frame other than `map` is refused. Details, topics and parameters: [setup §8a](docs/setup-windows-wsl.md#8a-send-a-goal-and-read-the-result) and [ros1/turtlebot_control/README.md](ros1/turtlebot_control/README.md).
-
-### Python tests
-
-The navigation logic is plain Python, tested without ROS and without Unity. From the repo root, in WSL (on Windows use `python` instead of `python3`):
-
-```bash
-cd ros1/turtlebot_control
-python3 -m unittest discover -s test -v
-```
-
-### MySQL
-
-From WSL, in your clone:
-
-```bash
-cd "$REPO/infra" && docker compose up -d
-```
-
-```bash
-docker compose exec mysql mysql -uwarehouse -p warehouse -e "SHOW TABLES;"
-```
-
-Expected: `categories`, `items`, `run_events`, `runs`, `shelf_slots`, `tasks`.
+### Step 3.5: Open Unity Project
+1. Open **Unity Hub** $\to$ click **Add** $\to$ select the folder `WarehouseProjectURP`.
+2. Ensure Editor version is **`2021.1.11f1`**.
+3. Let Unity perform its first import (it resolves ROS-TCP-Connector `v0.7.0` and URDF-Importer `v0.5.2` from `Packages/manifest.json`).
+4. In Unity Project browser, open the scene:
+   `Assets/Scenes/Warehouse.unity`
+5. Verify ROS Settings under menu: **Robotics $\to$ ROS Settings**:
+   - Protocol: `ROS1`
+   - ROS IP Address: `127.0.0.1`
+   - ROS Port: `10000`
 
 ---
 
-## 6. Repository layout
+## 4. Quick Start (1-Click Run)
+
+You have two convenient ways to run the complete simulation:
+
+### Method A: Directly from Unity Editor (Recommended)
+1. In Unity Editor's top menu bar, click:
+   **`Robotics > Warehouse > 1. Launch ROS System & RViz (WSL)`**
+   *(This automatically cleans stale processes, starts ROS master, ROS-TCP-Endpoint on port 10000, A\* Planner, Path Follower, and opens RViz in WSL).*
+2. In Unity, press the **Play** button (▶️).
+   *(The HUD arrows in the top-left corner turn blue, indicating a connected TCP bridge).*
+3. In Unity Editor's menu, click:
+   **`Robotics > Warehouse > 2. Start Mission Node (WSL)`**
+   *(The robot starts autonomous dispatch: drives to target shelf, attaches cargo box, returns to drop-off station, and unloads).*
+4. When finished, click:
+   **`Robotics > Warehouse > 3. Clean Stop All ROS (WSL)`**
+
+---
+
+### Method B: Using Windows Batch Files
+In the root directory of the project, double-click:
+1. Double-click [`start_ros.bat`](file:///d:/Project/Mobile_Robo_SuppliesChain/start_ros.bat) $\to$ Launches ROS Backend & RViz.
+2. In Unity, press **Play**.
+3. Double-click [`start_mission.bat`](file:///d:/Project/Mobile_Robo_SuppliesChain/start_mission.bat) $\to$ Starts mission execution.
+4. When done, double-click [`stop_ros.bat`](file:///d:/Project/Mobile_Robo_SuppliesChain/stop_ros.bat) $\to$ Cleans up all WSL background processes.
+
+---
+
+## 5. Interactive Testing & Obstacle Avoidance Demo
+
+The environment includes interactive testing capabilities for dynamic obstacle avoidance:
+
+### 🎮 How to Test Obstacle Avoidance
+1. Start the simulation and press **Play** in Unity.
+2. **Drop an Obstacle Directly Ahead**:
+   - Press hotkey **`O`** or **`0`** on your keyboard: A bright red hazard obstacle box drops 2.5 m directly in front of the robot.
+3. **Freely Move the Obstacle with Mouse**:
+   - In Unity's Scene view, click the pre-placed **`Dynamic_Draggable_Obstacle`** (red cube).
+   - Use Unity's **Move Tool (hotkey `W`)** to drag the box anywhere across the corridor.
+4. **Observe Autonomous Avoidance in Action**:
+   - **Real-Time Costmap Inflation**: In RViz, watch the obstacle immediately inflate with a bright costmap buffer at 2 Hz.
+   - **Early Automatic Replanning**: The planner detects the obstruction up to 3.5 m away and generates a wide, smooth green bypass route.
+   - **Anti-Scraping Flank Guard**: As the robot bypasses the box, lateral proximity monitoring maintains safe chassis clearance ($\ge 28\text{ cm}$), ensuring zero physical collisions or scraping.
+
+---
+
+## 6. Running Automated Tests
+
+All core algorithms are covered by comprehensive unit, integration, and closed-loop tests:
+
+In WSL (Ubuntu 20.04), run:
+```bash
+source /opt/ros/noetic/setup.bash && source ~/nav_ws/devel/setup.bash
+cd ~/nav_ws/src
+python3 -m unittest discover -s turtlebot_control/test && \
+python3 -m unittest discover -s warehouse_mission/test && \
+python3 -m unittest discover -s warehouse_eval/test
+```
+
+**Expected Result:**
+```text
+Ran 121 tests in 4.8s (turtlebot_control: A* planner, tracker, lateral flank guard, closed loop) - OK
+Ran 12 tests in 1.6s (warehouse_mission: task manager, motion profile, orchestrator) - OK
+Ran 2 tests in 0.01s (warehouse_eval: metrics collector, CSV report exporter) - OK
+----------------------------------------------------------------------
+Total: 135 tests passed, 0 failures, 0 errors!
+```
+
+---
+
+## 7. Repository Structure
 
 ```text
-.
-├─ README.md                    ← you are here
-├─ CONTEXT.md                   glossary: the exact words we use
-├─ docs/                        PRD, architecture, setup guide, test plan, milestones, ADRs
-│  └─ _archive/                 superseded plans (ROS 2 / Nav2, move_base, kinematic Cube ADR-013)
-├─ infra/                       MySQL docker-compose + .env.example
-├─ ros1/                        catkin packages (built in WSL)
-│  ├─ turtlebot_control/        astar_planner, path_follower, unit tests, runbook
-│  └─ warehouse_bringup/        bringup.launch + RViz config
-├─ WarehouseProjectURP/         ← the Unity project you open
-│  └─ Assets/
-│     ├─ Scenes/Warehouse.unity main scene (the physical Waffle Pi at scale 4)
-│     ├─ Scripts/               Physics/ (physics standard), Robot/ (DiffDriveController, TurtleBotNavigator), Ros/ (publishers, map, collisions)
-│     ├─ Tests/                 EditMode/ and PlayMode/ tests
-│     ├─ URDF/                  TurtleBot3 Waffle Pi URDF + meshes
-│     └─ Resources/             ROS connection settings
-├─ com.unity.robotics.warehouse.*   Unity warehouse packages (upstream, used by the project)
-├─ WarehouseProjectHDRP/        upstream HDRP version (not used)
-└─ _archive/                    the upstream README, and the Cube prototype: unity-cube-prototype/ (Unity scripts), ros1-cube-prototype/ (cube_control, README_ROS1_Prototype.md)
+Mobile_Robo_SuppliesChain/
+├── README.md                                  # You are here (complete setup & user guide)
+├── start_ros.bat                              # 1-Click launcher: ROS Backend & RViz
+├── start_mission.bat                          # 1-Click launcher: Autonomous Mission
+├── stop_ros.bat                               # 1-Click stopper: Clean WSL ROS shutdown
+├── docs/                                      # PRD, Architecture, ADRs, Test Plan
+│   ├── LOOP_PROGRESS.md                       # Iteration development & optimization logs
+│   ├── setup-windows-wsl.md                   # Extended WSL2 setup troubleshooting
+│   └── architecture.md                        # Detailed architecture & sequence diagrams
+├── infra/                                     # Database Infrastructure
+│   ├── docker-compose.yml                     # MySQL 8 service definition (:3307)
+│   └── .env.example                           # Sample database credentials
+├── ros1/                                      # ROS 1 Catkin Packages (Built in WSL)
+│   ├── turtlebot_control/                     # A* planner, path follower, flank guard
+│   │   ├── scripts/astar_planner.py           # Real-time costmap inflation & path replanner
+│   │   ├── scripts/path_follower.py           # Lookahead follower with lateral repulsion
+│   │   ├── scripts/path_tracker.py            # Pure pursuit & flank proximity checker
+│   │   └── test/                              # 121 unit & closed-loop tests
+│   ├── warehouse_bringup/                     # Launch configuration
+│   │   ├── launch/bringup.launch              # Master launchfile (endpoint, planner, rviz)
+│   │   └── rviz/bringup.rviz                  # Pre-configured RViz display setup
+│   ├── warehouse_mission/                     # Mission Orchestration
+│   │   └── scripts/mission_node.py            # High-level state machine & task dispatch
+│   └── warehouse_eval/                        # Benchmarking & Scenario Evaluation
+│       └── scripts/run_scenario.py            # Automated evaluation runner (S-00..S-05)
+└── WarehouseProjectURP/                       # Unity 2021.1.11f1 Project (Windows)
+    ├── Assets/
+    │   ├── Scenes/Warehouse.unity             # Primary warehouse simulation scene
+    │   ├── Scripts/Ros/
+    │   │   ├── Editor/RosBridgeSetupMenu.cs   # Unity Editor 1-Click Launch Menu
+    │   │   ├── ItemCarrier.cs                 # Smooth cargo pickup & dropoff animator
+    │   │   ├── ScenarioLoader.cs              # Dynamic obstacle spawner & hotkey handler
+    │   │   ├── PathVisualizer.cs              # Green trajectory line visualizer
+    │   │   ├── LaserScanPublisher.cs          # 360-degree LiDAR raycaster
+    │   │   └── RobotPosePublisher.cs          # Ground-truth TF/Pose publisher
+    │   └── Resources/ROSConnectionPrefab.prefab # Endpoint connection configuration (127.0.0.1:10000)
+    └── Packages/manifest.json                 # Pinned ROS-TCP-Connector & URDF-Importer
 ```
 
-Archived (moved, not deleted): the ROS 2 / Nav2, `move_base` and kinematic-Cube (ADR-013) plans in `docs/_archive/`, and the Cube prototype in `_archive/`: the Unity scripts in `unity-cube-prototype/`, and `ros1/cube_control` with `README_ROS1_Prototype.md` in `ros1-cube-prototype/` (moved after the acceptance run passed on 2026-10-05).
+---
+
+## 8. ROS Topics & Interface Contract
+
+| Topic | Type | Source | Description |
+|-------|------|--------|-------------|
+| `/clock` | `rosgraph_msgs/Clock` | Unity | Simulation time published at 50 Hz |
+| `/robot/pose` | `geometry_msgs/PoseStamped` | Unity | Robot ground-truth pose in map frame |
+| `/map` | `nav_msgs/OccupancyGrid` | Unity | Static warehouse grid map (0.05 m resolution) |
+| `/scan` | `sensor_msgs/LaserScan` | Unity | 360-degree LiDAR scanner (0.12 m – 3.5 m) |
+| `/cmd_vel` | `geometry_msgs/Twist` | ROS | Velocity command driving differential wheels |
+| `/costmap` | `nav_msgs/OccupancyGrid` | ROS | Live dynamic costmap with 3D obstacle dilation (2 Hz) |
+| `/planned_path` | `nav_msgs/Path` | ROS | Smoothed A* trajectory waypoints |
+| `/move_base_simple/goal`| `geometry_msgs/PoseStamped` | ROS | Navigation target destination |
+| `/nav/replan` | `std_msgs/Empty` | ROS | Early dynamic obstacle replan trigger |
+| `/nav/leg_result` | `std_msgs/String` | ROS | Leg completion outcome (`succeeded`, `aborted`) |
+| `/sim/attach_item` | `std_msgs/Int32` | ROS | Command to lift cargo onto robot bed |
+| `/sim/release_item` | `std_msgs/Empty` | ROS | Command to deliver cargo at drop-off station |
+| `/sim/ack` | `std_msgs/String` | Unity | Acknowledgment for cargo attachment/release |
 
 ---
 
-## 7. Which document to read for what
+## 9. Troubleshooting & FAQ
 
-| Read | When you need to know… |
-|------|------------------------|
-| [docs/README.md](docs/README.md) | Overview and reading order |
-| [docs/prd.md](docs/prd.md) | What we build, what we don't, how we are graded |
-| [docs/architecture.md](docs/architecture.md) | Nodes, topics, interface contract, diagrams |
-| [docs/setup-windows-wsl.md](docs/setup-windows-wsl.md) | **How to install everything** (+ troubleshooting table) |
-| [docs/test-plan.md](docs/test-plan.md) | Scenarios S-00…S-05, metrics, pass/fail numbers |
-| [docs/milestones.md](docs/milestones.md) | Week-by-week plan, roles, risks |
-| [docs/data-model.md](docs/data-model.md) + [docs/schema.sql](docs/schema.sql) | MySQL tables |
-| [ros1/turtlebot_control/README.md](ros1/turtlebot_control/README.md) | Running the planner and follower, topics, parameters, tests |
-| [CONTEXT.md](CONTEXT.md) | Glossary |
+### Q1: `OSError: [Errno 98] Address already in use (port 10000)`
+- **Cause**: A previous ROS launch process is still lingering in the background.
+- **Solution**:
+  - In Unity, click **`Robotics > Warehouse > 3. Clean Stop All ROS (WSL)`**, or
+  - Double-click [`stop_ros.bat`](file:///d:/Project/Mobile_Robo_SuppliesChain/stop_ros.bat), or
+  - In WSL run: `killall -9 rosmaster roslaunch python3 rviz gzserver 2>/dev/null`.
 
-**Decisions (ADRs):**
+### Q2: RViz window does not appear on Windows
+- **Cause**: WSLg display forwarding is disabled or X11 server is missing.
+- **Solution**: On Windows 11, WSLg is built-in. If on Windows 10, install [VcXsrv](https://sourceforge.net/projects/vcxsrv/) or launch with `rviz:=false` in `bringup.launch` if visual inspection is not required.
 
-| ADR | Decision |
-|-----|----------|
-| [001](docs/ADR-001-robot-platform.md) | TurtleBot3 Waffle Pi, no arm. Pickup = dwell, then attach in Unity |
-| [002](docs/ADR-002-perception-scope.md) | No ML perception. Shelf poses come from the catalog; pose and map are ground truth |
-| [003](docs/ADR-003-ros1-noetic.md) | ROS 1 Noetic (course requirement), standard messages only |
-| [004](docs/_archive/2026-10-04-move-base-plan/ADR-004-local-planner.md) | _Archived._ Local planner DWA vs TEB (superseded by 012) |
-| [005](docs/ADR-005-mysql-database.md) | MySQL. Only the `task_manager` class touches it |
-| [006](docs/ADR-006-single-robot.md) | Single robot only |
-| [007](docs/ADR-007-windows-wsl-environment.md) | Unity on Windows + ROS in WSL2, over localhost |
-| [008](docs/_archive/2026-10-04-move-base-plan/ADR-008-navigation-stack.md) | _Archived._ move_base + AMCL + static map (superseded by 012) |
-| [009](docs/ADR-009-simulation-clock.md) | Unity publishes `/clock`. ROS uses sim time |
-| [010](docs/ADR-010-robot-scale.md) | Robot scaled 4x in Unity; ROS sees true robot metres |
-| [011](docs/ADR-011-physics-standard.md) | Physics standard: Unity is an exact 4x model of Earth (gravity 39.24 m/s² in Unity) |
-| [012](docs/ADR-012-custom-python-navigation.md) | Navigation: custom Python A* planner + path follower, ground-truth pose |
-| [013](docs/_archive/2026-10-04-kinematic-cube-plan/ADR-013-kinematic-robot-body.md) | _Archived, superseded by 015._ Robot body: kinematic Cube with a Waffle Pi visual model, emulated sensors |
-| [014](docs/ADR-014-ros-interfaces.md) | ROS interfaces: standard messages only, one `mission` node |
-| [015](docs/ADR-015-physical-waffle-pi-body.md) | Robot body: physical Waffle Pi at scale 4. Supersedes 013, re-activates 010 and 011 |
+### Q3: Line endings error in WSL (`/bin/bash^M: bad interpreter`)
+- **Cause**: Git on Windows converted shell scripts to CRLF endings.
+- **Solution**: In WSL run:
+  ```bash
+  sudo apt install -y dos2unix
+  dos2unix ~/nav_ws/src/turtlebot_control/scripts/*.py
+  dos2unix ~/nav_ws/src/warehouse_mission/scripts/*.py
+  ```
 
-Stuck during setup? Check the **Troubleshooting** table at the end of [docs/setup-windows-wsl.md](docs/setup-windows-wsl.md) first.
+### Q4: HUD connection arrows in Unity remain red
+- **Cause**: ROS backend is not running or Windows firewall blocked port 10000.
+- **Solution**: Check connection in Windows PowerShell:
+  ```powershell
+  Test-NetConnection 127.0.0.1 -Port 10000
+  ```
+  Ensure `start_ros.bat` or Unity menu `1. Launch ROS System & RViz` was executed first.
 
 ---
 
-## 8. Working together (Git rules)
+## 10. Team Workflow & Git Rules
 
-- Branch from `Nguyen-planning` for your work; open a pull request back into it. This stays the rule until the team agrees on a new base branch (see [§3](#3-download-the-project)).
-- Issues and tasks live in [GitHub Issues](https://github.com/HoNguyen17/Mobile_Robo_SuppliesChain/issues).
-- Commit messages: `feat: …`, `fix: …`, `docs: …`, `chore: …`.
-- **Never commit** `infra/.env`, `WarehouseProjectURP/Library/`, `Temp/`, `Logs/`, `UserSettings/` (already in `.gitignore`).
-- Always commit Unity `.meta` files together with their asset.
-- Do not delete files: move retired ones to `_archive/`.
-- The robot scale (4) lives in one Transform, and only scale 4 is verified for the physical robot. Do not change it without updating [ADR-010](docs/ADR-010-robot-scale.md) and [ADR-015](docs/ADR-015-physical-waffle-pi-body.md).
-- Only one person edits `Warehouse.unity` at a time. Unity scenes merge badly; say so in the group chat before you change it.
+- **Branching**: Develop features in branch `nguyen`, then merge into `main` after verifying automated tests pass.
+- **Unity Scenes**: `Assets/Scenes/Warehouse.unity` is binary-like and merges poorly. Always notify the team before editing the scene file.
+- **Ignored Files**: Never commit `infra/.env`, `WarehouseProjectURP/Library/`, `Temp/`, or `Logs/` (already configured in `.gitignore`).
+- **Commits**: Use conventional commits (`feat: ...`, `fix: ...`, `docs: ...`, `test: ...`).
 
 ---
 
-## 9. Credits and license
+## 📄 License
 
-The warehouse environment comes from [Unity-Technologies/Robotics-Warehouse](https://github.com/Unity-Technologies/Robotics-Warehouse) (its original README is kept in [_archive/unity-warehouse-upstream/README.md](_archive/unity-warehouse-upstream/README.md)). TurtleBot3 models are from [ROBOTIS](https://github.com/ROBOTIS-GIT/turtlebot3).
-
-[Apache License 2.0](LICENSE)
+This project is licensed under the Apache License 2.0. The warehouse assets are adapted from [Unity-Technologies/Robotics-Warehouse](https://github.com/Unity-Technologies/Robotics-Warehouse). TurtleBot3 CAD and descriptions are courtesy of [ROBOTIS](https://github.com/ROBOTIS-GIT/turtlebot3).

@@ -15,6 +15,8 @@ from path_tracker import (
     MAX_ANG,
     STALE,
     PathTracker,
+    check_flank_obstacle,
+    check_frontal_obstacle,
     normalize,
     yaw_from_quaternion,
 )
@@ -196,5 +198,102 @@ class PathTrackerTest(unittest.TestCase):
             sys.setswitchinterval(old_interval)
 
 
+class FrontalObstacleTest(unittest.TestCase):
+    def test_no_obstacle_in_clear_scan(self):
+        # 360 beams, all at 2.0 m
+        ranges = [2.0] * 360
+        res = check_frontal_obstacle(
+            ranges, angle_min=0.0, angle_inc=math.radians(1.0), range_min=0.12, range_max=3.5, stop_dist=0.60
+        )
+        self.assertIsNone(res)
+
+    def test_detects_obstacle_straight_ahead(self):
+        # Beam 0 is straight ahead (0 rad), obstacle at 0.45 m
+        ranges = [2.0] * 360
+        ranges[0] = 0.45
+        res = check_frontal_obstacle(
+            ranges, angle_min=0.0, angle_inc=math.radians(1.0), range_min=0.12, range_max=3.5, stop_dist=0.60
+        )
+        self.assertIsNotNone(res)
+        self.assertAlmostEqual(res, 0.45)
+
+    def test_ignores_obstacle_behind_or_to_far_side(self):
+        ranges = [2.0] * 360
+        ranges[180] = 0.30
+        ranges[90] = 0.45
+        res = check_frontal_obstacle(
+            ranges, angle_min=0.0, angle_inc=math.radians(1.0), range_min=0.12, range_max=3.5, stop_dist=0.60
+        )
+        self.assertIsNone(res)
+
+    def test_two_zone_lookahead_detection(self):
+        ranges = [5.0] * 360
+        ranges[0] = 1.20  # In lookahead zone (0.55m to 1.80m)
+        close = check_frontal_obstacle(
+            ranges, 0.0, math.radians(1.0), 0.12, 5.0, stop_dist=0.55, min_dist=0.18
+        )
+        far = check_frontal_obstacle(
+            ranges, 0.0, math.radians(1.0), 0.12, 5.0, stop_dist=1.80, min_dist=0.55
+        )
+        self.assertIsNone(close)
+        self.assertIsNotNone(far)
+        self.assertAlmostEqual(far, 1.20)
+
+    def test_tracker_arrive_and_custom_final_tol(self):
+        tracker = PathTracker(waypoint_tol=0.3, pose_timeout=0.5, final_tol=0.25)
+        tracker.set_path([(0.0, 0.0), (1.0, 0.0)])
+        cmd = tracker.step(x=0.80, y=0.0, yaw=0.0, pose_age=0.0, max_lin=0.5)
+        self.assertEqual(cmd.status, ARRIVED)
+        self.assertFalse(tracker.active)
+
+        tracker.set_path([(0.0, 0.0), (1.0, 0.0)])
+        self.assertTrue(tracker.active)
+        tracker.arrive()
+        self.assertFalse(tracker.active)
+
+
+class FlankObstacleTest(unittest.TestCase):
+    def test_no_obstacle_in_clear_scan(self):
+        ranges = [5.0] * 360
+        res = check_flank_obstacle(
+            ranges, angle_min=0.0, angle_inc=math.radians(1.0), range_min=0.12, range_max=3.5
+        )
+        self.assertIsNone(res)
+
+    def test_detects_obstacle_on_left_flank(self):
+        # Beam at 90 deg (left flank, y_r > 0) at 0.22 m
+        ranges = [5.0] * 360
+        ranges[90] = 0.22
+        res = check_flank_obstacle(
+            ranges, angle_min=0.0, angle_inc=math.radians(1.0), range_min=0.12, range_max=3.5, side_dist=0.28
+        )
+        self.assertIsNotNone(res)
+        dist, yr = res
+        self.assertAlmostEqual(dist, 0.22, places=2)
+        self.assertGreater(yr, 0.0)
+
+    def test_detects_obstacle_on_right_flank(self):
+        # Beam at 270 deg (-90 deg, right flank, y_r < 0) at 0.24 m
+        ranges = [5.0] * 360
+        ranges[270] = 0.24
+        res = check_flank_obstacle(
+            ranges, angle_min=0.0, angle_inc=math.radians(1.0), range_min=0.12, range_max=3.5, side_dist=0.28
+        )
+        self.assertIsNotNone(res)
+        dist, yr = res
+        self.assertAlmostEqual(dist, 0.24, places=2)
+        self.assertLess(yr, 0.0)
+
+    def test_ignores_obstacle_outside_flank_limits(self):
+        # Obstacle at 90 deg but 0.40 m away (> side_dist 0.28m)
+        ranges = [5.0] * 360
+        ranges[90] = 0.40
+        res = check_flank_obstacle(
+            ranges, angle_min=0.0, angle_inc=math.radians(1.0), range_min=0.12, range_max=3.5, side_dist=0.28
+        )
+        self.assertIsNone(res)
+
+
 if __name__ == "__main__":
     unittest.main()
+

@@ -34,6 +34,9 @@ public static class RosBridgeSetupMenu
         added += AddIfMissing<RobotPosePublisher>(robot);
         added += AddIfMissing<WarehouseMapPublisher>(robot);
         added += AddIfMissing<CollisionReporter>(robot);
+        added += AddIfMissing<ItemCarrier>(robot);
+        added += AddIfMissing<ScenarioLoader>(robot);
+        added += AddIfMissing<PathVisualizer>(robot);
 
         if (Object.FindObjectOfType<ClockPublisher>() == null)
         {
@@ -80,5 +83,45 @@ public static class RosBridgeSetupMenu
         if (go.GetComponent<T>() != null) return 0;
         Undo.AddComponent<T>(go);
         return 1;
+    }
+
+    [MenuItem("Robotics/Warehouse/1. Launch ROS System & RViz (WSL)")]
+    public static void LaunchRosSystem()
+    {
+        System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "wsl.exe",
+            Arguments = "-d Ubuntu-20.04 bash -c \"killall -9 rosmaster roslaunch python3 rviz gzserver 2>/dev/null; sleep 1; source /opt/ros/noetic/setup.bash && source ~/nav_ws/devel/setup.bash && roslaunch warehouse_bringup bringup.launch\"",
+            UseShellExecute = true
+        };
+        System.Diagnostics.Process.Start(psi);
+        UnityEngine.Debug.Log("[ROS LAUNCH] Starting clean ROS System & RViz in WSL...");
+    }
+
+    [MenuItem("Robotics/Warehouse/2. Start Mission Node (WSL)")]
+    public static void StartMissionNode()
+    {
+        System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "wsl.exe",
+            Arguments = "-d Ubuntu-20.04 bash -c \"source /opt/ros/noetic/setup.bash && source ~/nav_ws/devel/setup.bash && python3 ~/nav_ws/src/warehouse_mission/scripts/mission_node.py --scenario S-00\"",
+            UseShellExecute = true
+        };
+        System.Diagnostics.Process.Start(psi);
+        UnityEngine.Debug.Log("[MISSION START] Starting Warehouse Mission Node in WSL...");
+    }
+
+    [MenuItem("Robotics/Warehouse/3. Clean Stop All ROS (WSL)")]
+    public static void StopAllRos()
+    {
+        System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "wsl.exe",
+            Arguments = "-d Ubuntu-20.04 bash -c \"killall -9 rosmaster roslaunch python3 rviz gzserver 2>/dev/null\"",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        System.Diagnostics.Process.Start(psi);
+        UnityEngine.Debug.Log("[ROS STOP] Cleaned up all ROS processes in WSL.");
     }
 }

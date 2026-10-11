@@ -171,6 +171,25 @@ def inflate(grid: Grid, radius: float) -> Grid:
     return Grid(data, w, h, res, grid.ox, grid.oy)
 
 
+def overlay_obstacles(grid: Grid, points: Sequence[Point]) -> Grid:
+    """New grid with the given obstacle (x, y) coordinates marked OCCUPIED.
+
+    Points outside the grid are ignored. If points is empty, the original grid is returned.
+    """
+    if not points:
+        return grid
+    data = list(grid.data)
+    changed = False
+    for px, py in points:
+        idx = cell_index(grid, px, py)
+        if idx >= 0 and data[idx] == 0:
+            data[idx] = OCCUPIED
+            changed = True
+    if not changed:
+        return grid
+    return Grid(data, grid.width, grid.height, grid.res, grid.ox, grid.oy)
+
+
 class InflatedMaps:
     """The inflated versions of one map, each made on first use and kept.
 
