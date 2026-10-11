@@ -1,0 +1,58 @@
+# Scenarios configuration for UC6 Warehouse Robot Evaluation
+# Conforms to docs/test-plan.md §1 & §2
+
+scenarios:
+  S-00:
+    name: "Open room"
+    category: "Standard"
+    leg_timeout_s: 90.0
+    criteria:
+      success_rate: 0.90
+      max_collisions: 0
+      max_path_ratio: 1.3
+
+  S-01:
+    name: "Single box"
+    category: "Standard"
+    leg_timeout_s: 90.0
+    criteria:
+      success_rate: 0.95
+      max_collisions: 0
+      min_clearance_m: 0.15
+      max_path_ratio: 1.5
+
+  S-02:
+    name: "Corridor"
+    category: "Standard"
+    leg_timeout_s: 90.0
+    criteria:
+      success_rate: 0.90
+      max_collisions: 0
+      min_clearance_m: 0.10
+      max_path_ratio: 1.4
+
+  S-03:
+    name: "Dead end"
+    category: "Standard"
+    leg_timeout_s: 120.0
+    criteria:
+      success_rate: 0.85
+      max_collisions: 0
+      min_clearance_m: 0.10
+      min_recoveries_runs: 15
+
+  S-04:
+    name: "Crossing NPC"
+    category: "Standard"
+    leg_timeout_s: 90.0
+    criteria:
+      success_rate: 0.85
+      max_collisions: 1
+
+  S-05:
+    name: "Category speeds"
+    leg_timeout_s: 120.0
+    criteria:
+      success_rate: 0.90
+      max_collisions: 0
+      speed_gap: 0.03

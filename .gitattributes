@@ -1,0 +1,16 @@
+# Let Git decide for everything else. This line must come first: for the same
+# attribute a later line overrides an earlier one.
+* text=auto
+
+# Files that run on Linux (WSL) must keep LF line endings,
+# otherwise a Windows checkout turns them into CRLF and "rosrun" fails with
+# "bad interpreter: python3\r".
+*.py            text eol=lf
+*.sh            text eol=lf
+*.launch        text eol=lf
+*.yaml          text eol=lf
+*.xml           text eol=lf
+CMakeLists.txt  text eol=lf
+
+# Everything in the ROS workspace, including extensions not listed above (.rviz, ...)
+ros1/**         text eol=lf

@@ -1,0 +1,15 @@
+# Category motion profiles for UC6 Warehouse Robot
+# Values are in robot metres and robot m/s.
+profiles:
+  Standard:
+    max_lin: 0.26
+    inflation_radius: 0.35
+    description: "Waffle Pi nominal top speed for standard cargo"
+  Heavy:
+    max_lin: 0.15
+    inflation_radius: 0.35
+    description: "Reduced speed with caution for heavy cargo"
+  Fragile:
+    max_lin: 0.10
+    inflation_radius: 0.50
+    description: "Slow speed with wide safety margin for fragile cargo"

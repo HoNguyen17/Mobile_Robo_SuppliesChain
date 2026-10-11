@@ -1,0 +1,21 @@
+.DS_Store*
+*.swp
+.idea
+**.vsconfig
+*~
+*~~
+# ROS (ros1 packages)
+*.pyc
+__pycache__/
+*.bak
+
+# Local secrets (MySQL passwords)
+infra/.env
+
+# Local tool folders (Claude Code worktrees, session hand-off notes)
+.claude/
+_claude/
+
+# Unity test run logs (local output)
+WarehouseProjectURP/nav_results.txt
+WarehouseProjectURP/test_results.txt

@@ -1,0 +1,277 @@
+{
+  "schema": "archify/architecture-1",
+  "id": "uc6-build-order",
+  "mode": "roadmap",
+  "title": "UC6 Build Order — empty repo to M3",
+  "question": "In what order do I build this from nothing, and what proves each step is done?",
+  "scope": "Sequenced by Phase only (Phase 0–5, docs/milestones.md §2). Milestone (M1/M2/M3) and Stage (A/B/C) are the other two axes and are shown as labels, never as sequence — they are three separate axes and must not be conflated (CONTEXT.md §2).",
+  "sources": [
+    "docs/milestones.md §1 (owner roles), §2 (phase plan), §3 (risk register)",
+    "docs/test-plan.md §2 (scenario matrix), §3 (headless runner), §4 (CSV), §5 (demo)",
+    "docs/prd.md §5 (FR), §6 (NFR), §8 (success metrics)",
+    "docs/architecture.md §2, §3, §4, §5, §6, §7",
+    "docs/data-model.md §5, §6",
+    "docs/schema.sql",
+    "CONTEXT.md §2, §4",
+    "ADR-001 … ADR-007"
+  ],
+  "canvas": { "width": 1240, "height": 1320 },
+  "phases": [
+    { "id": "p0", "label": "Phase 0", "sublabel": "Week 1 · environment verification", "x": 36, "y": 56, "w": 196, "h": 236 },
+    { "id": "p1", "label": "Phase 1", "sublabel": "Weeks 2–3 · M1 tutorial adaptation", "x": 36, "y": 300, "w": 196, "h": 356 },
+    { "id": "p2", "label": "Phase 2", "sublabel": "Weeks 3–4 · M2 static avoidance", "x": 36, "y": 664, "w": 196, "h": 236 },
+    { "id": "p3", "label": "Phase 3", "sublabel": "Weeks 5–6 · M3 dynamic avoidance", "x": 36, "y": 908, "w": 196, "h": 236 },
+    { "id": "p5", "label": "Phase 5", "sublabel": "Week 8 · hardening, evidence, demo", "x": 36, "y": 1152, "w": 196, "h": 124 },
+    { "id": "p4", "label": "Phase 4", "sublabel": "Weeks 6–7 · gated stretch, beyond M3", "x": 740, "y": 1112, "w": 460, "h": 36, "stretch": true }
+  ],
+  "nodes": [
+    {
+      "id": "s1",
+      "seq": 1,
+      "label": "Standardise the environment and pin the distro",
+      "phase": "p0",
+      "milestone": "pre-M1 groundwork",
+      "kind": "main",
+      "x": 260, "y": 70, "w": 420, "h": 92,
+      "card": {
+        "builds": "Ubuntu on every team member's machine (dual-boot expected, WSL2 only as a per-person accommodation whose results do not count toward a gate), then the ROS 2 distro and tutorial commit/tag pinned by reading the tutorial repository itself rather than assuming.",
+        "creates": [
+          "An Ubuntu LTS partition per machine, paired to the pinned ROS 2 distro",
+          "Unity Editor for Linux, running the Unity Robotics Hub tutorial scene",
+          "Status updates recorded into ADR-003 and ADR-007 (status change, not new ADRs)"
+        ],
+        "gate": "Phase 0 exit gate: tutorial repo runs unmodified; ROS 2 distro pinned (ADR-003 finalised); Unity version confirmed; TurtleBot3 Waffle Pi model/plugin availability confirmed.",
+        "scenario": "No scenario yet — Phase 0 is verified by its exit gate alone; the scenario matrix starts at S-00 in Phase 1.",
+        "why_first": "ADR-007 is upstream of every other Phase 0 task: the distro cannot be verified against the tutorial repo until an Ubuntu environment exists.",
+        "cites": ["milestones.md §2 Phase 0", "ADR-007", "ADR-003", "ADR-001"]
+      }
+    },
+    {
+      "id": "s2",
+      "seq": 2,
+      "label": "Stand up the persistence layer",
+      "phase": "p0",
+      "milestone": "pre-M1 groundwork",
+      "kind": "main",
+      "x": 260, "y": 190, "w": 420, "h": 92,
+      "card": {
+        "builds": "MySQL under docker-compose with docs/schema.sql applied on container init, dry-run on every team member's machine.",
+        "creates": [
+          "docker-compose configuration mounting docs/schema.sql into /docker-entrypoint-initdb.d/",
+          "The six tables from docs/schema.sql: categories, items, shelf_slots, tasks, runs, run_events"
+        ],
+        "gate": "Phase 0 exit gate: docker-compose up succeeds with docs/schema.sql applied, on every member's machine.",
+        "scenario": "No scenario yet — verified by the Phase 0 exit gate. The seeded catalog it produces is later shown as step 1 of the grading-day demo (test-plan.md §5).",
+        "why_first": "Phase 1's own exit gate requires the orchestrator skeleton to be operational against a seeded MySQL, so the schema has to exist before the skeleton does.",
+        "cites": ["milestones.md §2 Phase 0", "ADR-005", "data-model.md §1", "docs/schema.sql", "test-plan.md §5 step 1"]
+      }
+    },
+    {
+      "id": "s3",
+      "seq": 3,
+      "label": "Adapt the tutorial scene and fix the bridge contract",
+      "phase": "p1",
+      "milestone": "M1 tutorial adaptation",
+      "kind": "main",
+      "x": 260, "y": 314, "w": 420, "h": 92,
+      "card": {
+        "builds": "The Unity warehouse scene adapted from the Unity Robotics Hub Nav2 + SLAM example, plus the C# side of the bridge and the custom message set the rest of the system references.",
+        "creates": [
+          "Unity warehouse scene with shelf and drop-off poses matching the seeded shelf_slots grid",
+          "Robot Controller (C#), ROS-TCP-Connector configuration",
+          "Item Re-parent / Release Handler (C#) — dwell-then-re-parent, release at drop-off",
+          "warehouse_msgs / warehouse_srvs: PickupEvent, PickupAck, PlaceEvent, PlaceAck, CollisionEvent, ReplanEvent, ClearanceSample, CategoryUpdate, TaskResult, GetNextTask, SetCategory",
+          "The M1 map produced by the SLAM/mapping step, used as the global costmap static_layer"
+        ],
+        "gate": "Contributes to the Phase 1 exit gate (S-00 below). Its own blocking check is the architecture.md §2 [VERIFY]: confirm the tutorial's actual default topic set before the contract is frozen.",
+        "scenario": "S-00 — open room, no obstacles, single robot, Standard category only.",
+        "why_first": "The bridge contract is referenced by every ROS 2 node built afterwards; changing it later invalidates work in all four owner areas.",
+        "cites": ["milestones.md §2 Phase 1", "milestones.md §1 (Unity/Bridge Lead)", "architecture.md §2", "architecture.md §5", "test-plan.md S-00", "ADR-001"]
+      }
+    },
+    {
+      "id": "s4",
+      "seq": 4,
+      "label": "task_manager and mission_orchestrator skeleton",
+      "phase": "p1",
+      "milestone": "M1 tutorial adaptation",
+      "kind": "main",
+      "x": 260, "y": 434, "w": 420, "h": 92,
+      "card": {
+        "builds": "The episode spine: the single database-touching node, and the per-task FSM that drives two legs with a dwell at each end.",
+        "creates": [
+          "task_manager (Python): /task_manager/get_next_task service, the episode-end transaction, and the FR-16 disk-buffer fallback",
+          "mission_orchestrator (Python): shelf leg → dwell → profile → drop-off leg → dwell → report, over /navigate_to_pose",
+          "The seed script (data-model.md §5): three categories rows, a shelf_slots grid, a sample items catalog, a pending tasks queue"
+        ],
+        "gate": "Phase 1 exit gate: S-00 goal success rate ≥ 90% over N=20 and 0 collisions; task_manager / mission_orchestrator skeleton operational against seeded MySQL.",
+        "scenario": "S-00 — open room, no obstacles, single robot, Standard category only.",
+        "why_first": "NFR-03 is cheapest to hold from the first line: exactly one node performs database I/O, so no control-loop node ever acquires a query to remove later.",
+        "cites": ["milestones.md §2 Phase 1", "CONTEXT.md §4", "architecture.md §3", "data-model.md §5", "data-model.md §6", "test-plan.md S-00", "prd.md FR-01, FR-13, FR-16, NFR-03", "ADR-005"]
+      }
+    },
+    {
+      "id": "s5",
+      "seq": 5,
+      "label": "metrics_collector and the headless runner",
+      "phase": "p1",
+      "milestone": "M1 tutorial adaptation",
+      "kind": "main",
+      "x": 260, "y": 554, "w": 420, "h": 92,
+      "card": {
+        "builds": "The measurement path, without which no gate from here on can be evaluated: in-run event accumulation plus the harness that repeats a scenario N≥20 times and exports CSV.",
+        "creates": [
+          "metrics_collector (Python): collision, replan, clearance_sample and goal_outcome events; the per-episode run summary on /task/next_task_result",
+          "Headless runner parameterised by scenario_id and run_count (default 20)",
+          "CSV exporter: <scenario_id>_results.csv (16 columns) and <scenario_id>_summary.csv"
+        ],
+        "gate": "Phase 1 exit gate, measured: S-00 goal success rate ≥ 90% over N=20 with 0 collisions — a number that cannot be produced without this node and this runner.",
+        "scenario": "S-00 — and every scenario after it, since the runner is what makes N≥20 per scenario practical within 8 weeks.",
+        "sequencing_note": "Phase placement inferred, not stated: milestones.md §2 names the Phase 1 exit gate as a numeric rate over N=20, and milestones.md §1 assigns metrics_collector, the headless runner and CSV export to the Integration/Test Lead. The Phase 5 exit gate governs the completed CSV evidence set, not the tool's first build.",
+        "cites": ["milestones.md §1 (Integration/Test Lead)", "milestones.md §2 Phase 1", "test-plan.md §1", "test-plan.md §3", "test-plan.md §4", "prd.md FR-12, FR-20", "data-model.md §6 step 2"]
+      }
+    },
+    {
+      "id": "s6",
+      "seq": 6,
+      "label": "Static obstacle avoidance: costmaps and planner tuning",
+      "phase": "p2",
+      "milestone": "M2 static avoidance",
+      "kind": "main",
+      "x": 260, "y": 678, "w": 420, "h": 92,
+      "card": {
+        "builds": "The first graded capability. Nav2 is configured, never rebuilt: the obstacle layer is enabled for static obstacles, the global planner is tuned for costmap responsiveness, and stock recovery behaviours are left at defaults.",
+        "creates": [
+          "Nav2 YAML parameter layers over the tutorial defaults (no Nav2 source modified)",
+          "global_costmap: static_layer from the M1 map, obstacle_layer from /scan, inflation_layer",
+          "local_costmap: rolling-window obstacle_layer from /scan, inflation_layer",
+          "Unity scenes for the three static scenarios, including a 1.5× footprint corridor and a dead-end branch"
+        ],
+        "gate": "S-01 and S-02: 0 collisions across 20 consecutive runs, min clearance ≥ 0.15 m; S-02 additionally path length ratio ≤ 1.3. S-03: 0 collisions across 20 consecutive runs and goal success rate ≥ 90% over N=20, with recovery resolving the dead end rather than merely avoiding contact.",
+        "scenario": "S-01 static-only · S-02 narrow corridor · S-03 dead-end recovery.",
+        "cites": ["milestones.md §2 Phase 2", "architecture.md §4", "architecture.md §5", "test-plan.md S-01, S-02, S-03", "prd.md FR-03, FR-04, FR-06, NG3", "prd.md §8 (M2 headline)"]
+      }
+    },
+    {
+      "id": "s7",
+      "seq": 7,
+      "label": "Wire the category to the motion profile",
+      "phase": "p2",
+      "milestone": "M2 static avoidance",
+      "kind": "main",
+      "x": 260, "y": 798, "w": 420, "h": 92,
+      "card": {
+        "builds": "motion_profile_node and the parameter path it drives — end to end, even while only the Standard profile is exercised.",
+        "creates": [
+          "motion_profile_node (Python): /mission/active_category subscriber, /motion_profile/set_category service",
+          "Category parameter sets: Standard 0.26 / 2.5 / 0.30, Fragile 0.10 / 2.5 / 0.50, Heavy 0.15 / 1.0 / 0.35 (max_vel_x / acc_lim_x / inflation_radius)",
+          "The fail-safe path: on service failure or timeout, hold Fragile values and log a warning run_event"
+        ],
+        "gate": "Phase 2 exit gate: category profile mechanism wired end-to-end, even with only the Standard profile exercised — alongside the S-01–S-03 numbers above.",
+        "scenario": "S-01–S-03 for the phase gate; the mechanism's own numeric proof is S-06, run in Phase 3.",
+        "framing": "A mechanism reinforcing obstacle avoidance, never a standalone feature (PRD G4). Category is a catalog attribute, never inferred (ADR-002).",
+        "cites": ["milestones.md §2 Phase 2", "architecture.md §6", "prd.md FR-09, NFR-07, G4", "test-plan.md S-06", "ADR-002"]
+      }
+    },
+    {
+      "id": "s8",
+      "seq": 8,
+      "label": "Dynamic avoidance and the ADR-004 benchmark",
+      "phase": "p3",
+      "milestone": "M3 dynamic avoidance",
+      "kind": "main",
+      "x": 260, "y": 922, "w": 420, "h": 92,
+      "card": {
+        "builds": "The graded headline. Scripted NPC obstacles in Unity, the local costmap driving short-horizon avoidance, tightened recovery timeouts to keep replans responsive, and the pre-registered DWB-vs-TEB selection.",
+        "creates": [
+          "Scripted NPC Obstacle Controllers (C#) crossing the path at a fixed interval",
+          "Two local-planner parameter files (DWB and TEB) kept buildable until the benchmark decides",
+          "Costmap obstacle layers extended to LIDAR-observed dynamic obstacles; tuned spin / back-up / wait timeouts",
+          "The replan hook publishing /metrics/replan_event"
+        ],
+        "gate": "S-04: goal success rate ≥ 85% over N=20, ≤ 1 collision per 20 runs, replan count > 0 on at least 1 run in 20. Benchmark criterion, pre-registered: the configuration with the lower collision count over N=20 in S-04 is adopted; on a tie, the higher goal success rate; time-boxed to 2 days, defaulting to DWB if inconclusive.",
+        "scenario": "S-04 — dynamic NPC.",
+        "cites": ["milestones.md §2 Phase 3", "milestones.md §3 (benchmark risk)", "test-plan.md S-04", "ADR-004", "architecture.md §4", "architecture.md §5", "prd.md FR-05, FR-07, FR-17, NFR-02", "prd.md §8 (M3 headline)"]
+      }
+    },
+    {
+      "id": "s9",
+      "seq": 9,
+      "label": "Prove the per-category velocity difference",
+      "phase": "p3",
+      "milestone": "M3 dynamic avoidance (Phase 3 exit)",
+      "kind": "main",
+      "x": 260, "y": 1042, "w": 420, "h": 92,
+      "card": {
+        "builds": "The numeric evidence that the category mechanism measurably changes robot behaviour — a fixed route in an open room, run 20 times per category.",
+        "creates": [
+          "The S-06 fixed-route scene and its three 20-run task batches (60 runs total)",
+          "The cross-run mean-linear-velocity-per-category rollup in the CSV exporter (not a per-run runs column)"
+        ],
+        "gate": "S-06: mean linear velocity per category strictly ordered Fragile < Heavy < Standard, with each pairwise difference ≥ 0.03 m/s. Closes the Phase 3 exit gate together with S-04 and the finalised local planner.",
+        "scenario": "S-06 — per-category profile, ungraded but proves FR-09.",
+        "cites": ["milestones.md §2 Phase 3", "test-plan.md S-06", "test-plan.md §1 (mean linear velocity)", "test-plan.md §4", "prd.md FR-09, G4", "architecture.md §6"]
+      }
+    },
+    {
+      "id": "s10",
+      "seq": 10,
+      "label": "Harden, produce the evidence, rehearse the demo",
+      "phase": "p5",
+      "milestone": "M1–M3 evidence package",
+      "kind": "terminal",
+      "x": 260, "y": 1166, "w": 420, "h": 92,
+      "card": {
+        "builds": "The submission. Stage A alone is sufficient to enter this phase and to ship.",
+        "creates": [
+          "N≥20 CSV-exported runs per required scenario, from the headless runner",
+          "<scenario_id>_results.csv and <scenario_id>_summary.csv for S-00 through S-06",
+          "The 9-step scripted manual demo sequence, plus pre-recorded headless logs as the grading-day fallback",
+          "Finalised documentation and the packaged submission"
+        ],
+        "gate": "Phase 5 exit gate: headless runner has produced N≥20 CSV-exported runs per required scenario; manual demo sequence rehearsed at least twice; documentation finalised; submission packaged. Entry gate: Phase 3 exit met — Stage A is sufficient.",
+        "scenario": "S-00 through S-06, replayed as the evidence set; the live demo runs S-02, S-04 and S-06.",
+        "cites": ["milestones.md §2 Phase 5", "test-plan.md §3", "test-plan.md §4", "test-plan.md §5", "prd.md FR-20, G6, NFR-09"]
+      }
+    },
+    {
+      "id": "s11",
+      "seq": 11,
+      "label": "Stage B / Stage C multi-robot — gated stretch",
+      "phase": "p4",
+      "milestone": "Beyond M3 — never required for a graded milestone",
+      "kind": "stretch",
+      "x": 740, "y": 1166, "w": 460, "h": 92,
+      "card": {
+        "builds": "One independently-navigating second robot (Stage B), then a third (Stage C) — each a full Nav2 stack under its own namespace and TF prefix, entered only if the prior stage's exit gate is met.",
+        "creates": [
+          "Per-robot namespaces /robot1…/robot3 and TF prefixes robot1/…robot3/, with a single shared map frame [VERIFY]",
+          "A resolution of the ROS-TCP-Endpoint question: one endpoint multiplexed, or one endpoint process per robot on incrementing ports (e.g. 10000+n), load-tested before Stage B"
+        ],
+        "gate": "Stage B gate: 2 robots run without TF/namespace conflict across 20 consecutive runs in S-05, and goal success rate ≥ 80% over N=20 for every robot in the stage. Stage C gate: the same with 3 robots, attempted only within remaining Week 7 time. If either gate fails, ship the prior stage.",
+        "scenario": "S-05 — multi-robot, explicitly beyond M3 and gated.",
+        "warning": "This is a terminal branch, not a step on the way to M3. Stage A is the M3 baseline and already satisfies every graded milestone; Phase 4 is attempted only after the Phase 3 exit gate is met, and its failure costs nothing but the stretch. A namespace conflict here is a namespace conflict, never a collision.",
+        "cites": ["milestones.md §2 Phase 4", "ADR-006", "architecture.md §7", "test-plan.md S-05", "prd.md FR-18, FR-19, NFR-08", "CONTEXT.md §2 (Stage axis)", "CONTEXT.md §3 (Namespace / TF prefix)"]
+      }
+    }
+  ],
+  "edges": [
+    { "id": "b1", "from": "s1", "to": "s2", "kind": "seq", "label": "Phase 0 exit gate", "path": [[470,162],[470,190]] },
+    { "id": "b2", "from": "s2", "to": "s3", "kind": "seq", "label": "Phase 0 exit gate met → Phase 1 entry", "path": [[470,282],[470,314]] },
+    { "id": "b3", "from": "s3", "to": "s4", "kind": "seq", "label": "bridge contract frozen", "path": [[470,406],[470,434]] },
+    { "id": "b4", "from": "s4", "to": "s5", "kind": "seq", "label": "episode runs end to end", "path": [[470,526],[470,554]] },
+    { "id": "b5", "from": "s5", "to": "s6", "kind": "seq", "label": "Phase 1 exit gate met (S-00) → Phase 2 entry", "path": [[470,646],[470,678]] },
+    { "id": "b6", "from": "s6", "to": "s7", "kind": "seq", "label": "S-01–S-03 passing", "path": [[470,770],[470,798]] },
+    { "id": "b7", "from": "s7", "to": "s8", "kind": "seq", "label": "Phase 2 exit gate met → Phase 3 entry", "path": [[470,890],[470,922]] },
+    { "id": "b8", "from": "s8", "to": "s9", "kind": "seq", "label": "S-04 passing, local planner finalised", "path": [[470,1014],[470,1042]] },
+    { "id": "b9", "from": "s9", "to": "s10", "kind": "seq", "label": "Phase 3 exit gate met — Stage A is sufficient to ship", "path": [[470,1134],[470,1166]] },
+    { "id": "b10", "from": "s9", "to": "s11", "kind": "stretch", "label": "only if the Phase 3 exit gate is met, and only as time permits (ADR-006)", "path": [[680,1088],[710,1088],[710,1212],[740,1212]] }
+  ],
+  "omitted": [
+    { "item": "Owner-role assignment across the four leads", "why": "An orthogonal axis (who, not when); folded into the cards where it settles sequencing rather than drawn as nodes.", "cites": ["milestones.md §1"] },
+    { "item": "The nine-entry risk register", "why": "Not a build step; the two risks that actually move the order (tutorial/distro drift, benchmark overrun) are carried in the s1 and s8 cards.", "cites": ["milestones.md §3"] },
+    { "item": "YOLOv8n perception prototype", "why": "Gated behind the M3/Stage exit gates, never on the graded path, and not part of any phase exit gate.", "cites": ["prd.md NG1, FR-21", "ADR-002"] },
+    { "item": "Stage B and Stage C as separate nodes", "why": "Collapsed into one terminal gated-stretch node; C is entered only if B's gate passes, and neither is required for a graded milestone.", "cites": ["ADR-006", "milestones.md §2 Phase 4"] },
+    { "item": "Phase 4 as a position in the main sequence", "why": "Phase 4 sits between Phases 3 and 5 on the calendar but is not on the path from nothing to M3; drawn as a branch off the Phase 3 exit gate.", "cites": ["milestones.md §2 Phase 4, Phase 5", "ADR-006"] }
+  ]
+}

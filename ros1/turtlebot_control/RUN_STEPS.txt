@@ -1,0 +1,91 @@
+UC6 integrated run: Unity + ROS (turtlebot_control). Step by step.
+Details and topic tables: ros1/turtlebot_control/README.md
+
+The Unity Test Runner tests (Edit Mode, Play Mode) need NO ROS. Only this integrated run needs it.
+
+------------------------------------------------------------------
+A. ONE-TIME SETUP (WSL, Ubuntu-20.04)
+------------------------------------------------------------------
+Needs ROS Noetic, ros_tcp_endpoint in ~/catkin_ws, and python-is-python3.
+~/catkin_ws is never changed; ~/nav_ws is the workspace for this repo.
+
+  mkdir -p ~/nav_ws/src
+  ln -s "/mnt/c/<path to repo>/ros1/turtlebot_control" ~/nav_ws/src/turtlebot_control
+  ln -s "/mnt/c/<path to repo>/ros1/warehouse_bringup" ~/nav_ws/src/warehouse_bringup
+  cd ~/nav_ws && catkin_make
+
+Rebuild with catkin_make only after you add or rename files. Editing a .py/.launch file
+needs no rebuild (the links point at the repo).
+
+------------------------------------------------------------------
+B. EVERY RUN
+------------------------------------------------------------------
+Every WSL terminal first (catkin_ws BEFORE nav_ws, so nav_ws wins for same-named packages):
+
+  source ~/catkin_ws/devel/setup.bash
+  source ~/nav_ws/devel/setup.bash
+  rospack find warehouse_bringup        # must print .../ros1/warehouse_bringup
+
+Terminal 1 (start BEFORE pressing Play):
+
+  roslaunch warehouse_bringup bringup.launch
+  # nav:=false  -> only the Unity bridge, robot model and RViz (no planner/follower)
+  # rviz:=false -> no RViz
+
+Unity: open the project, open scene Warehouse, press Play.
+  - Console shows "RobotPosePublisher: positions in the ROS map frame": home point, target shelf, robot now.
+  - Console shows "WarehouseMapPublisher: built ... cells".
+  - Console lines "Connection to 127.0.0.1:10000 failed" mean terminal 1 is not running yet.
+  - Pressing Play again restarts the clock; the running leg ends aborted/cancelled, nodes keep running.
+
+Terminal 2 (results):   rostopic echo /nav/leg_result
+Terminal 3 (collisions; must stay silent): rostopic echo /sim/collision
+
+Terminal 4: send goals. The robot does NOT start on the HomePoint. Use the coordinates the
+Unity Console printed (current scene: HomePoint x=6.32 y=5.87, target shelf x=-3.75 y=-3.13).
+
+  # leg 1: go to the HomePoint
+  rostopic pub -1 /move_base_simple/goal geometry_msgs/PoseStamped "{header: {frame_id: 'map'}, pose: {position: {x: 6.32, y: 5.87, z: 0.0}, orientation: {w: 1.0}}}"
+
+  # wait for {"outcome": "succeeded", ...} in terminal 2, then leg 2: the target shelf
+  # (a goal inside a blocked area is moved to the nearest free cell within 2 m)
+  rostopic pub -1 /move_base_simple/goal geometry_msgs/PoseStamped "{header: {frame_id: 'map'}, pose: {position: {x: -3.75, y: -3.13, z: 0.0}, orientation: {w: 1.0}}}"
+
+  # wait for succeeded, then leg 3: back to the HomePoint (same command as leg 1)
+
+One run = leg 2 + leg 3 from the HomePoint. Acceptance = 5 runs in a row, each leg:
+  - /nav/leg_result = {"outcome": "succeeded", "reason": ""}
+  - robot stops within 0.15 m of the goal
+  - nothing on /sim/collision, robot does not tip
+
+------------------------------------------------------------------
+C. USEFUL COMMANDS
+------------------------------------------------------------------
+  rostopic pub -1 /nav/cancel std_msgs/Empty "{}"           # cancel the running leg -> aborted/cancelled
+  rosparam set /nav/max_lin 0.15                            # speed limit in m/s (default 0.26), read every step
+  rosparam set /nav/inflation_radius 0.35                   # obstacle margin in m (default 0.35), read at each plan
+  rostopic echo /robot/pose                                 # ground-truth pose (frame map, sim time)
+  rostopic hz /map                                          # raw map, about 1 Hz
+  rostopic pub -r 10 /cmd_vel geometry_msgs/Twist "{linear: {x: 0.1}}"   # drive by hand (Ctrl+C to stop, then send zeros)
+  rostopic pub -1 /cmd_vel geometry_msgs/Twist "{}"
+
+leg_result reasons: "" (succeeded), "no_path" (no goal route, bad frame, NaN, no map/pose, pose older than 1 s),
+"cancelled" (cancel command, or Unity restarted its clock).
+
+------------------------------------------------------------------
+D. IF NOTHING MOVES
+------------------------------------------------------------------
+  - The nodes are silent until a goal arrives. Send a goal (step B, terminal 4).
+  - Goal frame_id must be 'map' (or empty). Another frame is refused (no_path).
+  - "Waiting for Unity's /clock": press Play in Unity.
+  - rostopic list | grep -E "clock|robot/pose|map|cmd_vel": all four must exist.
+  - "python: No such file" from ros_tcp_endpoint: sudo apt install python-is-python3.
+  - rospack find warehouse_bringup points to ~/catkin_ws/src/warehouse/...: wrong source order, redo the two source lines in step B.
+
+------------------------------------------------------------------
+E. TESTS WITHOUT UNITY
+------------------------------------------------------------------
+Python unit tests (109), Windows or WSL, no ROS needed:
+
+  cd ros1/turtlebot_control
+  python -m unittest discover -s test -v          # python3 in WSL
