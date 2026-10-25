@@ -29,6 +29,7 @@ public class ScenarioLoader : MonoBehaviour
     {
         drive = GetComponent<DiffDriveController>();
         ros = ROSConnection.GetOrCreateInstance();
+        try { ros.RegisterPublisher<StringMsg>(ackTopic); } catch {}
         ros.Subscribe<StringMsg>(resetTopic, OnResetScenario);
 
         // Pre-place a non-static, draggable obstacle in the main warehouse aisle for easy mouse-dragging
@@ -172,20 +173,67 @@ public class ScenarioLoader : MonoBehaviour
 
     private void ResetRobotPose()
     {
+        if (drive == null)
+        {
+            drive = GetComponent<DiffDriveController>();
+        }
+
         if (drive != null)
         {
-            drive.SetCommand(0f, 0f);
+            drive.Stop();
         }
 
         transform.position = defaultStartUnityPos;
         transform.rotation = Quaternion.Euler(defaultStartUnityEuler);
 
-        var ab = GetComponent<ArticulationBody>();
-        if (ab != null)
+        ArticulationBody rootAb = null;
+        if (drive != null && drive.BaseBody != null)
         {
-            ab.velocity = Vector3.zero;
-            ab.angularVelocity = Vector3.zero;
-            ab.TeleportRoot(defaultStartUnityPos, Quaternion.Euler(defaultStartUnityEuler));
+            rootAb = drive.BaseBody.GetComponent<ArticulationBody>();
+        }
+
+        if (rootAb == null)
+        {
+            Transform link = transform.Find("base_footprint/base_link") ?? transform.Find("base_link");
+            if (link != null)
+            {
+                rootAb = link.GetComponent<ArticulationBody>();
+            }
+        }
+
+        if (rootAb == null)
+        {
+            foreach (ArticulationBody body in GetComponentsInChildren<ArticulationBody>())
+            {
+                Transform parent = body.transform.parent;
+                if (parent == null || parent.GetComponentInParent<ArticulationBody>() == null)
+                {
+                    rootAb = body;
+                    break;
+                }
+            }
+        }
+
+        if (rootAb != null)
+        {
+            rootAb.velocity = Vector3.zero;
+            rootAb.angularVelocity = Vector3.zero;
+            rootAb.TeleportRoot(defaultStartUnityPos, Quaternion.Euler(defaultStartUnityEuler));
+
+            foreach (ArticulationBody body in GetComponentsInChildren<ArticulationBody>())
+            {
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+        }
+        else
+        {
+            var rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
         }
     }
 
