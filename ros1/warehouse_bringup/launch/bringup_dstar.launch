@@ -1,0 +1,28 @@
+<!--
+  ROS side of the UC6 warehouse robot with D* Lite planner.
+    roslaunch warehouse_bringup bringup_dstar.launch
+    roslaunch warehouse_bringup bringup_dstar.launch rviz:=false
+-->
+<launch>
+  <arg name="tcp_ip"   default="0.0.0.0" doc="Endpoint listen address. 0.0.0.0 so Windows can reach it via WSL localhost forwarding"/>
+  <arg name="tcp_port" default="10000"/>
+  <arg name="model"    default="waffle_pi" doc="TurtleBot3 model, matches the URDF imported into Unity"/>
+  <arg name="rviz"     default="true"/>
+
+  <!-- D* Lite parameter overrides matching ab_batch.py -->
+  <param name="/dstar_planner/filter_static_hits" value="true"/>
+  <param name="/dstar_planner/blocked_use_plan_radius" value="true"/>
+  <param name="/dstar_planner/verify_costmap" value="false"/>
+
+  <!-- Include base bringup with default navigation disabled -->
+  <include file="$(find warehouse_bringup)/launch/bringup.launch">
+    <arg name="tcp_ip"   value="$(arg tcp_ip)"/>
+    <arg name="tcp_port" value="$(arg tcp_port)"/>
+    <arg name="model"    value="$(arg model)"/>
+    <arg name="rviz"     value="$(arg rviz)"/>
+    <arg name="nav"      value="false"/>
+  </include>
+
+  <!-- Include D* Lite navigation -->
+  <include file="$(find turtlebot_control)/launch/navigation_dstar.launch"/>
+</launch>

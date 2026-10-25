@@ -1,0 +1,26 @@
+<!--
+  Navigation nodes using D* Lite planner: dstar_planner and path_follower.
+
+  How to start:
+    1. Start bringup with navigation disabled:
+       roslaunch warehouse_bringup bringup.launch nav:=false
+    2. Start this launch file:
+       roslaunch turtlebot_control navigation_dstar.launch
+-->
+<launch>
+  <arg name="snap_distance"    default="2.0"  doc="How far a blocked start or goal may be moved to a free cell (m)"/>
+  <arg name="max_lin"          default="0.26" doc="Speed limit (m/s): the Waffle Pi's top speed"/>
+  <arg name="inflation_radius" default="0.35" doc="The robot centre stays this far from every obstacle (m). The footprint reaches 0.257 m"/>
+  <arg name="print_map"        default="false" doc="Draw each plan as text in the log (only for small maps)"/>
+
+  <param name="/use_sim_time" value="true"/>
+  <param name="/nav/max_lin" value="$(arg max_lin)"/>
+  <param name="/nav/inflation_radius" value="$(arg inflation_radius)"/>
+
+  <node pkg="turtlebot_control" type="dstar_planner.py" name="dstar_planner" output="screen" respawn="true">
+    <param name="snap_distance" value="$(arg snap_distance)"/>
+    <param name="print_map" value="$(arg print_map)"/>
+  </node>
+
+  <node pkg="turtlebot_control" type="path_follower.py" name="path_follower" output="screen" respawn="true"/>
+</launch>
