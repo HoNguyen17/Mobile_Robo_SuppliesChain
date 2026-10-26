@@ -338,6 +338,26 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument("--stop", action="store_true", default=False, help="Stop a running batch")
     parser.add_argument("--order", default="astar,dstar", help="Execution order for planners (default: astar,dstar)")
+    parser.add_argument(
+        "--dstar-filter-static",
+        type=str.lower,
+        choices=["true", "false"],
+        default="true",
+        help="Whether D* stack filters static obstacle hits (default: true)",
+    )
+    parser.add_argument(
+        "--dstar-trigger-debug",
+        type=str.lower,
+        choices=["true", "false"],
+        default="false",
+        help="Whether D* stack logs TRIGGER_DEBUG on early replan (default: false)",
+    )
+    parser.add_argument(
+        "--dstar-obstacle-memory-s",
+        type=float,
+        default=6.0,
+        help="Obstacle memory time in seconds for D* stack (default: 6.0)",
+    )
     return parser.parse_args(argv)
 
 
@@ -616,12 +636,19 @@ def write_handoff(
         handoff_path = os.path.join(session_dir, "handoff.txt")
 
         # 1. Header section
+        cli_args_dict = dict(vars(args))
+        if getattr(args, "dstar_filter_static", "true").lower() == "true":
+            cli_args_dict.pop("dstar_filter_static", None)
+        if getattr(args, "dstar_trigger_debug", "false").lower() == "false":
+            cli_args_dict.pop("dstar_trigger_debug", None)
+        if getattr(args, "dstar_obstacle_memory_s", 6.0) == 6.0:
+            cli_args_dict.pop("dstar_obstacle_memory_s", None)
         header_text = (
             "===== header =====\n"
             f"Time: {datetime.datetime.now().isoformat()}\n"
             f"Start Time: {start_time}\n"
             f"Git Commit: {runner.git_commit_hash()}\n"
-            f"CLI Args: {vars(args)}\n\n"
+            f"CLI Args: {cli_args_dict}\n\n"
         )
 
         # 2. batch.log section in full
@@ -741,7 +768,17 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
     # Prepare session dir
     batch_start_iso = datetime.datetime.now().isoformat()
     now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    dstar_filter_static = (getattr(args, "dstar_filter_static", "true").lower() == "true")
+    dstar_trigger_debug = (getattr(args, "dstar_trigger_debug", "false").lower() == "true")
+    dstar_obstacle_memory_s = float(getattr(args, "dstar_obstacle_memory_s", 6.0))
     session_name = f"dry_{now_str}" if args.dry else now_str
+    if not dstar_filter_static:
+        session_name += "_fsoff"
+    if dstar_obstacle_memory_s != 6.0:
+        mem_str = str(dstar_obstacle_memory_s).replace(".", "p")
+        session_name += f"_mem{mem_str}"
+    if dstar_trigger_debug:
+        session_name += "_tdbg"
     session_dir = os.path.join(out_dir, session_name)
     os.makedirs(session_dir, exist_ok=True)
 
@@ -755,6 +792,12 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
 
     logger = TeeLogger(os.path.join(session_dir, "batch.log"))
     logger.log(f"=== A/B Benchmark Batch Started at {batch_start_iso} ===")
+    if not dstar_filter_static:
+        logger.log("D* filter_static_hits: False (--dstar-filter-static false)")
+    if dstar_obstacle_memory_s != 6.0:
+        logger.log(f"D* obstacle_memory_s: {dstar_obstacle_memory_s} (--dstar-obstacle-memory-s {dstar_obstacle_memory_s})")
+    if dstar_trigger_debug:
+        logger.log("D* trigger_debug: True (--dstar-trigger-debug true)")
     logger.log(f"Session directory: {session_dir}")
     logger.log(f"Output directory:  {out_dir}")
 
@@ -897,9 +940,11 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
             # 4. dstar only: configure rosparam and start navigation_dstar.launch
             if planner == "dstar":
                 logger.log("Configuring D* Lite rosparams...")
-                runner.rosparam_set("/dstar_planner/filter_static_hits", True)
+                runner.rosparam_set("/dstar_planner/filter_static_hits", dstar_filter_static)
                 runner.rosparam_set("/dstar_planner/blocked_use_plan_radius", True)
                 runner.rosparam_set("/dstar_planner/verify_costmap", False)
+                runner.rosparam_set("/dstar_planner/trigger_debug", dstar_trigger_debug)
+                runner.rosparam_set("/dstar_planner/obstacle_memory_s", dstar_obstacle_memory_s)
 
                 dstar_cmd = ["roslaunch", "turtlebot_control", "navigation_dstar.launch"]
                 logger.log(f"Launching D* navigation: {' '.join(dstar_cmd)}")
@@ -943,12 +988,18 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
                     p1 = runner.rosparam_get("/dstar_planner/filter_static_hits")
                     p2 = runner.rosparam_get("/dstar_planner/blocked_use_plan_radius")
                     p3 = runner.rosparam_get("/dstar_planner/verify_costmap")
-                    if p1 is not True:
-                        missing.append(f"param /dstar_planner/filter_static_hits={p1} (expected True)")
+                    p4 = runner.rosparam_get("/dstar_planner/trigger_debug")
+                    p5 = runner.rosparam_get("/dstar_planner/obstacle_memory_s")
+                    if p1 is not dstar_filter_static:
+                        missing.append(f"param /dstar_planner/filter_static_hits={p1} (expected {dstar_filter_static})")
                     if p2 is not True:
                         missing.append(f"param /dstar_planner/blocked_use_plan_radius={p2} (expected True)")
                     if p3 is not False:
                         missing.append(f"param /dstar_planner/verify_costmap={p3} (expected False)")
+                    if p4 is not dstar_trigger_debug:
+                        missing.append(f"param /dstar_planner/trigger_debug={p4} (expected {dstar_trigger_debug})")
+                    if p5 != dstar_obstacle_memory_s:
+                        missing.append(f"param /dstar_planner/obstacle_memory_s={p5} (expected {dstar_obstacle_memory_s})")
                     if not missing:
                         verified = True
                         break
@@ -1060,6 +1111,8 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
                     "/dstar_planner/filter_static_hits": runner.rosparam_get("/dstar_planner/filter_static_hits"),
                     "/dstar_planner/blocked_use_plan_radius": runner.rosparam_get("/dstar_planner/blocked_use_plan_radius"),
                     "/dstar_planner/verify_costmap": runner.rosparam_get("/dstar_planner/verify_costmap"),
+                    "/dstar_planner/trigger_debug": runner.rosparam_get("/dstar_planner/trigger_debug"),
+                    "/dstar_planner/obstacle_memory_s": runner.rosparam_get("/dstar_planner/obstacle_memory_s"),
                 }
             nav_max_lin = runner.rosparam_get("/nav/max_lin")
             nav_inflation_radius = runner.rosparam_get("/nav/inflation_radius")
@@ -1085,6 +1138,14 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
             csv_path = os.path.join(session_dir, f"{planner}_runs.csv")
             summary_info = parse_csv_summary(csv_path)
 
+            cli_args_dict = dict(vars(args))
+            if dstar_filter_static:
+                cli_args_dict.pop("dstar_filter_static", None)
+            if not dstar_trigger_debug:
+                cli_args_dict.pop("dstar_trigger_debug", None)
+            if dstar_obstacle_memory_s == 6.0:
+                cli_args_dict.pop("dstar_obstacle_memory_s", None)
+
             meta = {
                 "git_commit": batch_git_commit,
                 "git_status": batch_git_status,
@@ -1093,7 +1154,7 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
                 "planner": planner,
                 "effective_repeats": repeats,
                 "rviz": args.rviz,
-                "cli_args": vars(args),
+                "cli_args": cli_args_dict,
                 "rosparam_values": rosparam_values,
                 "nav_max_lin": nav_max_lin,
                 "nav_inflation_radius": nav_inflation_radius,
@@ -1103,6 +1164,12 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
                 "ab_run_exit_code": ab_exit_code,
                 "respawn_count": respawns,
             }
+            if planner == "dstar" and not dstar_filter_static:
+                meta["dstar_filter_static"] = False
+            if planner == "dstar" and dstar_trigger_debug:
+                meta["dstar_trigger_debug"] = True
+            if planner == "dstar" and dstar_obstacle_memory_s != 6.0:
+                meta["dstar_obstacle_memory_s"] = dstar_obstacle_memory_s
             meta_path = os.path.join(session_dir, f"meta_{planner}.json")
             with open(meta_path, "w", encoding="utf-8") as f_meta:
                 json.dump(meta, f_meta, indent=2)

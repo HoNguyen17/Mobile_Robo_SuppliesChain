@@ -1244,6 +1244,290 @@ class TestAbBatchOrchestrator(unittest.TestCase):
 
             self.assertIn("Planner time/run:", log_text)
 
+    def test_dstar_filter_static_default_unchanged(self):
+        """Part 2: Default --dstar-filter-static is true and preserves byte-for-byte outputs."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--repeats", "2", "--out", tmpdir])
+            self.assertEqual(args.dstar_filter_static, "true")
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            # 1. Roparam filter_static_hits must be True
+            self.assertIn("rosparam_set: /dstar_planner/filter_static_hits=True", fake.timeline)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/filter_static_hits"), True)
+
+            # 2. Session dir must NOT have _fsoff suffix
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            self.assertEqual(len(session_dirs), 1)
+            self.assertFalse(session_dirs[0].endswith("_fsoff"))
+
+            # 3. batch.log first lines must NOT contain _fsoff or dstar-filter-static false notice
+            batch_log = os.path.join(tmpdir, session_dirs[0], "batch.log")
+            with open(batch_log, "r", encoding="utf-8") as f:
+                log_text = f.read()
+            self.assertNotIn("dstar_filter_static", log_text.lower())
+            self.assertNotIn("_fsoff", log_text)
+
+            # 4. meta_dstar.json must NOT contain dstar_filter_static field
+            meta_path = os.path.join(tmpdir, session_dirs[0], "meta_dstar.json")
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+            self.assertNotIn("dstar_filter_static", meta)
+            self.assertNotIn("dstar_filter_static", meta.get("cli_args", {}))
+
+    def test_dstar_filter_static_false_propagates(self):
+        """Part 2: --dstar-filter-static false propagates filter_static_hits=False to D* stack."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--dstar-filter-static", "false", "--repeats", "1", "--out", tmpdir])
+            self.assertEqual(args.dstar_filter_static, "false")
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            # Must have set filter_static_hits to False
+            self.assertIn("rosparam_set: /dstar_planner/filter_static_hits=False", fake.timeline)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/filter_static_hits"), False)
+            # Other parameters must remain identical
+            self.assertEqual(fake.rosparams.get("/dstar_planner/blocked_use_plan_radius"), True)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/verify_costmap"), False)
+
+    def test_dstar_filter_static_meta_field(self):
+        """Part 2: meta_dstar.json contains dstar_filter_static=False when option is false."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "both", "--dstar-filter-static", "false", "--repeats", "1", "--out", tmpdir])
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            session_dir = os.path.join(tmpdir, session_dirs[0])
+
+            # meta_dstar.json must have dstar_filter_static: false
+            meta_dstar_path = os.path.join(session_dir, "meta_dstar.json")
+            with open(meta_dstar_path, "r", encoding="utf-8") as f:
+                meta_dstar = json.load(f)
+            self.assertIn("dstar_filter_static", meta_dstar)
+            self.assertEqual(meta_dstar["dstar_filter_static"], False)
+
+            # meta_astar.json must NOT have dstar_filter_static
+            meta_astar_path = os.path.join(session_dir, "meta_astar.json")
+            with open(meta_astar_path, "r", encoding="utf-8") as f:
+                meta_astar = json.load(f)
+            self.assertNotIn("dstar_filter_static", meta_astar)
+
+    def test_dstar_filter_static_folder_suffix_and_log(self):
+        """Part 2: Session folder gets _fsoff suffix and batch.log first lines state setting."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--dstar-filter-static", "false", "--repeats", "1", "--out", tmpdir])
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            self.assertEqual(len(session_dirs), 1)
+            session_dir = session_dirs[0]
+            self.assertTrue(session_dir.endswith("_fsoff"), f"Expected folder ending with _fsoff, got {session_dir}")
+
+            # Verify batch.log first lines state the setting
+            batch_log = os.path.join(tmpdir, session_dir, "batch.log")
+            with open(batch_log, "r", encoding="utf-8") as f:
+                log_lines = [line.strip() for line in f.readlines()[:5]]
+
+            # Setting must appear in first lines
+            matched = any("D* filter_static_hits: False" in line for line in log_lines)
+            self.assertTrue(matched, f"Setting not found in first lines of batch.log: {log_lines}")
+
+    def test_dstar_trigger_debug_default_unchanged(self):
+        """Part 3: Default --dstar-trigger-debug is false and preserves byte-for-byte outputs."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--repeats", "2", "--out", tmpdir])
+            self.assertEqual(args.dstar_trigger_debug, "false")
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            # 1. Roparam trigger_debug must be False
+            self.assertIn("rosparam_set: /dstar_planner/trigger_debug=False", fake.timeline)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/trigger_debug"), False)
+
+            # 2. Session dir must NOT have _tdbg suffix
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            self.assertEqual(len(session_dirs), 1)
+            self.assertFalse(session_dirs[0].endswith("_tdbg"))
+
+            # 3. batch.log first lines must NOT contain _tdbg or trigger_debug: True
+            batch_log = os.path.join(tmpdir, session_dirs[0], "batch.log")
+            with open(batch_log, "r", encoding="utf-8") as f:
+                log_text = f.read()
+            self.assertNotIn("trigger_debug: true", log_text.lower())
+            self.assertNotIn("_tdbg", log_text)
+
+            # 4. meta_dstar.json must NOT contain dstar_trigger_debug field
+            meta_path = os.path.join(tmpdir, session_dirs[0], "meta_dstar.json")
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+            self.assertNotIn("dstar_trigger_debug", meta)
+            self.assertNotIn("dstar_trigger_debug", meta.get("cli_args", {}))
+
+    def test_dstar_trigger_debug_true_propagates(self):
+        """Part 3: --dstar-trigger-debug true propagates trigger_debug=True to D* stack."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--dstar-trigger-debug", "true", "--repeats", "1", "--out", tmpdir])
+            self.assertEqual(args.dstar_trigger_debug, "true")
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            # Must have set trigger_debug to True
+            self.assertIn("rosparam_set: /dstar_planner/trigger_debug=True", fake.timeline)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/trigger_debug"), True)
+            # Other parameters must remain identical
+            self.assertEqual(fake.rosparams.get("/dstar_planner/filter_static_hits"), True)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/blocked_use_plan_radius"), True)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/verify_costmap"), False)
+
+    def test_dstar_trigger_debug_meta_field(self):
+        """Part 3: meta_dstar.json contains dstar_trigger_debug=True when option is true."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "both", "--dstar-trigger-debug", "true", "--repeats", "1", "--out", tmpdir])
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            session_dir = os.path.join(tmpdir, session_dirs[0])
+
+            # meta_dstar.json must have dstar_trigger_debug: true
+            meta_dstar_path = os.path.join(session_dir, "meta_dstar.json")
+            with open(meta_dstar_path, "r", encoding="utf-8") as f:
+                meta_dstar = json.load(f)
+            self.assertIn("dstar_trigger_debug", meta_dstar)
+            self.assertEqual(meta_dstar["dstar_trigger_debug"], True)
+
+            # meta_astar.json must NOT have dstar_trigger_debug
+            meta_astar_path = os.path.join(session_dir, "meta_astar.json")
+            with open(meta_astar_path, "r", encoding="utf-8") as f:
+                meta_astar = json.load(f)
+            self.assertNotIn("dstar_trigger_debug", meta_astar)
+
+    def test_dstar_trigger_debug_folder_suffix_and_log(self):
+        """Part 3: Session folder gets _tdbg suffix and batch.log first lines state setting."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--dstar-trigger-debug", "true", "--repeats", "1", "--out", tmpdir])
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            self.assertEqual(len(session_dirs), 1)
+            session_dir = session_dirs[0]
+            self.assertTrue(session_dir.endswith("_tdbg"), f"Expected folder ending with _tdbg, got {session_dir}")
+
+            # Verify batch.log first lines state the setting
+            batch_log = os.path.join(tmpdir, session_dir, "batch.log")
+            with open(batch_log, "r", encoding="utf-8") as f:
+                log_lines = [line.strip() for line in f.readlines()[:5]]
+
+            # Setting must appear in first lines
+            matched = any("D* trigger_debug: True" in line for line in log_lines)
+            self.assertTrue(matched, f"Setting not found in first lines of batch.log: {log_lines}")
+
+    def test_dstar_obstacle_memory_s_default_unchanged(self):
+        """Default --dstar-obstacle-memory-s is 6.0 and preserves byte-for-byte outputs."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--repeats", "2", "--out", tmpdir])
+            self.assertEqual(args.dstar_obstacle_memory_s, 6.0)
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            # 1. Rosparam obstacle_memory_s must be 6.0
+            self.assertIn("rosparam_set: /dstar_planner/obstacle_memory_s=6.0", fake.timeline)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/obstacle_memory_s"), 6.0)
+
+            # 2. Session dir must NOT have _mem suffix
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            self.assertEqual(len(session_dirs), 1)
+            self.assertNotIn("_mem", session_dirs[0])
+
+            # 3. batch.log first lines must NOT contain obstacle_memory_s
+            batch_log = os.path.join(tmpdir, session_dirs[0], "batch.log")
+            with open(batch_log, "r", encoding="utf-8") as f:
+                log_text = f.read()
+            self.assertNotIn("obstacle_memory_s:", log_text.lower())
+            self.assertNotIn("_mem", log_text)
+
+            # 4. meta_dstar.json must NOT contain dstar_obstacle_memory_s field
+            meta_path = os.path.join(tmpdir, session_dirs[0], "meta_dstar.json")
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+            self.assertNotIn("dstar_obstacle_memory_s", meta)
+            self.assertNotIn("dstar_obstacle_memory_s", meta.get("cli_args", {}))
+
+    def test_dstar_obstacle_memory_s_propagates(self):
+        """--dstar-obstacle-memory-s 2.0 propagates obstacle_memory_s=2.0 to D* stack."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--dstar-obstacle-memory-s", "2.0", "--repeats", "1", "--out", tmpdir])
+            self.assertEqual(args.dstar_obstacle_memory_s, 2.0)
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            # Must have set obstacle_memory_s to 2.0
+            self.assertIn("rosparam_set: /dstar_planner/obstacle_memory_s=2.0", fake.timeline)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/obstacle_memory_s"), 2.0)
+            # Other parameters must remain identical
+            self.assertEqual(fake.rosparams.get("/dstar_planner/filter_static_hits"), True)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/blocked_use_plan_radius"), True)
+            self.assertEqual(fake.rosparams.get("/dstar_planner/verify_costmap"), False)
+
+    def test_dstar_obstacle_memory_s_meta_field(self):
+        """meta_dstar.json contains dstar_obstacle_memory_s=2.0 when option is non-default."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "both", "--dstar-obstacle-memory-s", "2.0", "--repeats", "1", "--out", tmpdir])
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            session_dir = os.path.join(tmpdir, session_dirs[0])
+
+            # meta_dstar.json must have dstar_obstacle_memory_s: 2.0
+            meta_dstar_path = os.path.join(session_dir, "meta_dstar.json")
+            with open(meta_dstar_path, "r", encoding="utf-8") as f:
+                meta_dstar = json.load(f)
+            self.assertIn("dstar_obstacle_memory_s", meta_dstar)
+            self.assertEqual(meta_dstar["dstar_obstacle_memory_s"], 2.0)
+
+            # meta_astar.json must NOT have dstar_obstacle_memory_s
+            meta_astar_path = os.path.join(session_dir, "meta_astar.json")
+            with open(meta_astar_path, "r", encoding="utf-8") as f:
+                meta_astar = json.load(f)
+            self.assertNotIn("dstar_obstacle_memory_s", meta_astar)
+
+    def test_dstar_obstacle_memory_s_folder_suffix_and_log(self):
+        """Session folder gets _mem2p0 suffix and batch.log first lines state setting."""
+        fake = FakeRunner()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = ab_batch.parse_args(["--planner", "dstar", "--dstar-obstacle-memory-s", "2.0", "--repeats", "1", "--out", tmpdir])
+            ret = ab_batch.run_batch(args, runner=fake)
+            self.assertEqual(ret, 0)
+
+            session_dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
+            self.assertEqual(len(session_dirs), 1)
+            session_dir = session_dirs[0]
+            self.assertTrue(session_dir.endswith("_mem2p0"), f"Expected folder ending with _mem2p0, got {session_dir}")
+
+            # Verify batch.log first lines state the setting
+            batch_log = os.path.join(tmpdir, session_dir, "batch.log")
+            with open(batch_log, "r", encoding="utf-8") as f:
+                log_lines = [line.strip() for line in f.readlines()[:5]]
+
+            matched = any("D* obstacle_memory_s: 2.0" in line for line in log_lines)
+            self.assertTrue(matched, f"Setting not found in first lines of batch.log: {log_lines}")
+
 
 if __name__ == "__main__":
     unittest.main()
+

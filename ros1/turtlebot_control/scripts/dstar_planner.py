@@ -178,8 +178,9 @@ class DStarPlanner:
         with self.obstacle_lock:
             for cell in new_cells:
                 self.obstacle_cells[cell] = now
-            # Prune obstacles older than 6 seconds (e.g. moving NPCs)
-            expire_time = now - 6.0
+            # Prune obstacles older than memory window (default 6.0s, e.g. moving NPCs)
+            obstacle_memory_s = float(self._get_param_cached("~obstacle_memory_s", 6.0))
+            expire_time = now - obstacle_memory_s
             self.obstacle_cells = {
                 c: t for c, t in self.obstacle_cells.items() if t >= expire_time
             }
@@ -226,12 +227,83 @@ class DStarPlanner:
             and (now - self.last_auto_replan_time >= 1.0)
         ):
             if self.is_path_blocked(robot_x, robot_y, curr_obstacle_points, radius=check_radius):
+                if self._get_param_cached("~trigger_debug", False):
+                    self._log_trigger_debug(robot_x, robot_y, curr_obstacle_points, check_radius)
                 rospy.loginfo(
                     "Dynamic obstacle detected blocking current planned path ahead! Triggering early replan... (check radius %.2f)",
                     check_radius,
                 )
                 self.last_auto_replan_time = now
                 self.plan_for_goal(self.latest_goal)
+
+    def _log_trigger_debug(
+        self,
+        rx: float,
+        ry: float,
+        obstacle_points: List[Tuple[float, float]],
+        check_radius: float,
+    ) -> None:
+        corners = self.current_path_corners
+        if not corners or len(corners) < 2 or not obstacle_points:
+            return
+
+        point_records = []
+        n_within_radius = 0
+        max_range = 3.5
+
+        for ox, oy in obstacle_points:
+            if math.hypot(ox - rx, oy - ry) > max_range:
+                continue
+
+            min_d = float("inf")
+            best_k = 0
+            best_px = 0.0
+            best_py = 0.0
+
+            for k in range(len(corners) - 1):
+                ax, ay = corners[k]
+                bx, by = corners[k + 1]
+                seg_dx = bx - ax
+                seg_dy = by - ay
+                seg_len = math.hypot(seg_dx, seg_dy)
+                if seg_len < 1e-4:
+                    continue
+                t = max(0.0, min(1.0, ((ox - ax) * seg_dx + (oy - ay) * seg_dy) / (seg_len * seg_len)))
+                px = ax + t * seg_dx
+                py = ay + t * seg_dy
+                d = math.hypot(ox - px, oy - py)
+                if d < min_d:
+                    min_d = d
+                    best_k = k
+                    best_px = px
+                    best_py = py
+
+            if min_d < float("inf"):
+                if min_d < check_radius:
+                    n_within_radius += 1
+                point_records.append((ox, oy, min_d, best_k, best_px, best_py))
+
+        if not point_records:
+            return
+
+        point_records.sort(key=lambda r: r[2])
+        best = point_records[0]
+        top3 = point_records[:3]
+        pts_str = " ".join(f"({r[0]:.2f},{r[1]:.2f},{r[2]:.3f})" for r in top3)
+
+        rospy.loginfo(
+            "TRIGGER_DEBUG robot=(%.2f,%.2f) nearest_pt=(%.2f,%.2f) dist_to_polyline=%.3f seg_index=%d n_obstacle_pts=%d n_within_radius=%d radius=%.2f %s",
+            rx,
+            ry,
+            best[4],
+            best[5],
+            best[2],
+            best[3],
+            len(obstacle_points),
+            n_within_radius,
+            check_radius,
+            pts_str,
+        )
 
     def publish_live_costmap(
         self,
