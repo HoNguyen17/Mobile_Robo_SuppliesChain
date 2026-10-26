@@ -1052,7 +1052,7 @@ class StringStub:
 
 
 @contextlib.contextmanager
-def fake_rospy_context(params=None, mod_name="dstar_planner_smoke"):
+def fake_rospy_context(params=None, mod_name="dstar_planner_smoke", script_name="dstar_planner.py"):
     fake_rospy = FakeRospy(params)
     rospy_mod = types.ModuleType("rospy")
     for k in dir(fake_rospy):
@@ -1078,7 +1078,7 @@ def fake_rospy_context(params=None, mod_name="dstar_planner_smoke"):
     modules_dict["std_msgs.msg"].String = StringStub
 
     planner_file = os.path.normpath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts", "dstar_planner.py")
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts", script_name)
     )
 
     with unittest.mock.patch.dict(sys.modules, modules_dict):
@@ -1351,6 +1351,20 @@ class NodeSmokeTest(unittest.TestCase):
         self.assertLess(pr_b, 0.40)
         self.assertEqual(cr_b, 0.38)
 
+    def test_astar_planner_parity(self):
+        """Verify AStarPlanner has identical default parameters, wiring, and static filtering."""
+        with fake_rospy_context({}, "ap_wiring_test", "astar_planner.py") as (mod, fake_rospy):
+            node = mod.AStarPlanner()
+            expected_subs = {"/map", "/robot/pose", "/scan", "/move_base_simple/goal", "/nav/replan"}
+            expected_pubs = {"/planned_path", "/costmap", "/nav/leg_result"}
+            self.assertEqual(set(fake_rospy.subscribers.keys()), expected_subs)
+            self.assertEqual(set(fake_rospy.publishers.keys()), expected_pubs)
+            self.assertTrue(node._get_param_cached("~filter_static_hits", True))
+            self.assertTrue(node._get_param_cached("~blocked_use_plan_radius", True))
+            self.assertEqual(node._get_param_cached("~obstacle_memory_s", 6.0), 6.0)
+            self.assertFalse(node._get_param_cached("~trigger_debug", False))
+
 
 if __name__ == "__main__":
     unittest.main()
+

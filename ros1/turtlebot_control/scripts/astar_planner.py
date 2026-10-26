@@ -13,7 +13,7 @@ import os
 import sys
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import rospy
 from geometry_msgs.msg import PoseStamped
@@ -24,6 +24,10 @@ from std_msgs.msg import Empty, String
 # catkin_make runs this file through a wrapper in devel/lib, so the folder with the
 # modules next to it is not on sys.path by itself.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dstar_lite import (  # noqa: E402
+    expand_lidar_hit,
+    path_near_points,
+)
 from grid_planner import (  # noqa: E402
     Grid,
     InflatedMaps,
@@ -54,10 +58,12 @@ class AStarPlanner:
         self.pose: Optional[PoseStamped] = None
         self.latest_goal: Optional[PoseStamped] = None
         self.current_path_corners: Optional[List[Tuple[float, float]]] = None
+        self.current_path_radius: Optional[float] = None
         self.last_costmap_pub_time: float = 0.0
         self.last_auto_replan_time: float = 0.0
         self.obstacle_cells: Dict[Tuple[int, int], float] = {}  # (i, j) -> timestamp
         self.obstacle_lock = threading.Lock()
+        self._param_cache: Dict[str, Tuple[Any, float]] = {}
 
         self.path_pub = rospy.Publisher("/planned_path", Path, queue_size=1, latch=True)
         self.costmap_pub = rospy.Publisher("/costmap", OccupancyGrid, queue_size=1, latch=True)
@@ -68,6 +74,17 @@ class AStarPlanner:
         rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.on_goal)
         rospy.Subscriber("/nav/replan", Empty, self.on_replan)
         rospy.loginfo("astar_planner ready: send a goal to /move_base_simple/goal")
+
+    def _get_param_cached(self, name: str, default: Any) -> Any:
+        now = time.time()
+        cached = self._param_cache.get(name)
+        if cached is not None:
+            val, last_time = cached
+            if now - last_time < 1.0:
+                return val
+        val = rospy.get_param(name, default)
+        self._param_cache[name] = (val, now)
+        return val
 
     # ---------------- callbacks ----------------
     def on_map(self, msg: OccupancyGrid) -> None:
@@ -120,6 +137,11 @@ class AStarPlanner:
         grid = maps.grid
         w, h, res, ox, oy = grid.width, grid.height, grid.res, grid.ox, grid.oy
 
+        filter_static = self._get_param_cached("~filter_static_hits", True)
+        use_plan_radius = self._get_param_cached("~blocked_use_plan_radius", True)
+
+        kept_hits = 0
+        dropped_hits = 0
         new_cells = []
         for k, r in enumerate(msg.ranges):
             if not math.isfinite(r) or r < max(msg.range_min, 0.22) or r > msg.range_max:
@@ -131,32 +153,33 @@ class AStarPlanner:
             ci = int(math.floor((px - ox) / res))
             cj = int(math.floor((py - oy) / res))
             if 0 <= ci < w and 0 <= cj < h:
-                new_cells.append((ci, cj))
-                # Footprint dilation: add radial 1-cell padding around hits so solid boxes aren't thin 1-pixel lines
-                for di in (-1, 0, 1):
-                    for dj in (-1, 0, 1):
-                        ni, nj = ci + di, cj + dj
-                        if 0 <= ni < w and 0 <= nj < h:
-                            new_cells.append((ni, nj))
                 # Extrude 0.10m deeper along beam vector into obstacle volume
                 p_depth_x = px + 0.10 * math.cos(total_angle)
                 p_depth_y = py + 0.10 * math.sin(total_angle)
                 di_depth = int(math.floor((p_depth_x - ox) / res))
                 dj_depth = int(math.floor((p_depth_y - oy) / res))
-                if 0 <= di_depth < w and 0 <= dj_depth < h:
-                    new_cells.append((di_depth, dj_depth))
+                depth_cell = (di_depth, dj_depth) if (0 <= di_depth < w and 0 <= dj_depth < h) else None
+
+                hit_cells, dropped = expand_lidar_hit(grid, ci, cj, depth_cell, filter_static)
+                if dropped:
+                    dropped_hits += 1
+                else:
+                    kept_hits += 1
+                    new_cells.extend(hit_cells)
 
         with self.obstacle_lock:
             for cell in new_cells:
                 self.obstacle_cells[cell] = now
-            # Prune obstacles older than 6 seconds (e.g. moving NPCs)
-            expire_time = now - 6.0
+            # Prune obstacles older than memory window (default 6.0s, e.g. moving NPCs)
+            obstacle_memory_s = float(self._get_param_cached("~obstacle_memory_s", 6.0))
+            expire_time = now - obstacle_memory_s
             self.obstacle_cells = {
                 c: t for c, t in self.obstacle_cells.items() if t >= expire_time
             }
+            curr_cells = list(self.obstacle_cells.keys())
             curr_obstacle_points = [
                 (maps.grid.ox + (ci + 0.5) * maps.grid.res, maps.grid.oy + (cj + 0.5) * maps.grid.res)
-                for ci, cj in self.obstacle_cells.keys()
+                for ci, cj in curr_cells
             ]
 
         # 1. Real-time live costmap publishing: every 0.5s (2 Hz) if dynamic obstacles exist,
@@ -167,18 +190,105 @@ class AStarPlanner:
 
         # 2. Early automatic replan: if dynamic obstacle blocks the currently planned path ahead,
         # trigger replan immediately without waiting for robot to get close!
+        if use_plan_radius and self.current_path_radius is not None:
+            check_radius = max(0.05, self.current_path_radius - 0.02)
+        else:
+            check_radius = 0.38
+
+        rospy.loginfo_throttle(
+            5.0,
+            "scan overlay: kept %d, dropped_static %d, filter=%s, check_radius=%.2f",
+            kept_hits,
+            dropped_hits,
+            filter_static,
+            check_radius,
+        )
+
         if (
             curr_obstacle_points
             and self.current_path_corners
             and self.latest_goal is not None
             and (now - self.last_auto_replan_time >= 1.0)
         ):
-            if self.is_path_blocked(robot_x, robot_y, curr_obstacle_points, radius=0.38):
+            if self.is_path_blocked(robot_x, robot_y, curr_obstacle_points, radius=check_radius):
+                if self._get_param_cached("~trigger_debug", False):
+                    self._log_trigger_debug(robot_x, robot_y, curr_obstacle_points, check_radius)
                 rospy.loginfo(
-                    "Dynamic obstacle detected blocking current planned path ahead! Triggering early replan..."
+                    "Dynamic obstacle detected blocking current planned path ahead! Triggering early replan... (check radius %.2f)",
+                    check_radius,
                 )
                 self.last_auto_replan_time = now
                 self.plan_for_goal(self.latest_goal)
+
+    def _log_trigger_debug(
+        self,
+        rx: float,
+        ry: float,
+        obstacle_points: List[Tuple[float, float]],
+        check_radius: float,
+    ) -> None:
+        corners = self.current_path_corners
+        if not corners or len(corners) < 2 or not obstacle_points:
+            return
+
+        point_records = []
+        n_within_radius = 0
+        max_range = 3.5
+
+        for ox, oy in obstacle_points:
+            if math.hypot(ox - rx, oy - ry) > max_range:
+                continue
+
+            min_d = float("inf")
+            best_k = 0
+            best_px = 0.0
+            best_py = 0.0
+
+            for k in range(len(corners) - 1):
+                ax, ay = corners[k]
+                bx, by = corners[k + 1]
+                seg_dx = bx - ax
+                seg_dy = by - ay
+                seg_len = math.hypot(seg_dx, seg_dy)
+                if seg_len < 1e-4:
+                    continue
+                t = max(0.0, min(1.0, ((ox - ax) * seg_dx + (oy - ay) * seg_dy) / (seg_len * seg_len)))
+                proj_x = ax + t * seg_dx
+                proj_y = ay + t * seg_dy
+                d = math.hypot(ox - proj_x, oy - proj_y)
+                if d < min_d:
+                    min_d = d
+                    best_k = k
+                    best_px = proj_x
+                    best_py = proj_y
+
+            if min_d < check_radius:
+                n_within_radius += 1
+            if min_d != float("inf"):
+                point_records.append((ox, oy, min_d, best_k, best_px, best_py))
+
+        if not point_records:
+            return
+
+        point_records.sort(key=lambda r: r[2])
+        best = point_records[0]
+        top3 = point_records[:3]
+        pts_str = " ".join([f"({p[0]:.2f},{p[1]:.2f},d={p[2]:.3f})" for p in top3])
+
+        rospy.loginfo(
+            "TRIGGER_DEBUG robot=(%.2f,%.2f) nearest_pt=(%.2f,%.2f) dist_to_polyline=%.3f "
+            "seg_index=%d n_obstacle_pts=%d n_within_radius=%d radius=%.2f pts=[%s]",
+            rx,
+            ry,
+            best[0],
+            best[1],
+            best[2],
+            best[3],
+            len(obstacle_points),
+            n_within_radius,
+            check_radius,
+            pts_str,
+        )
 
     def publish_live_costmap(self, obstacle_points: List[Tuple[float, float]]) -> None:
         if self.maps is None:
@@ -200,28 +310,12 @@ class AStarPlanner:
         radius: float = 0.38,
     ) -> bool:
         """Check if any dynamic obstacle point is within `radius` of the planned path ahead of the robot."""
-        corners = self.current_path_corners
-        if not corners or len(corners) < 2:
-            return False
-
-        for k in range(len(corners) - 1):
-            ax, ay = corners[k]
-            bx, by = corners[k + 1]
-            seg_dx = bx - ax
-            seg_dy = by - ay
-            seg_len = math.hypot(seg_dx, seg_dy)
-            if seg_len < 1e-4:
-                continue
-
-            for ox, oy in obstacle_points:
-                if math.hypot(ox - rx, oy - ry) > 3.5:
-                    continue
-                t = max(0.0, min(1.0, ((ox - ax) * seg_dx + (oy - ay) * seg_dy) / (seg_len * seg_len)))
-                proj_x = ax + t * seg_dx
-                proj_y = ay + t * seg_dy
-                if math.hypot(ox - proj_x, oy - proj_y) < radius:
-                    return True
-        return False
+        return path_near_points(
+            self.current_path_corners,
+            obstacle_points,
+            (rx, ry),
+            radius,
+        )
 
     def on_goal(self, msg: PoseStamped) -> None:
         self.latest_goal = msg
@@ -290,6 +384,7 @@ class AStarPlanner:
             return self.abort("No path found around obstacles")
 
         self.publish_costmap(chosen_grid)
+        self.current_path_radius = radius
         self.publish_path(corners)
         length = sum(
             math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(corners, corners[1:])
@@ -313,7 +408,7 @@ class AStarPlanner:
         for k, (x, y) in enumerate(corners):
             rospy.loginfo("  corner %d: x=%.2f y=%.2f", k, x, y)
         if self.print_map and maps.grid.height <= MAX_PICTURE_HEIGHT:
-            rospy.loginfo("\n%s", ascii_map(inflated_grid, corners))
+            rospy.loginfo("\n%s", ascii_map(chosen_grid, corners))
 
     # ---------------- output ----------------
     def abort(self, why: str) -> None:
