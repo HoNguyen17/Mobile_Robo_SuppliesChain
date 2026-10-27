@@ -16,6 +16,7 @@ The **A/B Benchmark Suite** is an autonomous test harness designed to execute re
 
 | File Path | Component Role |
 |---|---|
+| `ros1/turtlebot_control/scripts/astar_planner.py` | Baseline A* global planner ROS node (updated with `expand_lidar_hit`, `~filter_static_hits`, adaptive `~blocked_use_plan_radius`, and `~obstacle_memory_s` for 100% perception/trigger parity). |
 | `ros1/turtlebot_control/scripts/dstar_planner.py` | D* Lite global planner ROS node (subscribes to `/map`, `/robot/pose`, `/scan`, `/move_base_simple/goal`, `/nav/replan`; publishes `/planned_path`, `/costmap`, `/nav/leg_result`). |
 | `ros1/turtlebot_control/scripts/dstar_lite.py` | Pure-Python D* Lite incremental graph search engine with line-of-sight smoothing and adaptive inflation. |
 | `ros1/turtlebot_control/launch/navigation_dstar.launch` | Navigation launch file starting `dstar_planner` and `path_follower`. |
@@ -307,6 +308,27 @@ Data pooled from Batch 1 (`~/ab_runs/20261025_071408/`) and Batch 2 (`~/ab_runs/
 | **First Plan Cold (ms)** | 236.0 ms [220.0, 244.0] (n=10) | 474.0 & 503.0 ms (n=2) | 0.49x | - | D* cold build 2.0x–2.1x slower |
 | **First Plan Warm (ms)** | N/A | 81.5 ms & 88.0 ms (n=8) | - | - | D* warm start 2.8x faster than A* cold |
 
+### 7.4 100% Fair Parity Benchmark (Batch 20261026_214123, n=5 per planner)
+
+In Batches 1 and 2 above, `astar_planner.py` retained static LiDAR returns (~1000 cells), dilating walls and forcing A* southwards ($y \approx -2.18\text{ m}$), away from the crossing worker ($y = -1.65\text{ m}$). This masked early replans in A* (3.6 vs 7.2) and created an artificial clearance difference.
+
+With `astar_planner.py` updated to include `expand_lidar_hit(..., filter_static=True)`, adaptive check radius `~blocked_use_plan_radius`, and `~obstacle_memory_s=6.0` (commit `3a1ab03`), both planners were evaluated under identical perception conditions:
+
+| Metric | A* (`astar_planner`) | D* Lite (`dstar_planner`) | Ratio (A*/D*) | Status / Key Insight |
+|---|:---:|:---:|:---:|---|
+| **Dynamic Obstacles (First Plan)** | 43 cells (n=5) | 43 cells (n=5) | 1.00x | **Identical perception** [verified in log] |
+| **Success Rate** | 5/5 (100%) | 5/5 (100%) | 1.00x | All 10 runs succeeded |
+| **Sim Time to Goal (s)** | 39.3 s [38.1, 41.7] (mean 39.66) | 39.4 s [38.8, 42.0] (mean 39.88) | 1.00x | Identical transit duration |
+| **Driven Distance (m)** | 8.96 m [8.91, 9.16] (mean 9.00) | 9.02 m [8.93, 9.26] (mean 9.04) | 0.99x | Identical corridor trajectory |
+| **Min Clearance (m)** | 0.22 m [0.19, 0.23] (mean 0.210) | 0.18 m [0.16, 0.20] (mean 0.183) | 1.21x | Realistic corridor clearance |
+| **Early Replans** | **6.0 [6.0, 8.0] (mean 6.4)** | **7.0 [4.0, 10.0] (mean 6.6)** | **0.97x** | **Early-replan gap eliminated (6.4 vs 6.6)** |
+| **Path Switches** | 16.0 [15.0, 20.0] (mean 16.6) | 17.0 [12.0, 18.0] (mean 15.4) | 1.08x | Consistent replan response |
+| **First Plan ms (cold)** | 279.0 ms [208.0, 346.0] | 571.0 ms (n=1) | 0.49x | D* cold start 2.0x slower |
+| **First Plan ms (warm)** | N/A | 82.0 ms [66.0, 125.0] (n=4) | - | D* warm start 3.4x faster than A* cold |
+| **Replan ms (Median of Medians)**| **188.5 ms** [185.5, 195.0] | **24.5 ms** [22.0, 28.0] | **7.69x** | **Decisive (D* 7.7x faster replanning)** |
+| **Plan ms Total per Run (s)** | **3.17 s** [3.07, 4.04] (mean 3.41 s) | **0.53 s** [0.43, 0.94] (mean 0.60 s) | **5.94x** | **Decisive (D* uses 5.9x less CPU time)** |
+| **Plan Share % of Sim Time** | **8.1%** [7.4%, 10.1%] | **1.4%** [1.0%, 2.4%] | **5.7x** | **1.4% vs 8.1% CPU share** |
+
 ---
 
 ## 8. Running the Unit Tests
@@ -319,7 +341,7 @@ cd <repo>/ros1/turtlebot_control && python3 -m unittest discover -s test
 
 **Expected Result:**
 ```
-Ran 238 tests in ~35s
+Ran 250 tests in ~90s
 OK
 ```
 [verified in code: `test_launch_files.py`, `test_ab_tools.py`, `test_ab_batch.py`, `test_dstar_lite.py`, `test_grid_planner.py`, `test_path_tracker.py`]
