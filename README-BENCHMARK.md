@@ -341,7 +341,7 @@ cd <repo>/ros1/turtlebot_control && python3 -m unittest discover -s test
 
 **Expected Result:**
 ```
-Ran 250 tests in ~90s
+Ran 251 tests in ~30s
 OK
 ```
 [verified in code: `test_launch_files.py`, `test_ab_tools.py`, `test_ab_batch.py`, `test_dstar_lite.py`, `test_grid_planner.py`, `test_path_tracker.py`]
