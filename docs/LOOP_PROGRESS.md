@@ -1,5 +1,7 @@
 # HỆ THỐNG ĐIỀU HƯỚNG & NÉ VẬT CẢN (LOOP PROGRESS & CATCHUP)
 
+> **HISTORICAL: last updated 2026-10-12 on branch `nguyen`. This file is not the source of truth, whatever it says below.** Test counts, paths (such as `d:\Project\...`) and the branch name are out of date, and it predates the D\* Lite planner and the A/B benchmark. For the current state read `README.md`, `docs/README.md`, `CLAUDE.md`, `CONTEXT.md` and `README-BENCHMARK.md`. The text below is kept unchanged for its history.
+
 > **File này là nguồn thông tin duy nhất (Single Source of Truth) ghi lại toàn bộ trạng thái hệ thống, cấu hình, thay đổi mã nguồn và hướng dẫn kiểm thử. Dùng file này để catchup ngay lập tức cho các vòng lặp cải tiến tiếp theo.**
 
 ---
