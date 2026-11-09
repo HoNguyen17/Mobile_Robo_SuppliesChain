@@ -24,7 +24,7 @@ The **A/B Benchmark Suite** is an autonomous test harness designed to execute re
 | `WarehouseProjectURP/Assets/Scripts/Ros/Editor/DstarLaunchMenu.cs` | Unity Editor menu item (`Warehouse > 1D. Launch ROS System with D* Lite (WSL)`) for interactive testing. |
 | `WarehouseProjectURP/Assets/Scripts/Ros/Editor/AbBenchmarkMenu.cs` | Unity Editor menu integration (`Warehouse > A-B Test`) driving automated benchmarking from the Editor. |
 | `ros1/turtlebot_control/scripts/ab_batch.py` | Supervisory batch orchestrator managing ROS lifecycle, subprocess supervision, watchdog gates, and report dispatch. |
-| `ros1/turtlebot_control/scripts/ab_run.py` | Single-stack test runner managing `/sim/reset_scenario` resets, settle immobility checks, goal dispatch, and 41-column CSV capture. |
+| `ros1/turtlebot_control/scripts/ab_run.py` | Single-stack test runner managing `/sim/reset_scenario` resets, settle immobility checks, goal dispatch, and 45-column CSV capture. With `--seed-base` it uses the seeded reset protocol and records the worker gap (ADR-019). |
 | `ros1/turtlebot_control/scripts/ab_report.py` | Offline report generator generating `report.html` (interactive SVG charts) and `report.md` comparison tables, plus an exact two-sided permutation test on means (`permutation_test_means`). |
 | `ros1/turtlebot_control/test/test_ab_tools.py` | Unit tests for `ab_run.py` metrics collection and `ab_report.py` table/footnote generation and the permutation test. |
 | `docs/benchmark-data/` | Tracked copy of session `20261026_214123` (CSVs, `meta_*.json`, reports, redacted `handoff.txt`). See its `README.md`. |
@@ -202,8 +202,8 @@ Every batch execution creates an isolated, timestamped folder under `~/ab_runs/<
 
 ```
 ~/ab_runs/20261025_103721/
-├── astar_runs.csv        # 41-column telemetry for A* runs
-├── dstar_runs.csv        # 41-column telemetry for D* Lite runs
+├── astar_runs.csv        # 45-column telemetry for A* runs
+├── dstar_runs.csv        # 45-column telemetry for D* Lite runs
 ├── batch.log             # Interleaved supervisor, runner, and node output log
 ├── bringup_astar.log     # Stdout/stderr from A* bringup stack
 ├── bringup_dstar.log     # Stdout/stderr from D* Lite bringup stack
@@ -227,8 +227,8 @@ Every batch execution creates an isolated, timestamped folder under `~/ab_runs/<
   wsl -d Ubuntu-20.04 bash -c "explorer.exe \$(wslpath -w \$(cat ~/ab_runs/latest_report.txt))"
   ```
 
-### CSV Telemetry Columns (41 Columns)
-Defined in `CSV_COLUMNS` (`ab_run.py` lines 22–65):
+### CSV Telemetry Columns (45 Columns)
+Defined in `CSV_COLUMNS` in `ab_run.py`. The README used to say 41; the file had 42 before the three columns at the end were added for the seeded protocol (ADR-019). `ab_run.py` refuses to append to a CSV with another header, so move old CSVs aside; `ab_report.py` reads older CSVs by column name and leaves missing columns empty.
 
 | Column | Type | Description |
 |---|---|---|
@@ -272,6 +272,12 @@ Defined in `CSV_COLUMNS` (`ab_run.py` lines 22–65):
 | `path_switches` | int | Total `/planned_path` publications received during the leg. |
 | `plan_ms_total` | float | Sum of milliseconds across all `Planned:` lines in the leg. |
 | `plan_share_pct` | float | Fraction of simulation run time spent planning: `100 * plan_ms_total / 1000 / sim_time_to_goal_s`. |
+| `seed` | int | Seed of the seeded reset (`<scenario>?seed=<seed-base + run_index>`); empty when the run used the old protocol (bare scenario ID). |
+| `npc_min_gap_m` | float | Smallest gap between the robot footprint (0.257 m) and a worker (its `radius_m`) during the leg, from the ground-truth `/sim/npc_poses` (20 Hz, so about ±0.05 m at 1 m/s) and `/robot/pose`. Negative = overlap. Empty without seed or when no worker was seen. |
+| `collisions_npc` | int | Contacts on `/sim/collision` whose `other_tag` is `NPC` (a subset of `collisions`). |
+
+### Seeded protocol (ADR-019)
+`ab_run.py --seed-base 1000` resets with `S-06?seed=1001`, `S-06?seed=1002`, ... so run k of A\* and run k of D\* meet the same worker timing. `--first-index K` continues the numbering (used to re-run invalid runs with their own seeds). Without `--seed-base` the reset message is the bare scenario ID, as before, and the draggable red box stays in the scene. A seeded run that never saw a worker on `/sim/npc_poses` is `invalid` (`no worker seen`): an old Unity build without ADR-019 takes `S-06?seed=7` as an unknown scenario, acks ok and runs an empty scene. Only `ab_run.py` may subscribe to `/sim/npc_poses` (ground truth for metrics, never for navigation; a test enforces it). The unattended runner for whole matrices is `ab_matrix.py` ([ADR-020](docs/ADR-020-matrix-runner.md)).
 
 ### Environment Metadata (`meta_*.json`)
 - `git_commit`: Active git commit SHA at batch launch.

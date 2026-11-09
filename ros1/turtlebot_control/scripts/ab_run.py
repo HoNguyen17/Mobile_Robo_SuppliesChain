@@ -62,10 +62,42 @@ CSV_COLUMNS = [
     "path_switches",
     "plan_ms_total",
     "plan_share_pct",
+    "seed",
+    "npc_min_gap_m",
+    "collisions_npc",
 ]
 
 ROBOT_FOOTPRINT_RADIUS_M = 0.257
 DEFAULT_START_POSE = (5.01, -0.05)
+
+
+def load_scenario_spec() -> Any:
+    """warehouse_eval.scenario_spec, also when ab_run.py runs from the repository without the catkin workspace sourced."""
+    try:
+        from warehouse_eval import scenario_spec
+    except ImportError:
+        here = os.path.dirname(os.path.abspath(__file__))
+        sys.path.insert(0, os.path.normpath(os.path.join(here, "..", "..", "warehouse_eval", "src")))
+        from warehouse_eval import scenario_spec
+    return scenario_spec
+
+
+def compute_npc_gap(
+    robot_xy: Tuple[float, float],
+    worker_xys: Sequence[Tuple[float, float]],
+    worker_radius_m: float,
+    robot_radius_m: float = ROBOT_FOOTPRINT_RADIUS_M,
+) -> Optional[float]:
+    """Gap in metres between the robot footprint and the nearest worker (negative = overlapping); None without workers."""
+    if not worker_xys:
+        return None
+    nearest = min(math.hypot(wx - robot_xy[0], wy - robot_xy[1]) for wx, wy in worker_xys)
+    return nearest - robot_radius_m - worker_radius_m
+
+
+def count_npc_collisions(collisions: Sequence[Dict[str, Any]]) -> int:
+    """Collision payloads (/sim/collision) whose other_tag is NPC."""
+    return sum(1 for c in collisions if isinstance(c, dict) and c.get("other_tag") == "NPC")
 
 
 def yaw_from_quaternion(x: float, y: float, z: float, w: float) -> float:
@@ -572,6 +604,8 @@ class RunRecorder:
         self.paths: List[Tuple[float, List[Tuple[float, float]]]] = []  # (sim_time, [(x, y), ...])
         self.scans: List[List[float]] = []
         self.collisions: List[Dict[str, Any]] = []
+        self.npc_gap_min: Optional[float] = None
+        self.npc_samples: int = 0  # /sim/npc_poses messages with at least one worker during the leg
         self.planned_logs: List[Dict[str, Any]] = []
         self.early_replans: int = 0
         self.leg_result: Optional[Tuple[str, str]] = None  # (outcome, reason)
@@ -601,6 +635,8 @@ class RunRecorder:
         self.paths = []
         self.scans = []
         self.collisions = []
+        self.npc_gap_min = None
+        self.npc_samples = 0
         self.planned_logs = []
         self.early_replans = 0
         self.leg_result = None
@@ -678,6 +714,20 @@ class RunRecorder:
         if self.recording:
             self.collisions.append(payload)
 
+    def on_npc_poses(
+        self,
+        worker_xys: Sequence[Tuple[float, float]],
+        robot_xy: Optional[Tuple[float, float]],
+        worker_radius_m: float,
+    ) -> None:
+        """Ground-truth worker positions (metrics only, ADR-019). Keeps the smallest robot-to-worker gap of the leg."""
+        if not self.recording or robot_xy is None or not worker_xys:
+            return
+        self.npc_samples += 1
+        gap = compute_npc_gap(robot_xy, worker_xys, worker_radius_m)
+        if gap is not None and (self.npc_gap_min is None or gap < self.npc_gap_min):
+            self.npc_gap_min = gap
+
     def on_leg_result(self, outcome: str, reason: str) -> None:
         if self.recording and self.leg_result is None:
             self.leg_result = (outcome, reason)
@@ -734,19 +784,42 @@ def run_ab_experiment(
     out_dir: str = "~/ab_runs",
     custom_label: Optional[str] = None,
     rospy_mod: Any = None,
+    seed_base: Optional[int] = None,
+    first_index: int = 1,
 ) -> List[Dict[str, Any]]:
-    """Execute the A/B testing matrix and record CSV results."""
+    """Execute the A/B testing matrix and record CSV results.
+
+    Without seed_base the reset message is the bare scenario ID (the old protocol). With it, run k resets
+    "<scenario>?seed=<seed_base + k>" (ADR-019), so run k of every planner meets the same worker timing.
+    Run indices are first_index .. first_index + repeats - 1.
+    """
     if rospy_mod is None:
         import rospy as rospy_mod  # noqa: F401
 
     import rosnode
-    from geometry_msgs.msg import PoseStamped, Twist
+    from geometry_msgs.msg import PoseArray, PoseStamped, Twist
     from rosgraph_msgs.msg import Clock, Log
     from nav_msgs.msg import OccupancyGrid, Path
     from sensor_msgs.msg import LaserScan
     from std_msgs.msg import Empty, String
 
     planner_type, planner_node = detect_planner(rosnode.get_node_names())
+
+    scenario_spec = load_scenario_spec()
+    expected_workers = 0
+    npc_radius_m = 0.15
+    if seed_base is not None:
+        if seed_base < 0 or first_index < 1:
+            raise ValueError("seed_base must be >= 0 and first_index >= 1")
+        config = scenario_spec.load_config()
+        if not scenario_spec.is_spec_scenario(config, scenario):
+            raise ValueError(
+                "scenario %s is not spec-driven (no workers: in scenarios.yaml); run it without --seed-base" % scenario
+            )
+        workers = config["scenarios"][scenario]["workers"]
+        expected_workers = len(workers)
+        if workers:
+            npc_radius_m = max(float(w["radius_m"]) for w in workers)
     label = custom_label or planner_type
     out_dir = os.path.expanduser(out_dir)
     csv_file = os.path.join(out_dir, f"{label}_runs.csv")
@@ -812,6 +885,10 @@ def run_ab_experiment(
             data = {"raw": msg.data}
         recorder.on_collision(data)
 
+    def handle_npc_poses(msg: PoseArray) -> None:
+        robot = (latest_pose[0], latest_pose[1]) if latest_pose is not None else None
+        recorder.on_npc_poses([(p.position.x, p.position.y) for p in msg.poses], robot, npc_radius_m)
+
     def handle_leg_result(msg: String) -> None:
         try:
             data = json.loads(msg.data)
@@ -856,6 +933,8 @@ def run_ab_experiment(
     rospy_mod.Subscriber("/nav/leg_result", String, handle_leg_result)
     rospy_mod.Subscriber("/rosout", Log, handle_rosout)
     rospy_mod.Subscriber("/sim/ack", String, handle_ack)
+    # Ground truth for the worker gap. Only this metrics script may subscribe (ADR-019, test_npc_poses_rule.py).
+    rospy_mod.Subscriber("/sim/npc_poses", PoseArray, handle_npc_poses)
 
     # 1. Wait until prerequisites arrive (30 s limit)
     rospy_mod.loginfo("Waiting for /clock, /map, /robot/pose, /scan (30 s limit)...")
@@ -881,13 +960,16 @@ def run_ab_experiment(
     rows: List[Dict[str, Any]] = []
 
     # 2. Per-run execution loop
-    for run_idx in range(1, repeats + 1):
+    for run_idx in range(first_index, first_index + repeats):
         if rospy_mod.is_shutdown():
             break
 
+        seed_val = (seed_base + run_idx) if seed_base is not None else ""
+        reset_text = scenario_spec.reset_message(scenario, seed_val if seed_base is not None else None)
+
         run_id = f"{label}_{scenario}_r{run_idx}_{int(time.time())}"
         started_at = datetime.datetime.now().isoformat()
-        rospy_mod.loginfo("=== Starting Run %d / %d (run_id: %s) ===", run_idx, repeats, run_id)
+        rospy_mod.loginfo("=== Starting Run %d (%d of %d, run_id: %s) ===", run_idx, run_idx - first_index + 1, repeats, run_id)
 
         # Check connection for pub_reset
         if not wait_for_publisher_connection(pub_reset, timeout_wall_s=5.0, rospy_mod=rospy_mod):
@@ -905,6 +987,7 @@ def run_ab_experiment(
                 "goal_x": goal_xy[0],
                 "goal_y": goal_xy[1],
                 "run_index": run_idx,
+                "seed": seed_val,
                 "outcome": "invalid",
                 "settle_plans": 0,
                 "invalid_reason": "publisher not connected",
@@ -933,7 +1016,7 @@ def run_ab_experiment(
 
             # Publish reset and wait for ack
             recorder.latest_ack = None
-            pub_reset.publish(scenario)
+            pub_reset.publish(reset_text)
             t_ack_start = time.time()
             ack_ok = False
             ack_sim_time = None
@@ -992,6 +1075,7 @@ def run_ab_experiment(
                 "goal_x": goal_xy[0],
                 "goal_y": goal_xy[1],
                 "run_index": run_idx,
+                "seed": seed_val,
                 "outcome": "invalid",
                 "settle_plans": 0,
                 "invalid_reason": ack_failure_reason,
@@ -1018,6 +1102,7 @@ def run_ab_experiment(
                 "goal_x": goal_xy[0],
                 "goal_y": goal_xy[1],
                 "run_index": run_idx,
+                "seed": seed_val,
                 "outcome": "invalid",
                 "settle_plans": recorder.settle_plans,
                 "invalid_reason": "settle movement",
@@ -1054,6 +1139,7 @@ def run_ab_experiment(
                 "goal_x": goal_xy[0],
                 "goal_y": goal_xy[1],
                 "run_index": run_idx,
+                "seed": seed_val,
                 "outcome": "invalid",
                 "settle_plans": recorder.settle_plans,
                 "invalid_reason": "pose off start",
@@ -1080,6 +1166,7 @@ def run_ab_experiment(
                 "goal_x": goal_xy[0],
                 "goal_y": goal_xy[1],
                 "run_index": run_idx,
+                "seed": seed_val,
                 "outcome": "invalid",
                 "settle_plans": recorder.settle_plans,
                 "invalid_reason": "publisher not connected",
@@ -1105,6 +1192,7 @@ def run_ab_experiment(
                 "goal_x": goal_xy[0],
                 "goal_y": goal_xy[1],
                 "run_index": run_idx,
+                "seed": seed_val,
                 "outcome": "invalid",
                 "settle_plans": recorder.settle_plans,
                 "invalid_reason": "publisher not connected",
@@ -1166,6 +1254,10 @@ def run_ab_experiment(
         elif len(recorder.planned_logs) == 0:
             outcome = "invalid"
             invalid_reason = "no Planned line"
+        elif seed_base is not None and expected_workers > 0 and recorder.npc_samples == 0:
+            # An old Unity build takes "S-06?seed=7" as an unknown scenario, acks ok and runs an empty scene.
+            outcome = "invalid"
+            invalid_reason = "no worker seen"
 
         # F. Compute metrics & aggregate stats
         sim_time_to_goal = max(0.0, end_sim_time - start_sim_time)
@@ -1205,6 +1297,7 @@ def run_ab_experiment(
             "goal_x": goal_xy[0],
             "goal_y": goal_xy[1],
             "run_index": run_idx,
+            "seed": seed_val,
             "outcome": outcome,
             "sim_time_to_goal_s": round(sim_time_to_goal, 3),
             "wall_time_s": round(wall_time_s, 3),
@@ -1240,6 +1333,8 @@ def run_ab_experiment(
             "path_switches": path_switches,
             "plan_ms_total": plan_stats["plan_ms_total"],
             "plan_share_pct": plan_share_val if plan_share_val is not None else "",
+            "npc_min_gap_m": round(recorder.npc_gap_min, 3) if recorder.npc_gap_min is not None else "",
+            "collisions_npc": count_npc_collisions(recorder.collisions),
         })
 
         write_csv_row(csv_file, row)
@@ -1273,6 +1368,13 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--timeout", type=float, default=120.0, help="Timeout in sim seconds per run (default: 120.0)")
     parser.add_argument("--out", default="~/ab_runs", help="Output directory for runs CSV (default: ~/ab_runs)")
     parser.add_argument("--label", default=None, help="Custom label for output CSV filename")
+    parser.add_argument(
+        "--seed-base",
+        type=int,
+        default=None,
+        help="Seeded protocol (ADR-019): run k resets '<scenario>?seed=<seed-base + k>'. Default: none, the bare scenario ID",
+    )
+    parser.add_argument("--first-index", type=int, default=1, help="Index of the first run (default: 1)")
     return parser.parse_args(argv)
 
 
@@ -1300,6 +1402,8 @@ def main() -> None:
             out_dir=args.out,
             custom_label=args.label,
             rospy_mod=rospy,
+            seed_base=args.seed_base,
+            first_index=args.first_index,
         )
     except Exception as exc:
         rospy.logerr("A/B runner encountered fatal error: %s", exc)

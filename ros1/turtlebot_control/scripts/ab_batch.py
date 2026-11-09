@@ -275,6 +275,10 @@ META_TRACKED_FILES = [
     "ros1/turtlebot_control/scripts/path_follower.py",
     "ros1/turtlebot_control/launch/navigation_dstar.launch",
     "WarehouseProjectURP/Assets/Scripts/Ros/ScenarioLoader.cs",
+    "WarehouseProjectURP/Assets/Scripts/Robot/NpcMover.cs",
+    "WarehouseProjectURP/Assets/Scripts/Robot/NpcPath.cs",
+    "WarehouseProjectURP/Assets/StreamingAssets/scenarios.json",
+    "ros1/warehouse_eval/config/scenarios.yaml",
 ]
 
 
@@ -357,6 +361,19 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         type=float,
         default=6.0,
         help="Obstacle memory time in seconds for D* stack (default: 6.0)",
+    )
+    parser.add_argument(
+        "--seed-base",
+        type=int,
+        default=None,
+        help="Seeded protocol (ADR-019), passed to ab_run: run k resets '<scenario>?seed=<seed-base + k>' (default: none)",
+    )
+    parser.add_argument("--first-index", type=int, default=1, help="Index of the first run, passed to ab_run (default: 1)")
+    parser.add_argument(
+        "--no-report",
+        action="store_true",
+        default=False,
+        help="Do not generate the per-batch report (ab_matrix.py makes its own)",
     )
     return parser.parse_args(argv)
 
@@ -1038,6 +1055,10 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
                 "--label",
                 planner,
             ]
+            if getattr(args, "seed_base", None) is not None:
+                cmd_ab_run += ["--seed-base", str(args.seed_base)]
+            if getattr(args, "first_index", 1) != 1:
+                cmd_ab_run += ["--first-index", str(args.first_index)]
             logger.log(f"Executing benchmark: {' '.join(cmd_ab_run)}")
 
             watchdog_s = repeats * (args.timeout + args.settle + 60.0)
@@ -1217,7 +1238,7 @@ def run_batch(args: argparse.Namespace, runner: Optional[Runner] = None) -> int:
 
     # Generate Report (after both planners, skipped for dry runs)
     report_html_path: Optional[str] = None
-    if not args.dry and planner_results:
+    if not args.dry and planner_results and not getattr(args, "no_report", False):
         report_dir = os.path.join(session_dir, "report")
         csv_files = [res["csv"] for res in planner_results.values() if os.path.exists(res["csv"])]
         if csv_files:

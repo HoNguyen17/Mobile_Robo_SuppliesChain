@@ -22,7 +22,7 @@ MODES = ("once", "pingpong")
 TRIGGERS = ("reset", "robot_departs")
 FOREVER = -1.0
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
+_HERE = os.path.dirname(os.path.realpath(__file__))  # realpath: ~/nav_ws/src/warehouse_eval is a symlink into the repo
 REPO_DIR = os.path.normpath(os.path.join(_HERE, "..", "..", "..", ".."))
 DEFAULT_YAML = os.path.join(REPO_DIR, "ros1", "warehouse_eval", "config", "scenarios.yaml")
 DEFAULT_JSON = os.path.join(REPO_DIR, "WarehouseProjectURP", "Assets", "StreamingAssets", "scenarios.json")

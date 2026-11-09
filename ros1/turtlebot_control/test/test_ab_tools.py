@@ -594,6 +594,7 @@ def fake_ros_environment(active_nodes: List[str]):
 
     modules_to_mock["geometry_msgs.msg"].PoseStamped = PoseMsgStub
     modules_to_mock["geometry_msgs.msg"].Twist = TwistStub
+    modules_to_mock["geometry_msgs.msg"].PoseArray = types.SimpleNamespace
     modules_to_mock["nav_msgs.msg"].Path = PathStub
     modules_to_mock["rosgraph_msgs.msg"].Clock = types.SimpleNamespace
     modules_to_mock["rosgraph_msgs.msg"].Log = types.SimpleNamespace
@@ -1687,6 +1688,122 @@ class TestPermutationInReport(unittest.TestCase):
             with open(md_path, "r", encoding="utf-8") as f:
                 md_text = f.read()
         self.assertNotIn("### Permutation test", md_text)
+
+
+# ---------------- 4. Seeded protocol, worker gap, NPC collisions (ADR-019) ----------------
+
+class TestSeededProtocol(unittest.TestCase):
+    ROBOT = (5.01, -0.05)  # PoseMsgStub
+
+    def _drive(self, scenario="S-04", seed_base=None, first_index=1, repeats=1, npc_xs=(), collisions=(), planners=("/dstar_planner", "/rosout")):
+        """Runs ab_run against the fake rospy; after each goal the fake Unity sends the given worker poses and collisions."""
+        with fake_ros_environment(list(planners)) as (fake_rospy, PoseMsgStub):
+            orig_sub = fake_rospy.Subscriber
+
+            def hook_sub(top, cls, cb):
+                orig_sub(top, cls, cb)
+                if top == "/scan":
+                    fake_rospy.subscribers["/clock"](types.SimpleNamespace())
+                    fake_rospy.subscribers["/map"](types.SimpleNamespace())
+                    fake_rospy.subscribers["/robot/pose"](PoseMsgStub())
+                    fake_rospy.subscribers["/scan"](types.SimpleNamespace(ranges=[1.0, 1.2]))
+            fake_rospy.Subscriber = hook_sub
+
+            orig_pub = fake_rospy.Publisher
+
+            def pub(top, cls, queue_size=1):
+                p = orig_pub(top, cls, queue_size)
+                if top != "/move_base_simple/goal":
+                    return p
+                inner = p.publish
+
+                def publish_goal(msg):
+                    for x in npc_xs:
+                        poses = [types.SimpleNamespace(position=types.SimpleNamespace(x=x, y=self.ROBOT[1], z=0.0))]
+                        fake_rospy.subscribers["/sim/npc_poses"](types.SimpleNamespace(poses=poses))
+                    for payload in collisions:
+                        fake_rospy.subscribers["/sim/collision"](types.SimpleNamespace(data=json.dumps(payload)))
+                    inner(msg)
+                p.publish = publish_goal
+                return p
+            fake_rospy.Publisher = pub
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                rows = ab_run.run_ab_experiment(
+                    scenario=scenario, goal_xy=(-3.75, -3.13), repeats=repeats, settle_s=0.1, timeout_s=10.0,
+                    out_dir=tmpdir, custom_label="t", rospy_mod=fake_rospy, seed_base=seed_base, first_index=first_index,
+                )
+                with open(os.path.join(tmpdir, "t_runs.csv"), "r", encoding="utf-8", newline="") as f:
+                    csv_rows = list(csv.DictReader(f))
+            resets = [m if isinstance(m, str) else m.data for m in fake_rospy.publishers["/sim/reset_scenario"]]
+            subscribed = sorted(fake_rospy.subscribers)
+        return rows, csv_rows, resets, subscribed
+
+    def test_without_a_seed_base_the_reset_message_is_the_bare_id_and_the_new_columns_are_empty(self):
+        rows, csv_rows, resets, subscribed = self._drive(scenario="S-04")
+        self.assertEqual(resets, ["S-04"])
+        self.assertEqual(rows[0]["seed"], "")
+        self.assertEqual(rows[0]["npc_min_gap_m"], "")
+        self.assertEqual(rows[0]["collisions_npc"], 0)
+        self.assertEqual(csv_rows[0]["seed"], "")
+        self.assertEqual(rows[0]["outcome"], "succeeded")
+        self.assertIn("/sim/npc_poses", subscribed)
+
+    def test_a_seed_base_resets_with_base_plus_run_index_and_records_it(self):
+        rows, csv_rows, resets, _ = self._drive(scenario="S-04", seed_base=100, repeats=2, npc_xs=(6.01,))
+        self.assertEqual(resets, ["S-04?seed=101", "S-04?seed=102"])
+        self.assertEqual([r["seed"] for r in rows], [101, 102])
+        self.assertEqual([r["run_index"] for r in rows], [1, 2])
+        self.assertEqual([c["seed"] for c in csv_rows], ["101", "102"])
+
+    def test_first_index_continues_the_numbering_and_the_seeds(self):
+        rows, _csv, resets, _ = self._drive(scenario="S-06", seed_base=0, first_index=4, repeats=2, npc_xs=(6.01,))
+        self.assertEqual([r["run_index"] for r in rows], [4, 5])
+        self.assertEqual(resets, ["S-06?seed=4", "S-06?seed=5"])
+
+    def test_the_worker_gap_is_distance_minus_footprint_minus_worker_radius(self):
+        rows, *_ = self._drive(scenario="S-04", seed_base=0, npc_xs=(6.01, 5.51))
+        # nearest worker 0.5 m away: 0.5 - 0.257 - 0.15 (S-04 worker radius) = 0.093
+        self.assertAlmostEqual(rows[0]["npc_min_gap_m"], 0.093, places=3)
+
+    def test_collisions_npc_counts_only_npc_contacts_and_collisions_counts_all(self):
+        hits = [{"other_tag": "NPC", "sim_time_s": 1.0}, {"other_tag": "Wall", "sim_time_s": 2.0}, {"other_tag": "NPC", "sim_time_s": 5.0}]
+        rows, *_ = self._drive(scenario="S-04", seed_base=0, npc_xs=(6.01,), collisions=hits)
+        self.assertEqual(rows[0]["collisions"], 3)
+        self.assertEqual(rows[0]["collisions_npc"], 2)
+
+    def test_a_seeded_run_that_never_saw_a_worker_is_invalid(self):
+        # An old Unity build takes "S-06?seed=7" as an unknown scenario and runs an empty scene.
+        rows, *_ = self._drive(scenario="S-06", seed_base=0)
+        self.assertEqual(rows[0]["outcome"], "invalid")
+        self.assertEqual(rows[0]["invalid_reason"], "no worker seen")
+
+    def test_the_control_scenario_has_no_workers_and_is_not_invalid(self):
+        rows, *_ = self._drive(scenario="S-00c", seed_base=0)
+        self.assertEqual(rows[0]["outcome"], "succeeded")
+        self.assertEqual(rows[0]["npc_min_gap_m"], "")
+
+    def test_a_scenario_without_a_spec_cannot_be_seeded(self):
+        with self.assertRaises(ValueError):
+            self._drive(scenario="S-01", seed_base=0)
+        with self.assertRaises(ValueError):
+            self._drive(scenario="S-99", seed_base=0)
+
+    def test_helpers(self):
+        self.assertIsNone(ab_run.compute_npc_gap((0.0, 0.0), [], 0.15))
+        self.assertAlmostEqual(ab_run.compute_npc_gap((0.0, 0.0), [(3.0, 4.0), (0.0, 1.0)], 0.15), 1.0 - 0.257 - 0.15)
+        self.assertLess(ab_run.compute_npc_gap((0.0, 0.0), [(0.2, 0.0)], 0.15), 0.0)  # overlapping
+        self.assertEqual(ab_run.count_npc_collisions([{"other_tag": "NPC"}, {"other_tag": "Wall"}, {"raw": "x"}, "junk"]), 1)
+
+    def test_the_new_columns_are_appended_after_the_old_ones(self):
+        self.assertEqual(ab_run.CSV_COLUMNS[-4:], ["plan_share_pct", "seed", "npc_min_gap_m", "collisions_npc"])
+        self.assertEqual(len(ab_run.CSV_COLUMNS), 45)
+
+    def test_cli_accepts_the_seed_arguments(self):
+        args = ab_run.parse_args(["--seed-base", "1000", "--first-index", "5"])
+        self.assertEqual((args.seed_base, args.first_index), (1000, 5))
+        args = ab_run.parse_args([])
+        self.assertEqual((args.seed_base, args.first_index), (None, 1))
 
 
 if __name__ == "__main__":
