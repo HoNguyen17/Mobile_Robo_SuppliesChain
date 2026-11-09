@@ -279,6 +279,9 @@ Defined in `CSV_COLUMNS` in `ab_run.py`. The README used to say 41; the file had
 ### Seeded protocol (ADR-019)
 `ab_run.py --seed-base 1000` resets with `S-06?seed=1001`, `S-06?seed=1002`, ... so run k of A\* and run k of D\* meet the same worker timing. `--first-index K` continues the numbering (used to re-run invalid runs with their own seeds). Without `--seed-base` the reset message is the bare scenario ID, as before, and the draggable red box stays in the scene. A seeded run that never saw a worker on `/sim/npc_poses` is `invalid` (`no worker seen`): an old Unity build without ADR-019 takes `S-06?seed=7` as an unknown scenario, acks ok and runs an empty scene. Only `ab_run.py` may subscribe to `/sim/npc_poses` (ground truth for metrics, never for navigation; a test enforces it). The unattended runner for whole matrices is `ab_matrix.py` ([ADR-020](docs/ADR-020-matrix-runner.md)).
 
+### Unattended matrix (`ab_matrix.py`, ADR-020)
+Unity in Play (wait 90 s), then `start_matrix.bat` (or, in WSL, `python3 ros1/turtlebot_control/scripts/ab_matrix.py`). Default: `S-00c S-04 S-06 S-07 S-08` x `astar dstar` x N = 20, about 3.4 h. `--preflight-only` prints the checklist, `--dry` runs 3 runs per cell through the whole chain, `--scenarios`, `--planners`, `--repeats`, `--seed-base`, `--max-attempts` change the matrix, `--resume ~/ab_matrix/<folder>` continues one, Ctrl-C stops it cleanly and still writes the report. Results are in `~/ab_matrix/<timestamp>/` (`matrix_report.md`, `invalid_runs.csv`, `data/`, `report/`, `cells/`). Never use `start_ros.bat`, `stop_ros.bat` or Unity menu 3 while it runs.
+
 ### Environment Metadata (`meta_*.json`)
 - `git_commit`: Active git commit SHA at batch launch.
 - `git_status`: Short porcelain status or timeout fallback.

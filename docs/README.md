@@ -44,6 +44,7 @@ A simulated warehouse in **Unity** on Windows. One **TurtleBot3 Waffle Pi** is d
 | [017](ADR-017-live-costmap-radius.md) | The live `/costmap` uses the inflation radius of the plan being followed |
 | [018](ADR-018-planner-label.md) | The planner label in mission run summaries comes from `/nav/planner_name`, set by the bringup launch files |
 | [019](ADR-019-dynamic-scenario-spec.md) | Dynamic scenarios are data (`scenarios.yaml` exported to Unity); the reset message may carry a seed (`S-06?seed=7`); ground-truth worker poses for metrics only |
+| [020](ADR-020-matrix-runner.md) | The unattended matrix runner (`ab_matrix.py`): preflight, per-cell timeout, top-ups of invalid runs, resume, report; draft thresholds, not approved |
 
 ## One-minute summary
 
