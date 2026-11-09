@@ -54,7 +54,7 @@ The **A/B Benchmark Suite** is an autonomous test harness designed to execute re
 - **Unity Editor:** Version **2021.1.11f1** with project `WarehouseProjectURP` (`Assets/Scenes/Warehouse.unity`).
 - **Python Version:** Python 3.8 inside WSL (`python3`, `python-is-python3`, `psmisc`).
 
-For complete step-by-step installation commands, refer to `PROJECT.md` Section 5 ("How to Build and Run") and `ros1/turtlebot_control/RUN_STEPS.txt`.
+For complete step-by-step installation commands, refer to `README.md`, `docs/setup-windows-wsl.md` and `ros1/turtlebot_control/RUN_STEPS.txt`.
 
 ---
 
@@ -89,6 +89,8 @@ Adhere strictly to these operational safeguards before and during benchmark runs
 4. **Never Drag `Dynamic_Draggable_Obstacle` Manually:** In `ScenarioLoader.cs`, `Start()` spawns it at `(2.5, 1.5, 10.0)`. Moving it manually introduces uncontrolled spatial variance.
 5. **Do NOT Edit or Add `.cs` Files During a Run:** Editing C# scripts triggers an immediate Unity compilation and domain reload, halting Play mode and severing TCP sockets.
 6. **Clean Stop First:** Never launch Menu 1D and an A/B batch at the same time. Menu 1D runs standalone without process group tracking. If switching between 1D and benchmark batches, always click `Robotics > Warehouse > 3. Clean Stop All ROS (WSL)` first.
+7. **Never Stop Play During a Batch:** Leaving Play mode ends simulation time (`/clock`) and closes the TCP sockets, which causes immediate timeouts or deadlocks in `ab_run.py`.
+8. **Two-Stage Stop:** To end a running batch, click `Warehouse > A-B Test > 6 Stop Batch` first. It runs `ab_batch.py --stop`, which writes `handoff.txt` and shuts the process groups down in order. Use `Robotics > Warehouse > 3. Clean Stop All ROS (WSL)` only if a ROS master still answers afterwards: it runs `killall -9 ... python3`, which kills every python3 process in the WSL distro. `start_ros.bat` and `stop_ros.bat` do the same.
 
 ---
 
@@ -103,8 +105,10 @@ Adhere strictly to these operational safeguards before and during benchmark runs
   ```
   [verified in code: `DstarLaunchMenu.cs` lines 14–20]
 
+  `bringup_dstar.launch` includes `bringup.launch` with `nav:=false` (TCP endpoint, robot model, RViz, `mission_node.py`, no `astar_planner`) and then `navigation_dstar.launch` (`dstar_planner.py` + `path_follower.py`). It sets `filter_static_hits:=true`, `blocked_use_plan_radius:=true` and `verify_costmap:=false`, matching what `ab_batch.py` sets for D* Lite. `test_launch_files.py` checks this wiring. Neither the menu nor the launch file uses `killall` or `pkill`; stop the stack with menu 3.
+
 #### A/B Benchmark Menu (`Warehouse > A-B Test`)
-All benchmark menu items invoke commands via `wsl.exe` using `BuildWslCommandLine`:
+Items 1-4 are enabled only in Play mode and only while no batch is running. All benchmark menu items invoke commands via `wsl.exe` using `BuildWslCommandLine` (`python3 -u` plus `PYTHONUNBUFFERED=1` streams the log into the Unity console in real time):
 ```bash
 wsl.exe -d Ubuntu-20.04 --cd "<repo>" -e bash -c "source /opt/ros/noetic/setup.bash && source ~/nav_ws/devel/setup.bash && python3 -u ros1/turtlebot_control/scripts/ab_batch.py <extraArgs>"
 ```
@@ -390,3 +394,21 @@ OK
 2. **Fixed Goal Snapping vs Multi-Goal Missions:** D* Lite demonstrates high warm-start efficiency (~80 ms) when the goal is unchanged. In multi-waypoint missions where targets change at every leg, D* Lite rebuilds its search graph from scratch (`rebuilt=True`, 427–571 ms).
 3. **Hardcoded Planner Label in `mission_node.py`:** `mission_node.py` line 44 hardcodes parameter `planner_name` to `"astar"`. When D* Lite is active under Menu 1D, mission summary logs output `planner: astar`. This is purely an informational string label; navigation executes via D* Lite.
 4. **Absence of `/nav/cancel` Handling:** Neither `astar_planner.py` nor `dstar_planner.py` subscribes to `/nav/cancel`. Stale paths persist in node memory until a new goal is received.
+
+---
+
+## 11. Runner and Orchestrator Internals
+
+### `ab_run.py`: reset, settle and validity
+1. **Reset:** waits (up to 5 s) for a subscriber on `/sim/reset_scenario`, publishes the scenario name (e.g. `S-04`), then waits up to 5 s of wall time for `/sim/ack` with `cmd == "reset_scenario"` and `ok == True`.
+2. **Settle:** after the ack the runner waits `settle_s` simulation seconds (default 7.0). Poses stamped earlier than `ack_sim_time + 0.3 s` are ignored for movement detection, so a pose from before the teleport cannot cause a false failure. If the robot drifts more than 0.30 m from the nominal start `(5.01, -0.05)` the run flags `settle_moved`. During the window the recorder keeps downsampled poses (up to 4 Hz), the peak commanded velocities, spurious planned paths and node log warnings in `settle_diag`.
+3. **Retry:** on a first settle failure the runner publishes an empty `/nav/cancel`, waits 2.0 s of sim time, re-issues `/sim/reset_scenario` and settles again (`settle_retry = 1`).
+4. **Invalid runs:** if settle movement persists after the retry, or `/sim/ack` fails or times out, the run is recorded with `outcome = invalid` and `invalid_reason` (`settle movement` or `ack timeout`), `/nav/cancel` is published and the next iteration starts. Invalid runs are excluded from the report statistics and counted separately.
+5. **Start check:** before each leg the pose must be within 0.30 m of `(5.01, -0.05)`.
+6. **Leg:** publishes the goal `PoseStamped` on `/move_base_simple/goal` and records `/robot/pose`, `/cmd_vel`, `/planned_path`, `/scan`, `/sim/collision`, `/rosout` and `/nav/leg_result` until arrival or timeout.
+
+### `ab_batch.py`: supervision and cleanup
+- **Process groups:** `roslaunch` and `ab_run.py` are started in their own process groups (`preexec_fn=os.setsid`), and cleanup targets those group ids directly. The script uses no `killall` or `pkill`.
+- **`cleanup_group`:** sends SIGINT to each group and waits up to 10 s, then SIGTERM and waits up to 5 s, then SIGKILL only for groups still alive; then it waits for the ROS master to go down. `--stop` waits up to 45 s for the batch to exit before it escalates to SIGTERM and then SIGKILL.
+- **Zombies:** `is_pid_alive` checks `os.kill(pid, 0)` and `/proc/<pid>/stat`; a zombie (`Z`) counts as dead, which avoids 15 s stalls on children that already exited.
+- **Readiness gate:** waits up to 90 s (wall) using XML-RPC `getSystemState` queries on the ROS master. The gate passes when the master answers, a node whose name contains `unity_endpoint` is registered, and that node is a publisher of `/clock`. A softer `/clock` publishing check (10 s) follows.

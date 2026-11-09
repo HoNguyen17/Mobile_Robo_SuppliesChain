@@ -8,6 +8,33 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 
 **Unity is the body, ROS is the brain, MySQL is the notebook.** The project exists to prove **obstacle avoidance**. Everything else is support.
 
+## Where to look
+
+This file defines words. The structure and the interfaces are documented elsewhere; do not copy them here.
+
+| You need | Read |
+|----------|------|
+| How the pieces fit: Unity side, ROS nodes, node graph | [docs/architecture.md](docs/architecture.md) §1 to §3 |
+| Every ROS topic: type, direction, rate, payloads, parameters | [docs/architecture.md](docs/architecture.md) §5 (also `README.md` §8) |
+| Frames and units | [docs/architecture.md](docs/architecture.md) §4 |
+| Navigation configuration (inflation, pose, obstacle layer) | [docs/architecture.md](docs/architecture.md) §8 |
+| How Unity and ROS are connected and set up on one machine | [docs/ADR-007](docs/ADR-007-windows-wsl-environment.md), [docs/setup-windows-wsl.md](docs/setup-windows-wsl.md) |
+| Why navigation is our own Python code | [docs/ADR-012](docs/ADR-012-custom-python-navigation.md) |
+| How to run and read the A\* vs D\* Lite benchmark | [README-BENCHMARK.md](README-BENCHMARK.md) |
+
+## Where things live
+
+| Path | What |
+|------|------|
+| `WarehouseProjectURP/Assets/Scripts/Ros/` | Unity side of the bridge: publishers, subscribers, map, LIDAR, items, scenario loader; `Editor/` holds the menu commands |
+| `WarehouseProjectURP/Assets/Scripts/Robot/` | Robot body and NPC: `DiffDriveController`, `NpcMover`, `WheelHold`, `FloorColliderFix` |
+| `WarehouseProjectURP/Assets/Scripts/Physics/` | The physics standard: `PhysicalBody`, `PhysicsStandard`, friction and surface materials |
+| `ros1/turtlebot_control/` | Navigation: `astar_planner`, `dstar_planner`, `path_follower`, and the pure-Python modules and tests behind them; also the A/B benchmark scripts |
+| `ros1/warehouse_mission/` | The `mission` node and its pure-Python orchestrator, task manager and metrics |
+| `ros1/warehouse_bringup/` | Launch files, motion profiles, RViz config |
+| `ros1/warehouse_eval/` | Scenario runner, scenario criteria, CSV export |
+| `docs/` | Requirements, architecture, test plan, ADRs |
+
 ## Two axes: don't mix them up
 
 | Axis | Values | Means |
@@ -46,7 +73,8 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 | **Static obstacle** | A non-moving obstacle not in the map (boxes). Tested in M2. |
 | **NPC** | A Unity-scripted moving person. Not a ROS node. Tested in M3. |
 | **Inflation** | The planner keeps the robot centre at least `inflation_radius` away from every obstacle. A hard limit, set by the motion profile. Default 0.35 m, which is about 9 cm more than the **footprint**. |
-| **Global plan** | A* path over the whole map (`astar_planner`). |
+| **Global plan** | The path over the whole map. Made by `astar_planner` (A\*, the default) or by `dstar_planner` (**D\* Lite**, opt-in). Both read the same map and obstacle layer and publish `/planned_path`. |
+| **D\* Lite** | The incremental global planner. It repairs its previous search when obstacles change instead of searching again from scratch. Same inputs and outputs as the A\* planner. |
 | **Obstacle layer** | Cells marked blocked from what the emulated LIDAR sees, on top of the static map. |
 | **Follower** | `path_follower`: drives along the global plan and stops when the way ahead is blocked. |
 | **Replan** | A new global plan made because the robot was blocked. |
@@ -60,6 +88,7 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 | **Scenario** | A test setup, S-00 … S-05, with numeric pass/fail criteria ([test-plan.md](docs/test-plan.md)). |
 | **Gate** | The exit conditions of a phase. Pass/fail, never waived silently. |
 | **Runner** | The script that runs a scenario 20 times and writes the CSVs. |
+| **A/B benchmark** | The automated comparison of `astar_planner` and `dstar_planner` on one scenario under identical conditions (`ab_batch.py`, `ab_run.py`, `ab_report.py`). Not the same as the **Runner**. See [README-BENCHMARK.md](README-BENCHMARK.md). |
 
 ### Integration
 | Term | Meaning |
@@ -81,5 +110,5 @@ Use these words, with these meanings, in code, issues, commits and tests. Start 
 | trial / attempt / iteration | episode (live) · run (record) | Keeps metrics exact |
 | result / status of an episode | outcome | `status` belongs to `tasks` |
 | Nav2, Stage A/B/C, namespace | — | Removed: we use ROS 1 and one robot |
-| move_base, AMCL, costmap, DWA, TEB | planner, follower, obstacle layer | Not used: we run our own Python navigation ([ADR-012](docs/ADR-012-custom-python-navigation.md)) |
+| move_base, AMCL, costmap, DWA, TEB | planner, follower, obstacle layer | Not used: we run our own Python navigation ([ADR-012](docs/ADR-012-custom-python-navigation.md)). Exception: the topic names `/costmap` (the planners' picture of the inflated map, for RViz) and `/move_base_simple/goal` (the goal topic, also used by RViz's *2D Nav Goal*) are real. Write them as they are, and do not call the planner "move_base" or the obstacle layer a "costmap" |
 | Cube, kinematic body | physical body, the robot | The kinematic `Cube` was dropped on 2026-10-04 ([ADR-015](docs/ADR-015-physical-waffle-pi-body.md)) |
