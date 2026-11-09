@@ -10,13 +10,19 @@ The project is the UC6 warehouse robot: a simulated TurtleBot3 Waffle Pi in Unit
 - Exact two-sided permutation test on means in `ab_report.py` (`permutation_test_means`), with a per-scenario table in `report.md` and `report.html` and 17 tests in `test_ab_tools.py`.
 - `docs/benchmark-data/20261026_214123/`: tracked copy of the parity batch (CSVs, `meta_*.json`, both reports, `handoff.txt` with personal paths redacted).
 - `README-BENCHMARK.md` section 7.5: how to reproduce the p-values, and which values of the pooled table do not reproduce from the CSVs.
-- `mission_node.py` reads the planner label from `~planner_name` (default `astar`).
+- `mission_node.py` labels its run summaries from `~planner_name`, then the global `/nav/planner_name`, then `astar`. `bringup_dstar.launch` sets `/nav/planner_name` to `dstar` [af59c3e].
 - `run_scenario.py` and `run_all_scenarios.py` log "PLACEHOLDER: results are not measured". Their results are still hardcoded.
 
 ### Changed
-- `turtlebot_control` declares `sensor_msgs` (it imports `LaserScan`) and installs `dstar_planner.py` and `dstar_lite.py`.
+- `turtlebot_control` declares `sensor_msgs` (it imports `LaserScan`) and installs `dstar_planner.py` and `dstar_lite.py`. `catkin_make` in `~/nav_ws` builds all five packages with this.
 - Comments and docs state the real values: footprint 0.257 m (ADR-015), not 0.21 m; the follower's `~final_tol` is 0.20 m while `PathTracker`'s default is 0.10 m. No behaviour changed.
-- `RUN_STEPS.txt` no longer quotes a test count.
+- `RUN_STEPS.txt` and the main `README.md` no longer quote test counts [cc21f5f].
+- `README-BENCHMARK.md`: the pooled-table cells for planner time and share planning no longer claim "p < 0.001"; only 5 vs 5 runs carry those columns, so p = 0.008 [3ec9ee2].
+- `docs/LOOP_PROGRESS.md` carries a "historical" banner; its text is unchanged [546a775].
+
+### Removed
+- `docs/ADR-003-ros-distro-pinning.md`, `docs/ADR-004-nav2-local-planner.md` and `docs/ADR-006-multirobot-staging.md`: byte-identical to the copies in `docs/_archive/2026-09-30-ros2-nav2-plan/` and sharing numbers with the live ADR-003 and ADR-006 [4f35c84].
+- The broken `Mobile_Robo_SuppliesChain` gitlink (no `.gitmodules`, empty directory) [3441a44].
 
 ## 2026-11-09
 
