@@ -309,8 +309,8 @@ Data pooled from Batch 1 (`~/ab_runs/20261025_071408/`) and Batch 2 (`~/ab_runs/
 | **Path Switches** | 14.0 [9, 16] (mean 13.2) | 17.0 [13, 20] (mean 16.8) | 0.79x | **p = 0.004** | Significant |
 | **Heading Oscillations** | 3.0 [1, 7] (mean 3.5) | 4.0 [3, 5] (mean 4.0) | 0.88x | p = 0.558 | No difference |
 | **Replan ms (Median of Medians)**| **205.8 ms** [188.0, 224.0] | **19.5 ms** [18.0, 26.5] | **10.55x** | **p < 0.001** | **Decisive (D* 10x faster replan)** |
-| **Plan ms Total per Run (s)** | **3.21 s** [1.96, 3.43] (mean 2.96 s) | **0.57 s** [0.49, 0.97] (mean 0.64 s) | **4.65x** | **p < 0.001** | **Decisive (D* uses 4.6x less CPU time)** |
-| **Plan Share % of Sim Time** | **7.83%** [5.20%, 8.52%] (mean 7.31%) | **1.43%** [1.18%, 2.34%] (mean 1.58%) | **4.63x** | **p < 0.001** | **Decisive (1.6% vs 7.3% CPU share)** |
+| **Plan ms Total per Run (s)** | **3.21 s** [1.96, 3.43] (mean 2.96 s) | **0.57 s** [0.49, 0.97] (mean 0.64 s) | **4.65x** | p = 0.008 (only 5 vs 5 runs carry this column in the CSVs) | D* plans about 4.6x less; the n=10 means and ranges in this row do not reproduce from the CSVs (§7.5) |
+| **Plan Share % of Sim Time** | **7.83%** [5.20%, 8.52%] (mean 7.31%) | **1.43%** [1.18%, 2.34%] (mean 1.58%) | **4.63x** | p = 0.008 (only 5 vs 5 runs carry this column in the CSVs) | 1.6% vs 7.3% of sim time spent planning; the n=10 means and ranges in this row do not reproduce from the CSVs (§7.5) |
 | **First Plan Cold (ms)** | 236.0 ms [220.0, 244.0] (n=10) | 474.0 & 503.0 ms (n=2) | 0.49x | - | D* cold build 2.0x–2.1x slower |
 | **First Plan Warm (ms)** | N/A | 81.5 ms & 88.0 ms (n=8) | - | - | D* warm start 2.8x faster than A* cold |
 
