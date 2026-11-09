@@ -95,6 +95,14 @@ class TestLaunchFiles(unittest.TestCase):
         self.assertIn("/dstar_planner/verify_costmap", params)
         self.assertEqual(params["/dstar_planner/verify_costmap"].lower(), "false")
 
+    def test_planner_name_label_is_dstar_only_in_the_dstar_launch(self):
+        """The mission node labels its summaries from /nav/planner_name: dstar here, unset in bringup.launch."""
+        dstar = {p.get("name"): p.get("value") for p in self.tree_bringup_dstar.getroot().findall("param")}
+        self.assertEqual(dstar.get("/nav/planner_name"), "dstar")
+
+        bringup = {p.get("name"): p.get("value") for p in self.tree_bringup.getroot().findall("param")}
+        self.assertNotIn("/nav/planner_name", bringup)
+
     def test_no_astar_planner_node_anywhere(self):
         """(e) No astar_planner node anywhere in the three launch files."""
         files = [

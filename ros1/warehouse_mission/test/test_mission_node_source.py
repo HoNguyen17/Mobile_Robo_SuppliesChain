@@ -11,10 +11,13 @@ class TestMissionNodePlannerLabel(unittest.TestCase):
             self.src = f.read()
 
     def test_planner_label_is_a_parameter_defaulting_to_astar(self):
-        self.assertIn('rospy.get_param("~planner_name", "astar")', self.src)
+        self.assertIn('rospy.get_param("~planner_name", rospy.get_param("/nav/planner_name", "astar"))', self.src)
 
     def test_planner_label_is_not_hardcoded(self):
         self.assertNotIn('MetricsCollector(planner_name="astar")', self.src)
+
+    def test_collector_uses_the_parameter(self):
+        self.assertIn("MetricsCollector(planner_name=str(planner_name))", self.src)
 
 
 if __name__ == "__main__":

@@ -14,6 +14,9 @@
   <param name="/dstar_planner/blocked_use_plan_radius" value="true"/>
   <param name="/dstar_planner/verify_costmap" value="false"/>
 
+  <!-- Names the planner in the mission node's run summaries (label only, bringup.launch leaves it at astar) -->
+  <param name="/nav/planner_name" value="dstar"/>
+
   <!-- Include base bringup with default navigation disabled -->
   <include file="$(find warehouse_bringup)/launch/bringup.launch">
     <arg name="tcp_ip"   value="$(arg tcp_ip)"/>

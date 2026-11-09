@@ -48,9 +48,12 @@ class MissionNode:
         # Component instances
         self.task_mgr = TaskManager()
         self.motion_mgr = MotionProfileManager()
-        # Label only: it names the planner in the run summaries. Set _planner_name:=dstar when
-        # the mission runs on dstar_planner (the node does not detect it).
-        self.metrics_coll = MetricsCollector(planner_name=str(rospy.get_param("~planner_name", "astar")))
+        # Label only: it names the planner in the run summaries. bringup_dstar.launch sets the
+        # global /nav/planner_name to dstar; _planner_name:=... overrides it for this node.
+        # start_mission.bat and the Unity menu start this node with python3, not roslaunch,
+        # so a global parameter is what reaches it.
+        planner_name = rospy.get_param("~planner_name", rospy.get_param("/nav/planner_name", "astar"))
+        self.metrics_coll = MetricsCollector(planner_name=str(planner_name))
 
         # Publishers
         self.pub_goal = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size=1)
