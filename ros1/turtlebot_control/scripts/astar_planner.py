@@ -360,7 +360,8 @@ class AStarPlanner:
         corners = None
         chosen_grid = None
         # Guarantee safe clearance: try wide inflation (0.40m), then nominal (0.35m),
-        # down to 0.28m floor. Never go below 0.28m so robot (radius 0.21m) never touches obstacle!
+        # down to 0.28m floor. Never go below 0.28m: the Waffle Pi reaches 0.257m from its
+        # axis centre (ADR-015), so the floor leaves only about 2 cm.
         candidate_radii = [max(radius, 0.40), radius]
         if radius > 0.30:
             candidate_radii.append(0.30)

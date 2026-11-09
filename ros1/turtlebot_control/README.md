@@ -35,7 +35,7 @@ HomePoint and target-shelf coordinates that `RobotPosePublisher` prints in the U
 
 So a green Test Runner means the Unity side is right, not that ROS navigation works. The ROS side is covered by the
 unit tests below (no Unity) and by the integrated run in [RUN_STEPS.txt](RUN_STEPS.txt) (Unity Play + `bringup.launch`):
-HomePoint, target shelf, HomePoint, five runs in a row, each leg `succeeded`, stop within 0.15 m of the goal, nothing on
+HomePoint, target shelf, HomePoint, five runs in a row, each leg `succeeded`, stop within `~final_tol` (0.20 m) of the goal, nothing on
 `/sim/collision`. That run was done and reported clean by the project owner on 2026-10-05
 ([ADR-015](../../docs/ADR-015-physical-waffle-pi-body.md)). Neither check replaces the other.
 
@@ -57,6 +57,7 @@ HomePoint, target shelf, HomePoint, five runs in a row, each leg `succeeded`, st
 | `/nav/inflation_radius` | planner, every plan | 0.35 | The robot centre stays this far from every obstacle (m). The footprint reaches 0.257 m from the wheel axis centre |
 | `~snap_distance` | planner | 2.0 | How far a blocked start or goal may move to a free cell (m) |
 | `~waypoint_tol` | follower | 0.15 | Arrival distance for corners before the last (m) |
+| `~final_tol` | follower | 0.20 | Arrival distance for the last corner, the goal (m). `PathTracker`'s own default, `FINAL_TOL` in `path_tracker.py`, is 0.10 m and is what the unit tests use; the node overrides it |
 
 ## Build and run (WSL, Ubuntu 20.04, ROS Noetic)
 

@@ -48,7 +48,9 @@ class MissionNode:
         # Component instances
         self.task_mgr = TaskManager()
         self.motion_mgr = MotionProfileManager()
-        self.metrics_coll = MetricsCollector(planner_name="astar")
+        # Label only: it names the planner in the run summaries. Set _planner_name:=dstar when
+        # the mission runs on dstar_planner (the node does not detect it).
+        self.metrics_coll = MetricsCollector(planner_name=str(rospy.get_param("~planner_name", "astar")))
 
         # Publishers
         self.pub_goal = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size=1)

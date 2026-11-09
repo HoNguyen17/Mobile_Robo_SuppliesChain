@@ -17,6 +17,17 @@ from std_msgs.msg import String
 from warehouse_eval.scenario_runner import ScenarioRunner
 from warehouse_mission.models import RunSummary, OUTCOME_SUCCESS
 
+PLACEHOLDER_WARNING = (
+    "PLACEHOLDER: results are not measured. Every run and every PASS below is hardcoded "
+    "(outcome success, 18 m path, no ROS interaction); nothing was driven or checked."
+)
+
+
+def warn_placeholder():
+    rospy.logwarn("=" * 70)
+    rospy.logwarn(PLACEHOLDER_WARNING)
+    rospy.logwarn("=" * 70)
+
 
 def main():
     parser = argparse.ArgumentParser(description="UC6 Master Scenario Batch Runner")
@@ -25,6 +36,7 @@ def main():
     args = parser.parse_args(rospy.myargv()[1:])
 
     rospy.init_node("master_scenario_evaluator", anonymous=True)
+    warn_placeholder()
 
     rospack = rospkg.RosPack()
     eval_pkg_path = rospack.get_path("warehouse_eval")
@@ -88,6 +100,7 @@ def main():
     rospy.loginfo("Master summary written to: %s", master_csv_path)
     rospy.loginfo("All %d scenarios passed acceptance criteria!", len(master_summary))
     rospy.loginfo("==================================================")
+    warn_placeholder()
 
 
 if __name__ == "__main__":

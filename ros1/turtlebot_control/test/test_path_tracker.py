@@ -120,6 +120,7 @@ class PathTrackerTest(unittest.TestCase):
 
     # ---- arrival ----
     def test_it_arrives_inside_the_final_tolerance_and_then_goes_idle(self):
+        # FINAL_TOL is the tracker default (0.10 m); the path_follower node runs with 0.20 m.
         self.tracker.set_path([(0.0, 0.0), (5.0, 0.0)])
         cmd = self.step(x=5.0 - FINAL_TOL / 2)
         self.assertEqual((cmd.status, cmd.linear, cmd.angular), (ARRIVED, 0.0, 0.0))

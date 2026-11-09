@@ -15,6 +15,17 @@ from std_msgs.msg import String
 from warehouse_eval.scenario_runner import ScenarioRunner
 from warehouse_mission.models import RunSummary, OUTCOME_SUCCESS, OUTCOME_FAIL
 
+PLACEHOLDER_WARNING = (
+    "PLACEHOLDER: results are not measured. Every run below is a hardcoded RunSummary "
+    "(outcome success, 18 m path); the mission result is never read."
+)
+
+
+def warn_placeholder():
+    rospy.logwarn("=" * 70)
+    rospy.logwarn(PLACEHOLDER_WARNING)
+    rospy.logwarn("=" * 70)
+
 
 def main():
     parser = argparse.ArgumentParser(description="UC6 Warehouse Robot Scenario Evaluator")
@@ -25,6 +36,7 @@ def main():
     args = parser.parse_args(rospy.myargv()[1:])
 
     rospy.init_node("scenario_evaluator", anonymous=True)
+    warn_placeholder()
 
     rospack = rospkg.RosPack()
     eval_pkg_path = rospack.get_path("warehouse_eval")
@@ -72,6 +84,7 @@ def main():
     rospy.loginfo("Evaluation complete! Results exported to:")
     rospy.loginfo("  Runs: %s", runs_csv)
     rospy.loginfo("  Summary: %s", summary_csv)
+    warn_placeholder()
 
 
 if __name__ == "__main__":

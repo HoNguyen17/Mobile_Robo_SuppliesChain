@@ -17,7 +17,9 @@ MAX_ANG = 1.0  # rad/s (the Waffle Pi can do 1.82)
 # rad: with a bigger heading error the robot turns on the spot first
 TURN_FIRST = math.radians(45.0)
 WAYPOINT_TOL = 0.15  # m: a corner before the last one counts as reached inside this distance
-FINAL_TOL = 0.1  # m: the goal counts as reached inside this distance
+# m: the goal counts as reached inside this distance. This is the PathTracker default (and what
+# the unit tests use); path_follower.py passes ~final_tol, whose default is 0.20 m.
+FINAL_TOL = 0.1
 
 IDLE = "idle"  # no path: nothing to do
 DRIVING = "driving"  # follow the command

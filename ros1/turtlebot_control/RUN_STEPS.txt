@@ -55,7 +55,7 @@ Unity Console printed (current scene: HomePoint x=6.32 y=5.87, target shelf x=-3
 
 One run = leg 2 + leg 3 from the HomePoint. Acceptance = 5 runs in a row, each leg:
   - /nav/leg_result = {"outcome": "succeeded", "reason": ""}
-  - robot stops within 0.15 m of the goal
+  - robot stops within 0.20 m of the goal (~final_tol of path_follower; the tracker's own default is 0.10 m)
   - nothing on /sim/collision, robot does not tip
 
 ------------------------------------------------------------------
@@ -85,7 +85,7 @@ D. IF NOTHING MOVES
 ------------------------------------------------------------------
 E. TESTS WITHOUT UNITY
 ------------------------------------------------------------------
-Python unit tests (109), Windows or WSL, no ROS needed:
+Python unit tests, no ROS or Unity needed (run them in WSL):
 
   cd ros1/turtlebot_control
   python -m unittest discover -s test -v          # python3 in WSL

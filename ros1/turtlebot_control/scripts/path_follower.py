@@ -55,6 +55,8 @@ class PathFollower:
         waypoint_tol = finite_or(
             rospy.get_param("~waypoint_tol", WAYPOINT_TOL), WAYPOINT_TOL, 0.0
         )
+        # The node arrives within 0.20 m of the goal. path_tracker.FINAL_TOL (0.10 m) is only
+        # the default of PathTracker when it is built without final_tol, as the unit tests do.
         final_tol = finite_or(
             rospy.get_param("~final_tol", 0.20), 0.20, 0.05
         )
