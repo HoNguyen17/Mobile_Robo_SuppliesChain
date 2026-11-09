@@ -249,13 +249,11 @@ python3 -m unittest discover -s warehouse_mission/test && \
 python3 -m unittest discover -s warehouse_eval/test
 ```
 
-**Expected Result:**
+**Expected Result:** each of the three suites ends with `OK`, with no failures and no errors. The counts change as tests are added, so none is quoted here.
 ```text
-Ran 121 tests in 4.8s (turtlebot_control: A* planner, tracker, lateral flank guard, closed loop) - OK
-Ran 12 tests in 1.6s (warehouse_mission: task manager, motion profile, orchestrator) - OK
-Ran 2 tests in 0.01s (warehouse_eval: metrics collector, CSV report exporter) - OK
-----------------------------------------------------------------------
-Total: 135 tests passed, 0 failures, 0 errors!
+turtlebot_control: planners, tracker, flank guard, closed loop, A/B tools ... OK
+warehouse_mission: task manager, motion profile, orchestrator, metrics ... OK
+warehouse_eval: metrics collector, CSV report exporter ... OK
 ```
 
 ---
