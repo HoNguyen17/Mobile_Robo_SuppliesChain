@@ -3,10 +3,13 @@
 
 The planning itself is in grid_planner.py. This node only connects it to ROS.
 
-  in : /map, /robot/pose, /move_base_simple/goal, parameter /nav/inflation_radius
-  out: /planned_path (latched), /nav/leg_result (only when there is no path)
+  in : /map, /robot/pose, /scan, /move_base_simple/goal, /nav/replan, /nav/cancel,
+       parameter /nav/inflation_radius
+  out: /planned_path (latched), /costmap (latched), /nav/leg_result (only when there is no path)
 
 Everything is in the ROS "map" frame, in robot metres (ADR-010, ADR-012).
+
+Plans run one at a time on the PlanScheduler's thread, never inside a ROS callback (ADR-016).
 """
 import math
 import os
@@ -38,6 +41,13 @@ from grid_planner import (  # noqa: E402
     plan_inflated,
 )
 from nav_common import ABORTED, NO_PATH, finite_or, leg_result  # noqa: E402
+from plan_scheduler import (  # noqa: E402
+    GOAL,
+    REPLAN,
+    SCAN_TRIGGER,
+    PlanScheduler,
+    Ticket,
+)
 
 SNAP_DISTANCE = 2.0  # m, default of ~snap_distance
 # The map is raw (ADR-012), so the planner must inflate it. Used while /nav/inflation_radius is
@@ -64,6 +74,8 @@ class AStarPlanner:
         self.obstacle_cells: Dict[Tuple[int, int], float] = {}  # (i, j) -> timestamp
         self.obstacle_lock = threading.Lock()
         self._param_cache: Dict[str, Tuple[Any, float]] = {}
+        self.scheduler = PlanScheduler(self._run_plan, on_error=self._plan_failed)
+        rospy.on_shutdown(self.scheduler.stop)
 
         self.path_pub = rospy.Publisher("/planned_path", Path, queue_size=1, latch=True)
         self.costmap_pub = rospy.Publisher("/costmap", OccupancyGrid, queue_size=1, latch=True)
@@ -73,6 +85,7 @@ class AStarPlanner:
         rospy.Subscriber("/scan", LaserScan, self.on_scan)
         rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.on_goal)
         rospy.Subscriber("/nav/replan", Empty, self.on_replan)
+        rospy.Subscriber("/nav/cancel", Empty, self.on_cancel)
         rospy.loginfo("astar_planner ready: send a goal to /move_base_simple/goal")
 
     def _get_param_cached(self, name: str, default: Any) -> Any:
@@ -218,7 +231,7 @@ class AStarPlanner:
                     check_radius,
                 )
                 self.last_auto_replan_time = now
-                self.plan_for_goal(self.latest_goal)
+                self.scheduler.post(SCAN_TRIGGER)
 
     def _log_trigger_debug(
         self,
@@ -319,23 +332,41 @@ class AStarPlanner:
 
     def on_goal(self, msg: PoseStamped) -> None:
         self.latest_goal = msg
-        self.plan_for_goal(msg)
+        self.scheduler.post(GOAL, msg)
 
     def on_replan(self, _msg: Empty) -> None:
         if self.latest_goal is not None:
             rospy.loginfo("Replan requested: searching alternative path around obstacles...")
-            self.plan_for_goal(self.latest_goal)
+            self.scheduler.post(REPLAN)
 
-    def plan_for_goal(self, msg: PoseStamped) -> None:
+    def on_cancel(self, _msg: Empty) -> None:
+        """The leg is over (path_follower reports it): forget the goal and the path (ADR-016)."""
+        self.scheduler.cancel()
+        self.latest_goal = None
+        self.current_path_corners = None
+        self.current_path_radius = None
+        rospy.loginfo("Leg cancelled: the goal and the path are forgotten.")
+
+    # ---------------- planning (runs on the scheduler's thread) ----------------
+    def _run_plan(self, ticket: Ticket) -> None:
+        goal = ticket.payload if ticket.payload is not None else self.latest_goal
+        if goal is None:
+            return
+        self.plan_for_goal(goal, ticket)
+
+    def _plan_failed(self, exc: BaseException) -> None:
+        rospy.logerr("Planning failed with an unexpected error: %r", exc)
+
+    def plan_for_goal(self, msg: PoseStamped, ticket: Optional[Ticket] = None) -> None:
         maps, pose = self.maps, self.pose
         if maps is None or pose is None:
-            return self.abort("no /map or no /robot/pose received yet")
+            return self.abort("no /map or no /robot/pose received yet", ticket)
         frame = msg.header.frame_id
         if frame not in ("", "map"):
-            return self.abort("the goal is in frame '%s', not 'map'" % frame)
+            return self.abort("the goal is in frame '%s', not 'map'" % frame, ticket)
         age = (rospy.Time.now() - pose.header.stamp).to_sec()
         if age > POSE_MAX_AGE:
-            return self.abort("the last /robot/pose is %.1f s old" % age)
+            return self.abort("the last /robot/pose is %.1f s old" % age, ticket)
 
         start = (pose.pose.position.x, pose.pose.position.y)
         goal = (msg.pose.position.x, msg.pose.position.y)
@@ -382,8 +413,11 @@ class AStarPlanner:
                 continue
 
         if corners is None or chosen_grid is None:
-            return self.abort("No path found around obstacles")
+            return self.abort("No path found around obstacles", ticket)
 
+        if ticket is not None and ticket.cancelled:
+            rospy.loginfo("Plan dropped: the leg was cancelled or a newer goal arrived while planning.")
+            return
         self.publish_costmap(chosen_grid)
         self.current_path_radius = radius
         self.publish_path(corners)
@@ -412,7 +446,10 @@ class AStarPlanner:
             rospy.loginfo("\n%s", ascii_map(chosen_grid, corners))
 
     # ---------------- output ----------------
-    def abort(self, why: str) -> None:
+    def abort(self, why: str, ticket: Optional[Ticket] = None) -> None:
+        if ticket is not None and ticket.cancelled:
+            rospy.loginfo("Plan dropped (%s): the leg was cancelled or a newer goal arrived.", why)
+            return
         rospy.logwarn("No path: %s", why)
         self.result_pub.publish(String(data=leg_result(ABORTED, NO_PATH)))
 

@@ -31,6 +31,7 @@ install(FILES
   scripts/grid_planner.py
   scripts/nav_common.py
   scripts/path_tracker.py
+  scripts/plan_scheduler.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

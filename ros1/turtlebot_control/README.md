@@ -48,7 +48,7 @@ HomePoint, target shelf, HomePoint, five runs in a row, each leg `succeeded`, st
 | `/move_base_simple/goal` | `geometry_msgs/PoseStamped` | you (or RViz *2D Nav Goal*) to planner. Frame `map` |
 | `/planned_path` | `nav_msgs/Path` | planner to follower. Latched |
 | `/cmd_vel` | `geometry_msgs/Twist` | follower to Unity |
-| `/nav/cancel` | `std_msgs/Empty` | you to follower |
+| `/nav/cancel` | `std_msgs/Empty` | you, the mission node and `ab_run.py` to follower and planners. The planners forget the goal and the path and drop a plan in progress ([ADR-016](../../docs/ADR-016-planner-scheduling.md)) |
 | `/nav/leg_result` | `std_msgs/String` (JSON) | planner and follower to you: `{"outcome": "succeeded"|"aborted", "reason": ""|"no_path"|"cancelled"}` |
 
 | Parameter | Read by | Default | Meaning |

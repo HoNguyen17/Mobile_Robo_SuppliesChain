@@ -40,6 +40,7 @@ A simulated warehouse in **Unity** on Windows. One **TurtleBot3 Waffle Pi** is d
 | [013](_archive/2026-10-04-kinematic-cube-plan/ADR-013-kinematic-robot-body.md) | _Archived, superseded by 015._ Robot body: kinematic Cube with a Waffle Pi visual model, emulated sensors |
 | [014](ADR-014-ros-interfaces.md) | ROS interfaces: standard messages only, one `mission` node |
 | [015](ADR-015-physical-waffle-pi-body.md) | Robot body: physical Waffle Pi at scale 4. Supersedes 013, re-activates 010 and 011 |
+| [016](ADR-016-planner-scheduling.md) | Planner scheduling: one plan at a time on a worker thread, `/nav/cancel` clears the goal and path |
 
 ## One-minute summary
 

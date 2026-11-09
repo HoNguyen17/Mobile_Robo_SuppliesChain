@@ -925,6 +925,13 @@ class FakeRospy:
         self._throttles = {}
         self.sim_time = 100.0
         self.Time = self
+        self.shutdown_hooks = []
+
+    def on_shutdown(self, callback: Any) -> None:
+        self.shutdown_hooks.append(callback)
+
+    def logerr(self, msg: str, *args: Any) -> None:
+        self.logs.append(("ERR", msg, args))
 
     def now(self) -> FakeTime:
         return FakeTime(self.sim_time)
@@ -1085,14 +1092,20 @@ def fake_rospy_context(params=None, mod_name="dstar_planner_smoke", script_name=
         spec = importlib.util.spec_from_file_location(mod_name, planner_file)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        yield mod, fake_rospy
+        try:
+            yield mod, fake_rospy
+        finally:
+            for hook in fake_rospy.shutdown_hooks:  # stops the PlanScheduler thread of the node
+                hook()
 
 
 class NodeSmokeTest(unittest.TestCase):
     def test_wiring(self):
         with fake_rospy_context({}, "dp_wiring_test") as (mod, fake_rospy):
             node = mod.DStarPlanner()
-            expected_subs = {"/map", "/robot/pose", "/scan", "/move_base_simple/goal", "/nav/replan"}
+            expected_subs = {
+                "/map", "/robot/pose", "/scan", "/move_base_simple/goal", "/nav/replan", "/nav/cancel",
+            }
             expected_pubs = {"/planned_path", "/costmap", "/nav/leg_result"}
             self.assertEqual(set(fake_rospy.subscribers.keys()), expected_subs)
             self.assertEqual(set(fake_rospy.publishers.keys()), expected_pubs)
@@ -1170,6 +1183,7 @@ class NodeSmokeTest(unittest.TestCase):
             node_on.on_pose(pose_msg)
             node_on.on_scan(scan_msg)
             node_on.on_goal(goal_msg)
+            self.assertTrue(node_on.scheduler.wait_idle(10.0))
             path_on = fake_rospy.publishers["/planned_path"][-1]
             max_y_on = max(p.pose.position.y for p in path_on.poses)
             self.assertLess(max_y_on, 3.5)
@@ -1184,6 +1198,7 @@ class NodeSmokeTest(unittest.TestCase):
             node_off.on_pose(pose_msg)
             node_off.on_scan(scan_msg)
             node_off.on_goal(goal_msg)
+            self.assertTrue(node_off.scheduler.wait_idle(10.0))
             path_off = fake_rospy.publishers["/planned_path"][-1]
             max_y_off = max(p.pose.position.y for p in path_off.poses)
             self.assertTrue(max_y_off > 4.4 or node_off.current_path_radius < 0.40)
@@ -1223,6 +1238,7 @@ class NodeSmokeTest(unittest.TestCase):
                 goal_msg.pose.position.x = 2.0
                 goal_msg.pose.position.y = 3.0
                 node.on_goal(goal_msg)
+                self.assertTrue(node.scheduler.wait_idle(10.0))
 
                 # Advance fake time past throttle period (5.0s)
                 fake_rospy.sim_time += 10.0
@@ -1321,6 +1337,7 @@ class NodeSmokeTest(unittest.TestCase):
                 goal_msg.pose.position.x = 9.0
                 goal_msg.pose.position.y = 3.0
                 node.on_goal(goal_msg)
+                self.assertTrue(node.scheduler.wait_idle(10.0))
 
                 current_path_radius = node.current_path_radius
 
@@ -1355,7 +1372,9 @@ class NodeSmokeTest(unittest.TestCase):
         """Verify AStarPlanner has identical default parameters, wiring, and static filtering."""
         with fake_rospy_context({}, "ap_wiring_test", "astar_planner.py") as (mod, fake_rospy):
             node = mod.AStarPlanner()
-            expected_subs = {"/map", "/robot/pose", "/scan", "/move_base_simple/goal", "/nav/replan"}
+            expected_subs = {
+                "/map", "/robot/pose", "/scan", "/move_base_simple/goal", "/nav/replan", "/nav/cancel",
+            }
             expected_pubs = {"/planned_path", "/costmap", "/nav/leg_result"}
             self.assertEqual(set(fake_rospy.subscribers.keys()), expected_subs)
             self.assertEqual(set(fake_rospy.publishers.keys()), expected_pubs)
