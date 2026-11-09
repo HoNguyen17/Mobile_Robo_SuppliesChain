@@ -16,7 +16,7 @@ The project is the UC6 warehouse robot: a simulated TurtleBot3 Waffle Pi in Unit
 - Exact two-sided permutation test on means in `ab_report.py` (`permutation_test_means`), with a per-scenario table in `report.md` and `report.html` and 17 tests in `test_ab_tools.py`.
 - `docs/benchmark-data/20261026_214123/`: tracked copy of the parity batch (CSVs, `meta_*.json`, both reports, `handoff.txt` with personal paths redacted).
 - `README-BENCHMARK.md` section 7.5: how to reproduce the p-values, and which values of the pooled table do not reproduce from the CSVs.
-- `mission_node.py` labels its run summaries from `~planner_name`, then the global `/nav/planner_name`, then `astar`. `bringup_dstar.launch` sets `/nav/planner_name` to `dstar` [af59c3e].
+- `mission_node.py` labels its run summaries from `~planner_name`, then the global `/nav/planner_name`, then `astar`. `bringup_dstar.launch` sets `/nav/planner_name` to `dstar` [af59c3e]; `bringup.launch` sets it to `astar` when it starts the A\* planner (`nav:=true`) ([ADR-018](docs/ADR-018-planner-label.md)). Closes open issue 14.
 - `run_scenario.py` and `run_all_scenarios.py` log "PLACEHOLDER: results are not measured". Their results are still hardcoded.
 
 ### Changed

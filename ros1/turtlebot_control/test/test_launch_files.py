@@ -95,13 +95,25 @@ class TestLaunchFiles(unittest.TestCase):
         self.assertIn("/dstar_planner/verify_costmap", params)
         self.assertEqual(params["/dstar_planner/verify_costmap"].lower(), "false")
 
-    def test_planner_name_label_is_dstar_only_in_the_dstar_launch(self):
-        """The mission node labels its summaries from /nav/planner_name: dstar here, unset in bringup.launch."""
-        dstar = {p.get("name"): p.get("value") for p in self.tree_bringup_dstar.getroot().findall("param")}
-        self.assertEqual(dstar.get("/nav/planner_name"), "dstar")
+    def test_planner_name_label_matches_the_planner_each_launch_starts(self):
+        """ADR-018: the mission node labels its summaries from /nav/planner_name."""
+        dstar = {p.get("name"): p for p in self.tree_bringup_dstar.getroot().findall("param")}
+        self.assertEqual(dstar["/nav/planner_name"].get("value"), "dstar")
+        self.assertIsNone(dstar["/nav/planner_name"].get("if"))
 
-        bringup = {p.get("name"): p.get("value") for p in self.tree_bringup.getroot().findall("param")}
-        self.assertNotIn("/nav/planner_name", bringup)
+        bringup = {p.get("name"): p for p in self.tree_bringup.getroot().findall("param")}
+        self.assertEqual(bringup["/nav/planner_name"].get("value"), "astar")
+        # Only when bringup.launch starts the A* planner: bringup_dstar.launch includes it with
+        # nav:=false and its own dstar value must not be overridden by the included file.
+        self.assertEqual(bringup["/nav/planner_name"].get("if"), "$(arg nav)")
+
+    def test_the_dstar_launch_includes_bringup_with_nav_false_so_the_label_stays_dstar(self):
+        include = [
+            inc for inc in self.tree_bringup_dstar.getroot().findall("include")
+            if "bringup.launch" in (inc.get("file") or "")
+        ][0]
+        args = {a.get("name"): a.get("value") for a in include.findall("arg")}
+        self.assertEqual(args.get("nav"), "false")
 
     def test_no_astar_planner_node_anywhere(self):
         """(e) No astar_planner node anywhere in the three launch files."""

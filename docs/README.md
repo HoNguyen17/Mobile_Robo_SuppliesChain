@@ -42,6 +42,7 @@ A simulated warehouse in **Unity** on Windows. One **TurtleBot3 Waffle Pi** is d
 | [015](ADR-015-physical-waffle-pi-body.md) | Robot body: physical Waffle Pi at scale 4. Supersedes 013, re-activates 010 and 011 |
 | [016](ADR-016-planner-scheduling.md) | Planner scheduling: one plan at a time on a worker thread, `/nav/cancel` clears the goal and path |
 | [017](ADR-017-live-costmap-radius.md) | The live `/costmap` uses the inflation radius of the plan being followed |
+| [018](ADR-018-planner-label.md) | The planner label in mission run summaries comes from `/nav/planner_name`, set by the bringup launch files |
 
 ## One-minute summary
 

@@ -18,6 +18,10 @@
   <!-- ADR-009: Unity owns the clock. Every node started after this line uses /clock. -->
   <param name="/use_sim_time" value="true"/>
 
+  <!-- Names the planner in the mission node's run summaries (label only, ADR-018). Set only when this file starts the
+       A* planner: bringup_dstar.launch passes nav:=false and sets dstar itself, and this must not override it. -->
+  <param name="/nav/planner_name" value="astar" if="$(arg nav)"/>
+
   <!-- Bridge to Unity (ROS-TCP-Connector). Same node as ros_tcp_endpoint's endpoint.launch, but started with
        python3 explicitly: its script says "#!/usr/bin/env python", and Ubuntu 20.04 has no "python" command
        unless python-is-python3 is installed. -->
