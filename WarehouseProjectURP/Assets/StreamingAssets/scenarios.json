@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "scenarios": [
+    {
+      "id": "S-04",
+      "name": "Crossing NPC",
+      "workers": [
+        {
+          "name": "crosser",
+          "speed_mps": 0.5,
+          "radius_m": 0.15,
+          "mode": "pingpong",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 0.0,
+          "start_jitter_s": 6.0,
+          "waypoints": [
+            {
+              "x": 0.0,
+              "y": 1.5,
+              "dwell_s": 0.0
+            },
+            {
+              "x": 0.0,
+              "y": -1.5,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-00c",
+      "name": "Open route, control",
+      "workers": []
+    },
+    {
+      "id": "S-06",
+      "name": "Oncoming worker in the aisle",
+      "workers": [
+        {
+          "name": "oncoming",
+          "speed_mps": 0.5,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 0.0,
+          "start_jitter_s": 3.0,
+          "waypoints": [
+            {
+              "x": -2.436,
+              "y": -2.668,
+              "dwell_s": 0.0
+            },
+            {
+              "x": 4.572,
+              "y": -0.204,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-07",
+      "name": "Worker stops in the aisle, then walks on",
+      "workers": [
+        {
+          "name": "stopper",
+          "speed_mps": 0.5,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 0.0,
+          "start_jitter_s": 3.0,
+          "waypoints": [
+            {
+              "x": 1.1275,
+              "y": -3.0051,
+              "dwell_s": 0.0
+            },
+            {
+              "x": 0.63,
+              "y": -1.59,
+              "dwell_s": 6.0
+            },
+            {
+              "x": 0.1325,
+              "y": -0.1749,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-07b",
+      "name": "Worker stops in the aisle and stays",
+      "workers": [
+        {
+          "name": "stayer",
+          "speed_mps": 0.5,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 0.0,
+          "start_jitter_s": 3.0,
+          "waypoints": [
+            {
+              "x": 1.1275,
+              "y": -3.0051,
+              "dwell_s": 0.0
+            },
+            {
+              "x": 0.63,
+              "y": -1.59,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-08",
+      "name": "Two workers crossing",
+      "workers": [
+        {
+          "name": "crosser_a",
+          "speed_mps": 0.5,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 0.0,
+          "start_jitter_s": 3.0,
+          "waypoints": [
+            {
+              "x": 2.4415,
+              "y": -2.5431,
+              "dwell_s": 0.0
+            },
+            {
+              "x": 1.4465,
+              "y": 0.2871,
+              "dwell_s": 0.0
+            }
+          ]
+        },
+        {
+          "name": "crosser_b",
+          "speed_mps": 0.5,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 0.0,
+          "start_jitter_s": 3.0,
+          "waypoints": [
+            {
+              "x": -0.7435,
+              "y": -0.4829,
+              "dwell_s": 0.0
+            },
+            {
+              "x": 0.2515,
+              "y": -3.3131,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-09",
+      "name": "Worker emerges from a side aisle",
+      "workers": [
+        {
+          "name": "emerger",
+          "speed_mps": 0.5,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 4.0,
+          "start_jitter_s": 4.0,
+          "waypoints": [
+            {
+              "x": 1.227,
+              "y": -3.2881,
+              "dwell_s": 0.0
+            },
+            {
+              "x": 0.431,
+              "y": -1.024,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-10",
+      "name": "Slower worker ahead, same direction",
+      "workers": [
+        {
+          "name": "slow_walker",
+          "speed_mps": 0.2,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 0.0,
+          "start_jitter_s": 2.0,
+          "waypoints": [
+            {
+              "x": 2.382,
+              "y": -0.974,
+              "dwell_s": 0.0
+            },
+            {
+              "x": -3.312,
+              "y": -2.976,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S-11",
+      "name": "Fast crossing vehicle",
+      "workers": [
+        {
+          "name": "vehicle",
+          "speed_mps": 1.0,
+          "radius_m": 0.15,
+          "mode": "once",
+          "start_trigger": "robot_departs",
+          "start_delay_s": 4.0,
+          "start_jitter_s": 6.0,
+          "waypoints": [
+            {
+              "x": 1.6251,
+              "y": -4.4202,
+              "dwell_s": 0.0
+            },
+            {
+              "x": -0.3651,
+              "y": 1.2402,
+              "dwell_s": 0.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

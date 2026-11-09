@@ -12,6 +12,7 @@ The project is the UC6 warehouse robot: a simulated TurtleBot3 Waffle Pi in Unit
 - The live `/costmap` uses the inflation radius of the plan being followed (`nav_common.costmap_radius`), so RViz no longer alternates between 0.40 m and 0.35 m ([ADR-017](docs/ADR-017-live-costmap-radius.md)). Closes open issue 11.
 
 ### Added
+- Dynamic scenarios as data ([ADR-019](docs/ADR-019-dynamic-scenario-spec.md)): `scenarios.yaml` gets a `route`, worker specs for S-04 and the new S-00c, S-06, S-07, S-07b, S-08, S-09, S-10 and S-11, and `warehouse_eval.scenario_spec` validates it and exports `WarehouseProjectURP/Assets/StreamingAssets/scenarios.json` (`--write`, `--check`; a test fails while the JSON is stale). Includes the reset message format `ID?seed=N`, the seeded start offset and the worker path maths, with `test_scenario_spec.py`. One `docs/test-plan.md` row per new scenario in sections 1 and 2.
 - `scripts/plan_scheduler.py` and tests `test_plan_scheduler.py`, `test_planner_nodes.py` (both real planner nodes against a fake rospy), `test_planner_scheduling_source.py`; `plan_scheduler.py` is installed by `CMakeLists.txt`.
 - Exact two-sided permutation test on means in `ab_report.py` (`permutation_test_means`), with a per-scenario table in `report.md` and `report.html` and 17 tests in `test_ab_tools.py`.
 - `docs/benchmark-data/20261026_214123/`: tracked copy of the parity batch (CSVs, `meta_*.json`, both reports, `handoff.txt` with personal paths redacted).

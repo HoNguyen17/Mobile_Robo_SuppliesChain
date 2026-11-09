@@ -1,5 +1,21 @@
 # Scenarios configuration for UC6 Warehouse Robot Evaluation
 # Conforms to docs/test-plan.md §1 & §2
+#
+# Dynamic scenarios carry a `workers:` list (ADR-019). ros1/warehouse_eval/src/warehouse_eval/scenario_spec.py turns it
+# into WarehouseProjectURP/Assets/StreamingAssets/scenarios.json, which Unity's ScenarioLoader reads on every seeded reset
+# ("S-06?seed=7"). A reset without "?seed=" ignores this list and builds the scenario in C# exactly as before.
+# After editing this file run:  python3 -m warehouse_eval.scenario_spec --write   (a test fails while the JSON is stale)
+#
+# Worker waypoints are ROS metres in frame map (ADR-010). A waypoint is absolute ({x, y}) or relative to the planned
+# straight route from `route.start` to `route.goal` ({f, offset_m}: f = fraction along it, offset_m = metres to the
+# left of the travel direction). `dwell_s` = seconds the worker waits there; -1 = for ever.
+# A worker is not in the scene before it starts: with start_trigger robot_departs it appears at its first waypoint
+# `start_delay_s + start_jitter_s * seeded_unit(seed, worker index)` seconds after the robot first leaves its start pose.
+# layout_checked stays false until the aisle geometry of the scenario was looked at in Unity (docs/test-plan.md, step U3).
+
+route:
+  start: [5.01, -0.05]
+  goal: [-3.75, -3.13]
 
 scenarios:
   S-00:
@@ -44,10 +60,25 @@ scenarios:
   S-04:
     name: "Crossing NPC"
     category: "Standard"
+    tier: core
     leg_timeout_s: 90.0
+    layout_checked: false
     criteria:
       success_rate: 0.85
       max_collisions: 1
+    # The same line as the hardcoded C# worker (Unity (-6,1,0) to (6,1,0), 0.5 m/s), so the seeded path measures the
+    # scenario that was benchmarked before. Only its start time is new.
+    workers:
+      - name: crosser
+        speed_mps: 0.5
+        radius_m: 0.15
+        mode: pingpong
+        start_trigger: robot_departs
+        start_delay_s: 0.0
+        start_jitter_s: 6.0
+        waypoints:
+          - {x: 0.0, y: 1.5}
+          - {x: 0.0, y: -1.5}
 
   S-05:
     name: "Category speeds"
@@ -56,3 +87,150 @@ scenarios:
       success_rate: 0.90
       max_collisions: 0
       speed_gap: 0.03
+
+  # ---- Dynamic obstacles, milestone 3 (ADR-019) ----
+
+  S-00c:
+    name: "Open route, control"
+    category: "Dynamic"
+    tier: core
+    leg_timeout_s: 90.0
+    layout_checked: true
+    workers: []
+
+  S-06:
+    name: "Oncoming worker in the aisle"
+    category: "Dynamic"
+    tier: core
+    leg_timeout_s: 90.0
+    layout_checked: false
+    workers:
+      - name: oncoming
+        speed_mps: 0.5
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 0.0
+        start_jitter_s: 3.0
+        waypoints:
+          - {f: 0.85, offset_m: 0.0}
+          - {f: 0.05, offset_m: 0.0}
+
+  S-07:
+    name: "Worker stops in the aisle, then walks on"
+    category: "Dynamic"
+    tier: core
+    leg_timeout_s: 90.0
+    layout_checked: false
+    workers:
+      - name: stopper
+        speed_mps: 0.5
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 0.0
+        start_jitter_s: 3.0
+        waypoints:
+          - {f: 0.5, offset_m: 1.5}
+          - {f: 0.5, offset_m: 0.0, dwell_s: 6.0}
+          - {f: 0.5, offset_m: -1.5}
+
+  S-07b:
+    name: "Worker stops in the aisle and stays"
+    category: "Dynamic"
+    tier: stress
+    leg_timeout_s: 90.0
+    layout_checked: false
+    workers:
+      - name: stayer
+        speed_mps: 0.5
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 0.0
+        start_jitter_s: 3.0
+        waypoints:
+          - {f: 0.5, offset_m: 1.5}
+          - {f: 0.5, offset_m: 0.0}
+
+  S-08:
+    name: "Two workers crossing"
+    category: "Dynamic"
+    tier: core
+    leg_timeout_s: 90.0
+    layout_checked: false
+    workers:
+      - name: crosser_a
+        speed_mps: 0.5
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 0.0
+        start_jitter_s: 3.0
+        waypoints:
+          - {f: 0.35, offset_m: 1.5}
+          - {f: 0.35, offset_m: -1.5}
+      - name: crosser_b
+        speed_mps: 0.5
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 0.0
+        start_jitter_s: 3.0
+        waypoints:
+          - {f: 0.6, offset_m: -1.5}
+          - {f: 0.6, offset_m: 1.5}
+
+  S-09:
+    name: "Worker emerges from a side aisle"
+    category: "Dynamic"
+    tier: stress
+    leg_timeout_s: 90.0
+    layout_checked: false
+    workers:
+      - name: emerger
+        speed_mps: 0.5
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 4.0
+        start_jitter_s: 4.0
+        waypoints:
+          - {f: 0.5, offset_m: 1.8}
+          - {f: 0.5, offset_m: -0.6}
+
+  S-10:
+    name: "Slower worker ahead, same direction"
+    category: "Dynamic"
+    tier: stress
+    leg_timeout_s: 120.0
+    layout_checked: false
+    workers:
+      - name: slow_walker
+        speed_mps: 0.2
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 0.0
+        start_jitter_s: 2.0
+        waypoints:
+          - {f: 0.3, offset_m: 0.0}
+          - {f: 0.95, offset_m: 0.0}
+
+  S-11:
+    name: "Fast crossing vehicle"
+    category: "Dynamic"
+    tier: stress
+    leg_timeout_s: 90.0
+    layout_checked: false
+    workers:
+      - name: vehicle
+        speed_mps: 1.0
+        radius_m: 0.15
+        mode: once
+        start_trigger: robot_departs
+        start_delay_s: 4.0
+        start_jitter_s: 6.0
+        waypoints:
+          - {f: 0.5, offset_m: 3.0}
+          - {f: 0.5, offset_m: -3.0}

@@ -20,6 +20,16 @@ All scenarios use one robot, the same static map (walls + shelves), and a fixed 
 | **S-03** | Dead end | A box row closes the short route; the robot must back out and take the long route | Recovery + replanning | M2 |
 | **S-04** | Crossing NPC | An NPC walks across the robot's path at 0.5 m/s, every 8 s | Dynamic avoidance | M3 |
 | **S-05** | Category speeds | Same route as S-00; 20 runs each of Fragile, Standard and Heavy (60 total) | Profile changes behaviour | supports G4 |
+| **S-00c** | Open route, control | S-00 on the S-04 route and goal, with the seeded reset and no worker | Reference time and clearance for the dynamic scenarios | M3 |
+| **S-06** | Oncoming worker | A worker walks toward the robot along the route at 0.5 m/s, starting when the robot leaves | Head-on in an aisle: side step or yield | M3 |
+| **S-07** | Worker stops, then walks on | A worker steps into the route, stands still for 6 s, then walks on | Yield (wait) instead of collide | M3 |
+| **S-07b** | Worker stops and stays | Same, but the worker stays in the route for the rest of the run | Replan and bypass when waiting never ends | M3 stress |
+| **S-08** | Two workers | Two workers cross the route in opposite directions at f = 0.35 and 0.6 | Overlapping hazards, no deadlock | M3 |
+| **S-09** | Worker from a side aisle | A worker appears 1.8 m beside the route and walks into it | Short reaction distance (reaction-limited) | M3 stress |
+| **S-10** | Slower worker ahead | A worker walks the same way along the route at 0.2 m/s | Follow or overtake without churn | M3 stress |
+| **S-11** | Fast crossing vehicle | A vehicle crosses the route at 1.0 m/s, once | Fast object; reaction-limited | M3 stress |
+
+The new rows are defined in `ros1/warehouse_eval/config/scenarios.yaml` and exported to Unity as `scenarios.json` ([ADR-019](ADR-019-dynamic-scenario-spec.md)); a worker start time comes from the reset message `S-06?seed=N`. Their aisle geometry is **unverified** until step U3 is done in Unity (`layout_checked` in the yaml).
 
 ```mermaid
 flowchart LR
@@ -50,6 +60,16 @@ flowchart LR
 | S-03 | ≥ 85 % | 0 | ≥ 0.10 m | — | recoveries ≥ 1 in ≥ 15 of 20 runs (proves the recovery path is exercised) |
 | S-04 | ≥ 85 % | ≤ 1 | — | — | replans and recoveries are **reported, not gated** |
 | S-05 | ≥ 90 % per category | 0 | — | — | mean drop-off speed: Fragile < Heavy < Standard, each gap ≥ 0.03 m/s |
+| S-00c | draft, set after the baseline | draft | — | — | reference: time to goal, clearance |
+| S-06 | draft, set after the baseline | draft | — | — | ADR-020 draft |
+| S-07 | draft, set after the baseline | draft | — | — | ADR-020 draft |
+| S-07b | draft, set after the baseline | draft | — | — | stress: reported, not gated |
+| S-08 | draft, set after the baseline | draft | — | — | ADR-020 draft |
+| S-09 | draft, set after the baseline | draft | — | — | stress: reported, not gated |
+| S-10 | draft, set after the baseline | draft | — | — | stress: reported, not gated |
+| S-11 | draft, set after the baseline | draft | — | — | stress: reported, not gated |
+
+The numbers for S-04 to S-11 above `draft` come from the baseline (N = 20 per planner, seeded) and are proposed in [ADR-020](ADR-020-matrix-runner.md); they are not approved yet. S-04 keeps the minimum of the table until they are.
 
 "Min clearance" is the worst single value across all 20 runs, not an average.
 

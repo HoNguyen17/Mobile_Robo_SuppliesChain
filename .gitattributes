@@ -14,3 +14,5 @@ CMakeLists.txt  text eol=lf
 
 # Everything in the ROS workspace, including extensions not listed above (.rviz, ...)
 ros1/**         text eol=lf
+
+WarehouseProjectURP/Assets/StreamingAssets/*.json text eol=lf

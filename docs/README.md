@@ -43,6 +43,7 @@ A simulated warehouse in **Unity** on Windows. One **TurtleBot3 Waffle Pi** is d
 | [016](ADR-016-planner-scheduling.md) | Planner scheduling: one plan at a time on a worker thread, `/nav/cancel` clears the goal and path |
 | [017](ADR-017-live-costmap-radius.md) | The live `/costmap` uses the inflation radius of the plan being followed |
 | [018](ADR-018-planner-label.md) | The planner label in mission run summaries comes from `/nav/planner_name`, set by the bringup launch files |
+| [019](ADR-019-dynamic-scenario-spec.md) | Dynamic scenarios are data (`scenarios.yaml` exported to Unity); the reset message may carry a seed (`S-06?seed=7`); ground-truth worker poses for metrics only |
 
 ## One-minute summary
 
