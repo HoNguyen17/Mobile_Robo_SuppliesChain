@@ -1,0 +1,361 @@
+===== header =====
+Time: 2026-10-26T21:50:33.338605
+Start Time: 2026-10-26T21:41:23.158851
+Git Commit: 3a1ab03f60509b3a2772c3b117766e08a969b2e3
+CLI Args: {'planner': 'both', 'repeats': 5, 'scenario': 'S-04', 'goal': [-3.75, -3.13], 'settle': 7.0, 'timeout': 120.0, 'rviz': False, 'out': '~/ab_runs', 'dry': False, 'stop': False, 'order': 'astar,dstar'}
+
+===== batch.log =====
+=== A/B Benchmark Batch Started at 2026-10-26T21:41:23.158851 ===
+Session directory: /home/<user>/ab_runs/20261026_214123
+Output directory:  /home/<user>/ab_runs
+Capturing git state (can take up to ~40 s on /mnt/c)...
+
+------------------------------------------------------------
+Starting Planner 1 / 2: ASTAR
+------------------------------------------------------------
+Launching bringup: roslaunch warehouse_bringup bringup.launch rviz:=false
+Waiting for ROS stack & Unity (90s wall limit)...
+Soft-check: /clock is actively publishing.
+Verifying node configuration and parameters (up to 20s)...
+Nodes and parameters verified successfully.
+Executing benchmark: /usr/bin/python3 <repo>/ros1/turtlebot_control/scripts/ab_run.py --scenario S-04 --goal -3.75 -3.13 --repeats 5 --settle 7.0 --timeout 120.0 --out /home/<user>/ab_runs/20261026_214123 --label astar
+[INFO] [1793025725.407715, 162.320203]: A/B Runner: planner=astar (/astar_planner), scenario=S-04, repeats=5, out=/home/<user>/ab_runs/20261026_214123/astar_runs.csv
+[INFO] [1793025725.517102, 162.413942]: Waiting for /clock, /map, /robot/pose, /scan (30 s limit)...
+[INFO] [1793025725.706071, 162.634417]: === Starting Run 1 / 5 (run_id: astar_S-04_r1_1793025725) ===
+[INFO] [1793025774.463576, 211.383469]: Run 1 complete: outcome=succeeded, time=41.7s, driven=9.2m, plans=15, xte_mean=0.014, osc=3
+[INFO] [1793025775.500820, 212.431142]: === Starting Run 2 / 5 (run_id: astar_S-04_r2_1793025775) ===
+[INFO] [1793025822.680109, 259.608173]: Run 2 complete: outcome=succeeded, time=40.1s, driven=8.9m, plans=20, xte_mean=0.018, osc=3
+[INFO] [1793025823.671337, 260.621169]: === Starting Run 3 / 5 (run_id: astar_S-04_r3_1793025823) ===
+[INFO] [1793025868.835284, 305.740804]: Run 3 complete: outcome=succeeded, time=38.1s, driven=8.9m, plans=17, xte_mean=0.018, osc=5
+[INFO] [1793025869.818960, 306.763481]: === Starting Run 4 / 5 (run_id: astar_S-04_r4_1793025869) ===
+[INFO] [1793025916.145565, 353.073595]: Run 4 complete: outcome=succeeded, time=39.3s, driven=9.0m, plans=16, xte_mean=0.018, osc=5
+[INFO] [1793025917.140242, 354.090339]: === Starting Run 5 / 5 (run_id: astar_S-04_r5_1793025917) ===
+[INFO] [1793025963.474687, 400.396893]: Run 5 complete: outcome=succeeded, time=39.2s, driven=9.0m, plans=15, xte_mean=0.014, osc=3
+ab_run exited with code 0
+Stopping ROS stack...
+Bringup log respawns/crashes: 0
+Pausing 5 seconds before next planner...
+
+------------------------------------------------------------
+Starting Planner 2 / 2: DSTAR
+------------------------------------------------------------
+Launching bringup: roslaunch warehouse_bringup bringup.launch rviz:=false nav:=false
+Waiting for ROS stack & Unity (90s wall limit)...
+Soft-check: /clock is actively publishing.
+Configuring D* Lite rosparams...
+Launching D* navigation: roslaunch turtlebot_control navigation_dstar.launch
+Verifying node configuration and parameters (up to 20s)...
+Nodes and parameters verified successfully.
+Executing benchmark: /usr/bin/python3 <repo>/ros1/turtlebot_control/scripts/ab_run.py --scenario S-04 --goal -3.75 -3.13 --repeats 5 --settle 7.0 --timeout 120.0 --out /home/<user>/ab_runs/20261026_214123 --label dstar
+[INFO] [1793025987.739393, 424.632739]: A/B Runner: planner=dstar (/dstar_planner), scenario=S-04, repeats=5, out=/home/<user>/ab_runs/20261026_214123/dstar_runs.csv
+[INFO] [1793025987.830077, 424.742068]: Waiting for /clock, /map, /robot/pose, /scan (30 s limit)...
+[INFO] [1793025988.752871, 425.682709]: === Starting Run 1 / 5 (run_id: dstar_S-04_r1_1793025988) ===
+[INFO] [1793026035.271106, 472.200699]: Run 1 complete: outcome=succeeded, time=39.4s, driven=9.1m, plans=12, xte_mean=0.011, osc=3
+[INFO] [1793026036.265445, 473.212799]: === Starting Run 2 / 5 (run_id: dstar_S-04_r2_1793026036) ===
+[INFO] [1793026082.483867, 519.406100]: Run 2 complete: outcome=succeeded, time=39.1s, driven=8.9m, plans=18, xte_mean=0.014, osc=5
+[INFO] [1793026083.508099, 520.433705]: === Starting Run 3 / 5 (run_id: dstar_S-04_r3_1793026083) ===
+[INFO] [1793026132.609850, 569.518232]: Run 3 complete: outcome=succeeded, time=42.0s, driven=9.3m, plans=13, xte_mean=0.009, osc=5
+[INFO] [1793026133.585018, 570.536269]: === Starting Run 4 / 5 (run_id: dstar_S-04_r4_1793026133) ===
+[INFO] [1793026180.850228, 617.777902]: Run 4 complete: outcome=succeeded, time=40.2s, driven=9.0m, plans=17, xte_mean=0.014, osc=3
+[INFO] [1793026181.894102, 618.823643]: === Starting Run 5 / 5 (run_id: dstar_S-04_r5_1793026181) ===
+[INFO] [1793026227.819168, 664.725501]: Run 5 complete: outcome=succeeded, time=38.8s, driven=8.9m, plans=17, xte_mean=0.015, osc=5
+ab_run exited with code 0
+Stopping ROS stack...
+Bringup log respawns/crashes: 0
+Generating report: /usr/bin/python3 <repo>/ros1/turtlebot_control/scripts/ab_report.py /home/<user>/ab_runs/20261026_214123/astar_runs.csv /home/<user>/ab_runs/20261026_214123/dstar_runs.csv --out /home/<user>/ab_runs/20261026_214123/report
+Report generated: /home/<user>/ab_runs/20261026_214123/report/report.html
+
+================ SUMMARY ================
+Planner: astar
+  Valid runs:      5
+    Succeeded:     5
+    Timeout:       0
+    Aborted:       0
+  Invalid runs:    0
+  Invalid reasons: none
+  Settle retries:  0
+  Respawns:        0
+  Sim/wall ratio:  1.00x
+  Planner time/run: 3.41s (8.6%)
+Planner: dstar
+  Valid runs:      5
+    Succeeded:     5
+    Timeout:       0
+    Aborted:       0
+  Invalid runs:    0
+  Invalid reasons: none
+  Settle retries:  0
+  Respawns:        0
+  Sim/wall ratio:  1.00x
+  Planner time/run: 0.60s (1.5%)
+Report: /home/<user>/ab_runs/20261026_214123/report/report.html
+
+===== meta_astar.json =====
+{
+  "git_commit": "3a1ab03f60509b3a2772c3b117766e08a969b2e3",
+  "git_status": "",
+  "git_diff_stat": "",
+  "file_sha256": {
+    "ros1/turtlebot_control/scripts/ab_batch.py": "784d116d7e43912b5eb6deaac8b4cf8fa971235cd0902f2ae1df160b02bbc5c0",
+    "ros1/turtlebot_control/scripts/ab_run.py": "b516a14ac003b692951ab405135abb5d20bf1abd7a123c1e663e739c5d65976a",
+    "ros1/turtlebot_control/scripts/ab_report.py": "668253e1f018415410cfba8b447fc1e8f3ff410cd01e49e90a7540c54655f820",
+    "ros1/turtlebot_control/scripts/dstar_planner.py": "2249ed1401f8deec992b68b942c9aaec2fa07b46f5d3eb7ce930f9402990cb94",
+    "ros1/turtlebot_control/scripts/dstar_lite.py": "ffaf0c487b8a27e9a8b453cc30810d45b0a726654eae84a1a04e67f57a0951bb",
+    "ros1/turtlebot_control/scripts/astar_planner.py": "da6dde00aefe903ee4b6f1adb062b9f7d201f1a8934061c9b5e80bdad4592668",
+    "ros1/turtlebot_control/scripts/path_follower.py": "7bdb10eeb79f11ee40cd42350b74c3bef7304e8aa8fb81a85228d33850a52893",
+    "ros1/turtlebot_control/launch/navigation_dstar.launch": "fd16fd1baecb7806725bb8906b9c0e235c709f0d2031ac83a184272afb6b6f81",
+    "WarehouseProjectURP/Assets/Scripts/Ros/ScenarioLoader.cs": "e3a5d1e64d4296d0540281ec282761b2762b588a299b591bec8623d29874023a"
+  },
+  "planner": "astar",
+  "effective_repeats": 5,
+  "rviz": false,
+  "cli_args": {
+    "planner": "both",
+    "repeats": 5,
+    "scenario": "S-04",
+    "goal": [
+      -3.75,
+      -3.13
+    ],
+    "settle": 7.0,
+    "timeout": 120.0,
+    "rviz": false,
+    "out": "~/ab_runs",
+    "dry": false,
+    "stop": false,
+    "order": "astar,dstar"
+  },
+  "rosparam_values": {},
+  "nav_max_lin": 0.26,
+  "nav_inflation_radius": 0.35,
+  "python_version": "3.8.10 (default, Mar 18 2025, 20:04:55) \n[GCC 9.4.0]",
+  "start_time": "2026-10-26T21:41:53.829573",
+  "end_time": "2026-10-26T21:46:05.478536",
+  "ab_run_exit_code": 0,
+  "respawn_count": 0
+}
+
+===== meta_dstar.json =====
+{
+  "git_commit": "3a1ab03f60509b3a2772c3b117766e08a969b2e3",
+  "git_status": "",
+  "git_diff_stat": "",
+  "file_sha256": {
+    "ros1/turtlebot_control/scripts/ab_batch.py": "784d116d7e43912b5eb6deaac8b4cf8fa971235cd0902f2ae1df160b02bbc5c0",
+    "ros1/turtlebot_control/scripts/ab_run.py": "b516a14ac003b692951ab405135abb5d20bf1abd7a123c1e663e739c5d65976a",
+    "ros1/turtlebot_control/scripts/ab_report.py": "668253e1f018415410cfba8b447fc1e8f3ff410cd01e49e90a7540c54655f820",
+    "ros1/turtlebot_control/scripts/dstar_planner.py": "2249ed1401f8deec992b68b942c9aaec2fa07b46f5d3eb7ce930f9402990cb94",
+    "ros1/turtlebot_control/scripts/dstar_lite.py": "ffaf0c487b8a27e9a8b453cc30810d45b0a726654eae84a1a04e67f57a0951bb",
+    "ros1/turtlebot_control/scripts/astar_planner.py": "da6dde00aefe903ee4b6f1adb062b9f7d201f1a8934061c9b5e80bdad4592668",
+    "ros1/turtlebot_control/scripts/path_follower.py": "7bdb10eeb79f11ee40cd42350b74c3bef7304e8aa8fb81a85228d33850a52893",
+    "ros1/turtlebot_control/launch/navigation_dstar.launch": "fd16fd1baecb7806725bb8906b9c0e235c709f0d2031ac83a184272afb6b6f81",
+    "WarehouseProjectURP/Assets/Scripts/Ros/ScenarioLoader.cs": "e3a5d1e64d4296d0540281ec282761b2762b588a299b591bec8623d29874023a"
+  },
+  "planner": "dstar",
+  "effective_repeats": 5,
+  "rviz": false,
+  "cli_args": {
+    "planner": "both",
+    "repeats": 5,
+    "scenario": "S-04",
+    "goal": [
+      -3.75,
+      -3.13
+    ],
+    "settle": 7.0,
+    "timeout": 120.0,
+    "rviz": false,
+    "out": "~/ab_runs",
+    "dry": false,
+    "stop": false,
+    "order": "astar,dstar"
+  },
+  "rosparam_values": {
+    "/dstar_planner/filter_static_hits": true,
+    "/dstar_planner/blocked_use_plan_radius": true,
+    "/dstar_planner/verify_costmap": false,
+    "/dstar_planner/trigger_debug": false,
+    "/dstar_planner/obstacle_memory_s": 6.0
+  },
+  "nav_max_lin": 0.26,
+  "nav_inflation_radius": 0.35,
+  "python_version": "3.8.10 (default, Mar 18 2025, 20:04:55) \n[GCC 9.4.0]",
+  "start_time": "2026-10-26T21:46:13.039299",
+  "end_time": "2026-10-26T21:50:29.622499",
+  "ab_run_exit_code": 0,
+  "respawn_count": 0
+}
+
+===== astar_runs.csv =====
+run_id,label,planner,scenario,goal_x,goal_y,run_index,outcome,sim_time_to_goal_s,wall_time_s,driven_m,straight_m,displacement_m,path_ratio,stops,collisions,min_clearance_m,plans,early_replans,first_plan_ms,first_plan_rebuilt,replan_ms_median,replan_ms_p95,replan_ms_max,expanded_total,rebuilds,level_max,started_at,ended_at,settle_plans,invalid_reason,first_plan_path_ready_ms,replan_path_ready_median_ms,replan_path_ready_p95_ms,settle_diag,settle_retry,max_xte_m,mean_xte_m,heading_osc,path_switches,plan_ms_total,plan_share_pct
+astar_S-04_r1_1793025725,astar,astar,S-04,-3.75,-3.13,1,succeeded,41.655,41.64,9.158,9.286,8.581,1.067,0,0,0.19,15,6,264.0,,185.5,255.1,274.0,,,,2026-10-26T21:42:05.705796,2026-10-26T21:42:54.460104,0,,,,,"{""poses"":[[162.752,5.01,-0.05],[163.009,5.01,-0.05],[163.264,5.01,-0.05],[163.513,5.01,-0.05],[163.771,5.01,-0.05],[164.058,5.01,-0.05],[164.351,5.01,-0.05],[164.649,5.01,-0.05],[164.904,5.01,-0.05],[165.165,5.01,-0.05],[165.421,5.01,-0.05],[165.72,5.01,-0.05],[165.985,5.01,-0.05],[166.242,5.01,-0.05],[166.507,5.01,-0.05],[166.765,5.01,-0.05],[167.031,5.01,-0.05],[167.315,5.01,-0.05],[167.577,5.01,-0.05],[167.852,5.01,-0.05],[168.108,5.01,-0.05],[168.375,5.01,-0.05],[168.642,5.01,-0.05],[168.919,5.01,-0.05],[169.174,5.01,-0.05],[169.433,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[astar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38"",""[astar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38""]}",0,0.127,0.014,3,15,3071.0,7.37
+astar_S-04_r2_1793025775,astar,astar,S-04,-3.75,-3.13,2,succeeded,40.066,40.043,8.914,9.286,8.578,1.039,0,0,0.192,20,8,208.0,,189.0,270.3,273.0,,,,2026-10-26T21:42:55.500566,2026-10-26T21:43:42.678987,0,,,,,"{""poses"":[[212.561,5.01,-0.05],[212.839,5.01,-0.05],[213.095,5.01,-0.05],[213.365,5.01,-0.05],[213.619,5.01,-0.05],[213.887,5.01,-0.05],[214.151,5.01,-0.05],[214.415,5.01,-0.05],[214.682,5.01,-0.05],[214.948,5.01,-0.05],[215.232,5.01,-0.05],[215.498,5.01,-0.05],[215.781,5.01,-0.05],[216.044,5.01,-0.05],[216.303,5.01,-0.05],[216.561,5.01,-0.05],[216.851,5.01,-0.05],[217.112,5.01,-0.05],[217.37,5.01,-0.05],[217.626,5.01,-0.05],[217.898,5.01,-0.05],[218.167,5.01,-0.05],[218.427,5.01,-0.05],[218.695,5.01,-0.05],[218.983,5.01,-0.05],[219.278,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[astar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38"",""[astar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38""]}",0,0.131,0.018,3,20,4044.0,10.09
+astar_S-04_r3_1793025823,astar,astar,S-04,-3.75,-3.13,3,succeeded,38.073,38.054,8.917,9.286,8.579,1.039,0,0,0.223,17,6,346.0,,188.5,268.0,322.0,,,,2026-10-26T21:43:43.670971,2026-10-26T21:44:28.829469,0,,,,,"{""poses"":[[260.675,5.01,-0.05],[260.94,5.01,-0.05],[261.19,5.01,-0.05],[261.445,5.01,-0.05],[261.723,5.01,-0.05],[261.975,5.01,-0.05],[262.24,5.01,-0.05],[262.49,5.01,-0.05],[262.744,5.01,-0.05],[263.021,5.01,-0.05],[263.295,5.01,-0.05],[263.558,5.01,-0.05],[263.822,5.01,-0.05],[264.09,5.01,-0.05],[264.34,5.01,-0.05],[264.614,5.01,-0.05],[264.897,5.01,-0.05],[265.152,5.01,-0.05],[265.417,5.01,-0.05],[265.682,5.01,-0.05],[265.944,5.01,-0.05],[266.229,5.01,-0.05],[266.484,5.01,-0.05],[266.743,5.01,-0.05],[266.994,5.01,-0.05],[267.288,5.01,-0.05],[267.559,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[astar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38""]}",0,0.122,0.018,5,17,3623.0,9.52
+astar_S-04_r4_1793025869,astar,astar,S-04,-3.75,-3.13,4,succeeded,39.26,39.256,8.964,9.286,8.576,1.045,0,0,0.216,16,6,279.0,,195.0,236.7,243.0,,,,2026-10-26T21:44:29.818556,2026-10-26T21:45:16.144228,0,,,,,"{""poses"":[[306.826,5.01,-0.05],[307.104,5.01,-0.05],[307.358,5.01,-0.05],[307.645,5.01,-0.05],[307.907,5.01,-0.05],[308.163,5.01,-0.05],[308.445,5.01,-0.05],[308.709,5.01,-0.05],[308.969,5.01,-0.05],[309.228,5.01,-0.05],[309.513,5.01,-0.05],[309.766,5.01,-0.05],[310.043,5.01,-0.05],[310.336,5.01,-0.05],[310.621,5.01,-0.05],[310.88,5.01,-0.05],[311.131,5.01,-0.05],[311.392,5.01,-0.05],[311.662,5.01,-0.05],[311.93,5.01,-0.05],[312.18,5.01,-0.05],[312.467,5.01,-0.05],[312.725,5.01,-0.05],[312.985,5.01,-0.05],[313.24,5.01,-0.05],[313.512,5.01,-0.05],[313.767,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[astar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38""]}",0,0.139,0.018,5,16,3168.0,8.07
+astar_S-04_r5_1793025917,astar,astar,S-04,-3.75,-3.13,5,succeeded,39.227,39.211,9.03,9.286,8.586,1.052,0,0,0.227,15,6,312.0,,188.5,265.4,268.0,,,,2026-10-26T21:45:17.139975,2026-10-26T21:46:03.473691,0,,,,,"{""poses"":[[354.142,5.01,-0.05],[354.415,5.01,-0.05],[354.689,5.01,-0.05],[354.949,5.01,-0.05],[355.208,5.01,-0.05],[355.485,5.01,-0.05],[355.74,5.01,-0.05],[356.01,5.01,-0.05],[356.262,5.01,-0.05],[356.527,5.01,-0.05],[356.788,5.01,-0.05],[357.047,5.01,-0.05],[357.32,5.01,-0.05],[357.573,5.01,-0.05],[357.852,5.01,-0.05],[358.117,5.01,-0.05],[358.392,5.01,-0.05],[358.681,5.01,-0.05],[358.943,5.01,-0.05],[359.211,5.01,-0.05],[359.47,5.01,-0.05],[359.742,5.01,-0.05],[360.027,5.01,-0.05],[360.286,5.01,-0.05],[360.536,5.01,-0.05],[360.787,5.01,-0.05],[361.042,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[astar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38""]}",0,0.101,0.014,3,15,3149.0,8.03
+
+
+===== dstar_runs.csv =====
+run_id,label,planner,scenario,goal_x,goal_y,run_index,outcome,sim_time_to_goal_s,wall_time_s,driven_m,straight_m,displacement_m,path_ratio,stops,collisions,min_clearance_m,plans,early_replans,first_plan_ms,first_plan_rebuilt,replan_ms_median,replan_ms_p95,replan_ms_max,expanded_total,rebuilds,level_max,started_at,ended_at,settle_plans,invalid_reason,first_plan_path_ready_ms,replan_path_ready_median_ms,replan_path_ready_p95_ms,settle_diag,settle_retry,max_xte_m,mean_xte_m,heading_osc,path_switches,plan_ms_total,plan_share_pct
+dstar_S-04_r1_1793025988,dstar,dstar,S-04,-3.75,-3.13,1,succeeded,39.351,39.327,9.07,9.286,8.589,1.056,0,0,0.205,12,4,571.0,True,28.0,66.5,70.0,5505,1,0,2026-10-26T21:46:28.752593,2026-10-26T21:47:15.269992,0,,561.0,19.0,59.5,"{""poses"":[[425.804,5.01,-0.05],[426.074,5.01,-0.05],[426.335,5.01,-0.05],[426.597,5.01,-0.05],[426.875,5.01,-0.05],[427.129,5.01,-0.05],[427.405,5.01,-0.05],[427.657,5.01,-0.05],[427.931,5.01,-0.05],[428.192,5.01,-0.05],[428.461,5.01,-0.05],[428.733,5.01,-0.05],[429.001,5.01,-0.05],[429.258,5.01,-0.05],[429.523,5.01,-0.05],[429.785,5.01,-0.05],[430.064,5.01,-0.05],[430.335,5.01,-0.05],[430.61,5.01,-0.05],[430.908,5.01,-0.05],[431.194,5.01,-0.05],[431.488,5.01,-0.05],[431.748,5.01,-0.05],[432.004,5.01,-0.05],[432.275,5.01,-0.05],[432.53,5.01,-0.05],[432.781,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[dstar_planner] live costmap: 174 ms (43 cells)"",""[dstar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38"",""[dstar_planner] live costmap: 10 ms (43 cells)"",""[dstar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38""]}",0,0.12,0.011,3,12,938.0,2.38
+dstar_S-04_r2_1793026036,dstar,dstar,S-04,-3.75,-3.13,2,succeeded,39.112,39.091,8.926,9.286,8.58,1.04,0,0,0.17,18,7,66.0,False,23.0,55.4,89.0,1275,0,0,2026-10-26T21:47:16.265134,2026-10-26T21:48:02.482891,0,,60.0,14.0,48.6,"{""poses"":[[473.31,5.01,-0.05],[473.573,5.01,-0.05],[473.835,5.01,-0.05],[474.097,5.01,-0.05],[474.355,5.01,-0.05],[474.635,5.01,-0.05],[474.888,5.01,-0.05],[475.163,5.01,-0.05],[475.429,5.01,-0.05],[475.695,5.01,-0.05],[475.969,5.01,-0.05],[476.219,5.01,-0.05],[476.498,5.01,-0.05],[476.771,5.01,-0.05],[477.066,5.01,-0.05],[477.315,5.01,-0.05],[477.581,5.01,-0.05],[477.867,5.01,-0.05],[478.139,5.01,-0.05],[478.401,5.01,-0.05],[478.661,5.01,-0.05],[478.921,5.01,-0.05],[479.183,5.01,-0.05],[479.45,5.01,-0.05],[479.735,5.01,-0.05],[479.985,5.01,-0.05],[480.266,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[dstar_planner] live costmap: 11 ms (160 cells)"",""[dstar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38"",""[dstar_planner] live costmap: 8 ms (43 cells)""]}",0,0.115,0.014,5,18,533.0,1.36
+dstar_S-04_r3_1793026083,dstar,dstar,S-04,-3.75,-3.13,3,succeeded,41.965,41.978,9.255,9.286,8.588,1.078,0,0,0.163,13,5,80.0,False,27.5,52.1,62.0,1432,0,0,2026-10-26T21:48:03.507794,2026-10-26T21:48:52.607468,0,,71.0,20.5,45.1,"{""poses"":[[520.517,-3.027,-3.083],[520.791,5.01,-0.05],[521.057,5.01,-0.05],[521.331,5.01,-0.05],[521.594,5.01,-0.05],[521.843,5.01,-0.05],[522.116,5.01,-0.05],[522.375,5.01,-0.05],[522.649,5.01,-0.05],[522.927,5.01,-0.05],[523.202,5.01,-0.05],[523.51,5.01,-0.05],[523.763,5.01,-0.05],[524.021,5.01,-0.05],[524.301,5.01,-0.05],[524.579,5.01,-0.05],[524.87,5.01,-0.05],[525.131,5.01,-0.05],[525.38,5.01,-0.05],[525.664,5.01,-0.05],[525.934,5.01,-0.05],[526.208,5.01,-0.05],[526.46,5.01,-0.05],[526.725,5.01,-0.05],[527.012,5.01,-0.05],[527.265,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[dstar_planner] live costmap: 16 ms (87 cells)"",""[dstar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38""]}",0,0.118,0.009,5,13,432.0,1.03
+dstar_S-04_r4_1793026133,dstar,dstar,S-04,-3.75,-3.13,4,succeeded,40.167,40.17,9.022,9.286,8.582,1.051,0,0,0.2,17,10,84.0,False,24.5,49.8,55.0,1480,0,0,2026-10-26T21:48:53.584762,2026-10-26T21:49:40.849431,0,,74.0,17.0,42.2,"{""poses"":[[570.62,5.01,-0.05],[570.875,5.01,-0.05],[571.147,5.01,-0.05],[571.413,5.01,-0.05],[571.677,5.01,-0.05],[571.938,5.01,-0.05],[572.196,5.01,-0.05],[572.479,5.01,-0.05],[572.751,5.01,-0.05],[573.003,5.01,-0.05],[573.282,5.01,-0.05],[573.579,5.01,-0.05],[573.844,5.01,-0.05],[574.111,5.01,-0.05],[574.37,5.01,-0.05],[574.639,5.01,-0.05],[574.909,5.01,-0.05],[575.159,5.01,-0.05],[575.446,5.01,-0.05],[575.707,5.01,-0.05],[575.962,5.01,-0.05],[576.241,5.01,-0.05],[576.51,5.01,-0.05],[576.765,5.01,-0.05],[577.014,5.01,-0.05],[577.274,5.01,-0.05],[577.534,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[dstar_planner] scan overlay: kept 148, dropped_static 0, filter=True, check_radius=0.38"",""[dstar_planner] live costmap: 16 ms (672 cells)"",""[dstar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38"",""[dstar_planner] live costmap: 25 ms (43 cells)""]}",0,0.106,0.014,3,17,523.0,1.3
+dstar_S-04_r5_1793026181,dstar,dstar,S-04,-3.75,-3.13,5,succeeded,38.823,38.783,8.943,9.286,8.571,1.043,0,0,0.178,17,7,125.0,False,22.0,69.0,75.0,1402,0,0,2026-10-26T21:49:41.893892,2026-10-26T21:50:27.815597,0,,113.0,14.5,61.5,"{""poses"":[[618.878,-3.048,-3.055],[619.137,5.01,-0.05],[619.387,5.01,-0.05],[619.646,5.01,-0.05],[619.901,5.01,-0.05],[620.154,5.01,-0.05],[620.404,5.01,-0.05],[620.674,5.01,-0.05],[620.953,5.01,-0.05],[621.217,5.01,-0.05],[621.48,5.01,-0.05],[621.742,5.01,-0.05],[622.005,5.01,-0.05],[622.294,5.01,-0.05],[622.55,5.01,-0.05],[622.814,5.01,-0.05],[623.072,5.01,-0.05],[623.338,5.01,-0.05],[623.6,5.01,-0.05],[623.888,5.01,-0.05],[624.15,5.01,-0.05],[624.406,5.01,-0.05],[624.69,5.01,-0.05],[624.942,5.01,-0.05],[625.219,5.01,-0.05],[625.482,5.01,-0.05],[625.756,5.01,-0.05]],""max_lin_x"":0.0,""max_ang_z"":0.0,""planned_paths"":0,""leg_results"":[],""rosouts"":[""[dstar_planner] live costmap: 10 ms (126 cells)"",""[dstar_planner] scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38"",""[dstar_planner] live costmap: 9 ms (43 cells)""]}",0,0.097,0.015,5,17,585.0,1.51
+
+
+===== bringup_astar.log =====
+[INFO] [1793025720.420834, 0.000000]: astar_planner ready: send a goal to /move_base_simple/goal
+[INFO] [1793025720.958170, 157.591374]: New map: 317 x 317 cells of 0.05 m.
+[INFO] [1793025721.211118, 158.097389]: scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38
+[INFO] [1793025726.255547, 163.201879]: scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38
+[INFO] [1793025731.317472, 168.213514]: scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38
+[INFO] [1793025733.066919, 169.992815]: Planned: 4 corners, 9.0 m, 264 ms, inflation 0.40 m (43 dynamic obstacles)
+[INFO] [1793025733.075862, 169.992815]:   corner 0: x=5.01 y=-0.05
+[INFO] [1793025733.079606, 169.992815]:   corner 1: x=4.08 y=-0.98
+[INFO] [1793025733.082407, 169.992815]:   corner 2: x=-1.73 y=-2.23
+[INFO] [1793025733.086437, 170.031264]:   corner 3: x=-3.18 y=-3.18
+[INFO] [1793025734.485214, 171.424170]: Dynamic obstacle detected blocking current planned path ahead! Triggering early replan... (check radius 0.38)
+[INFO] [1793025734.708442, 171.607610]: Planned: 4 corners, 9.1 m, 216 ms, inflation 0.40 m (180 dynamic obstacles)
+[INFO] [1793025734.718073, 171.656126]:   corner 0: x=5.01 y=-0.05
+[INFO] [1793025734.723076, 171.656126]:   corner 1: x=4.38 y=-0.98
+[INFO] [1793025734.726745, 171.656126]:   corner 2: x=-1.73 y=-2.23
+[INFO] [1793025720.694151, 0.000000]: RegisterPublisher(/scan, <class 'sensor_msgs.msg._LaserScan.LaserScan'>) OK
+[INFO] [1793025720.717143, 0.000000]: RegisterPublisher(/odom, <class 'nav_msgs.msg._Odometry.Odometry'>) OK
+[INFO] [1793025720.741530, 0.000000]: RegisterPublisher(/sim/collision, <class 'std_msgs.msg._String.String'>) OK
+[INFO] [1793025720.756963, 0.000000]: RegisterPublisher(/map, <class 'nav_msgs.msg._OccupancyGrid.OccupancyGrid'>) OK
+[INFO] [1793025720.770747, 0.000000]: RegisterPublisher(/robot/pose, <class 'geometry_msgs.msg._PoseStamped.PoseStamped'>) OK
+[INFO] [1793025720.779716, 0.000000]: RegisterPublisher(/tf, <class 'tf2_msgs.msg._TFMessage.TFMessage'>) OK
+[INFO] [1793025720.789775, 0.000000]: RegisterPublisher(/sim/ack, <class 'std_msgs.msg._String.String'>) OK
+... logging to /home/<user>/.ros/log/63f12282-d14b-11f1-b4b3-d03957a86f1b/roslaunch-<host>-3452.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;<repo>/ros1/warehouse_bringup/launch/bringup.launch
+[1mstarted roslaunch server http://<host>:45463/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /astar_planner/print_map: False
+ * /astar_planner/snap_distance: 2.0
+ * /nav/inflation_radius: 0.35
+ * /nav/max_lin: 0.26
+ * /robot_description: <?xml version="1....
+ * /robot_state_publisher/publish_frequency: 50.0
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+ * /unity_endpoint/tcp_ip: 0.0.0.0
+ * /unity_endpoint/tcp_port: 10000
+ * /use_sim_time: True
+
+NODES
+  /
+    astar_planner (turtlebot_control/astar_planner.py)
+    joint_state_publisher (joint_state_publisher/joint_state_publisher)
+    path_follower (turtlebot_control/path_follower.py)
+    robot_state_publisher (robot_state_publisher/robot_state_publisher)
+    unity_endpoint (ros_tcp_endpoint/default_server_endpoint.py)
+
+auto-starting new master
+[1mprocess[master]: started with pid [3462][0m
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;<repo>/ros1/warehouse_bringup/launch/bringup.launch http://localhost:11311
+[1msetting /run_id to 63f12282-d14b-11f1-b4b3-d03957a86f1b[0m
+[1mprocess[rosout-1]: started with pid [3475][0m
+started core service [/rosout]
+[1mprocess[unity_endpoint-2]: started with pid [3478][0m
+[1mprocess[joint_state_publisher-3]: started with pid [3480][0m
+[1mprocess[robot_state_publisher-4]: started with pid [3481][0m
+[1mprocess[astar_planner-5]: started with pid [3490][0m
+[1mprocess[path_follower-6]: started with pid [3494][0m
+[path_follower-6] killing on exit
+[astar_planner-5] killing on exit
+[robot_state_publisher-4] killing on exit
+[joint_state_publisher-3] killing on exit
+[unity_endpoint-2] killing on exit
+[rosout-1] killing on exit
+[master] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
+
+
+===== bringup_dstar.log =====
+[INFO] [1793025983.986834, 420.878607]: dstar_planner ready: send a goal to /move_base_simple/goal
+[INFO] [1793025984.665308, 421.601835]: New map: 317 x 317 cells of 0.05 m.
+[INFO] [1793025984.896630, 421.823919]: scan overlay: kept 0, dropped_static 74, filter=True, check_radius=0.38
+[INFO] [1793025989.036067, 425.943496]: live costmap: 174 ms (43 cells)
+[INFO] [1793025990.067590, 427.002760]: scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38
+[INFO] [1793025994.285238, 431.218028]: live costmap: 10 ms (43 cells)
+[INFO] [1793025995.058566, 432.004263]: scan overlay: kept 14, dropped_static 134, filter=True, check_radius=0.38
+[INFO] [1793025996.497805, 433.414499]: Planned: 4 corners, 9.0 m, 571 ms, inflation 0.40 m (43 dynamic obstacles), expanded=3834, rebuilt=True, level=0, search=559 ms, changed=0, set_obs=0 ms, costmap_inflate=0 ms, costmap_pub=4 ms, path_pub=1 ms, path_ready=561 ms, cpu=521 ms, build=209 ms, sync=0 ms, cells=0 ms, compute=343 ms, path=1 ms, format=6 ms, raw=+43/-0
+[INFO] [1793025996.510564, 433.414499]:   corner 0: x=5.01 y=-0.05
+[INFO] [1793025996.515392, 433.414499]:   corner 1: x=4.18 y=-0.88
+[INFO] [1793025996.518808, 433.414499]:   corner 2: x=-2.33 y=-2.38
+[INFO] [1793025996.523455, 433.414499]:   corner 3: x=-3.18 y=-3.18
+[INFO] [1793025997.671998, 434.616642]: Dynamic obstacle detected blocking current planned path ahead! Triggering early replan... (check radius 0.38)
+[INFO] [1793025997.749910, 434.672254]: Planned: 4 corners, 9.1 m, 70 ms, inflation 0.40 m (154 dynamic obstacles), expanded=924, rebuilt=False, level=0, search=63 ms, changed=309, set_obs=0 ms, costmap_inflate=0 ms, costmap_pub=4 ms, path_pub=1 ms, path_ready=65 ms, cpu=61 ms, build=0 ms, sync=4 ms, cells=2 ms, compute=51 ms, path=1 ms, format=5 ms, raw=+111/-0
+[INFO] [1793025997.758022, 434.697979]:   corner 0: x=5.01 y=-0.05
+ * /rosversion: 1.17.4
+ * /use_sim_time: True
+
+NODES
+  /
+    dstar_planner (turtlebot_control/dstar_planner.py)
+    path_follower (turtlebot_control/path_follower.py)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;<repo>/ros1/turtlebot_control/launch/navigation_dstar.launch http://localhost:11311
+[1mprocess[dstar_planner-1]: started with pid [3910][0m
+[1mprocess[path_follower-2]: started with pid [3911][0m
+[path_follower-2] killing on exit
+[dstar_planner-1] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
+... logging to /home/<user>/.ros/log/fddfb624-d14b-11f1-8299-d03957a86f1b/roslaunch-<host>-3746.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;<repo>/ros1/warehouse_bringup/launch/bringup.launch
+[1mstarted roslaunch server http://<host>:45989/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /robot_description: <?xml version="1....
+ * /robot_state_publisher/publish_frequency: 50.0
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+ * /unity_endpoint/tcp_ip: 0.0.0.0
+ * /unity_endpoint/tcp_port: 10000
+ * /use_sim_time: True
+
+NODES
+  /
+    joint_state_publisher (joint_state_publisher/joint_state_publisher)
+    robot_state_publisher (robot_state_publisher/robot_state_publisher)
+    unity_endpoint (ros_tcp_endpoint/default_server_endpoint.py)
+
+auto-starting new master
+[1mprocess[master]: started with pid [3756][0m
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;<repo>/ros1/warehouse_bringup/launch/bringup.launch http://localhost:11311
+[1msetting /run_id to fddfb624-d14b-11f1-8299-d03957a86f1b[0m
+[1mprocess[rosout-1]: started with pid [3766][0m
+started core service [/rosout]
+[1mprocess[unity_endpoint-2]: started with pid [3771][0m
+[1mprocess[joint_state_publisher-3]: started with pid [3773][0m
+[1mprocess[robot_state_publisher-4]: started with pid [3774][0m
+[robot_state_publisher-4] killing on exit
+[joint_state_publisher-3] killing on exit
+[unity_endpoint-2] killing on exit
+[rosout-1] killing on exit
+[master] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
+

@@ -10,6 +10,7 @@ import argparse
 import csv
 import datetime
 import html
+import itertools
 import math
 import os
 import statistics
@@ -61,6 +62,36 @@ FOOTNOTE_PLANNER_TIME = (
     "path_tracker.py line 3-4 'ROS callbacks run on their own threads'], "
     "so only the scan-triggered part delays scan processing."
 )
+
+
+FOOTNOTE_PERMUTATION = (
+    "Permutation test: exact and two-sided, on the difference of means. Every way of splitting the "
+    "pooled runs into two groups of the same sizes is enumerated, and p is the share of splits whose "
+    "absolute difference of means is at least the observed one (ties count). With n=5 per planner the "
+    "smallest possible p is 2/252 = 0.0079. No correction for the number of metrics tested; with n=5 "
+    "read p as indicative."
+)
+
+# Largest number of group splits the exact test enumerates. 20 runs split 10/10 is 184,756.
+PERMUTATION_MAX_COMBINATIONS = 2000000
+
+# (key in compute_planner_metrics()["samples"], row label, digits shown for the means)
+PERMUTATION_METRICS = [
+    ("sim_time_s", "Sim Time to Goal (s)", 2),
+    ("driven_m", "Driven Distance (m)", 3),
+    ("path_ratio", "Path Ratio", 3),
+    ("stops", "Stops", 2),
+    ("min_clearance_m", "Min Clearance (m)", 3),
+    ("max_xte_m", "Max XTE (m)", 3),
+    ("mean_xte_m", "Mean XTE (m)", 3),
+    ("heading_osc", "Heading Oscillations", 2),
+    ("path_switches", "Path Switches", 2),
+    ("plans", "Plans per Run", 2),
+    ("early_replans", "Early Replans", 2),
+    ("replan_ms", "Replan ms (per-run median)", 1),
+    ("plan_time_s", "Planner Time per Run (s)", 3),
+    ("plan_share_pct", "Planner Time Share of Run (%)", 2),
+]
 
 
 def _to_float(val: Any) -> Optional[float]:
@@ -118,6 +149,93 @@ def _calc_ratio(a_med: Optional[float], d_med: Optional[float]) -> str:
         ratio = a_med / d_med
         return "{:.2f}x".format(ratio)
     return "-"
+
+
+def permutation_test_means(
+    a: Sequence[float],
+    b: Sequence[float],
+    max_combinations: int = PERMUTATION_MAX_COMBINATIONS,
+) -> Optional[float]:
+    """Exact two-sided permutation test on the difference of means of two samples.
+
+    Enumerates every split of the pooled values into groups of len(a) and len(b) and
+    returns the share of splits whose |mean difference| is at least the observed one.
+    Returns None when a sample is empty or the number of splits exceeds max_combinations.
+    NaN and infinite values are ignored.
+    """
+    x = [float(v) for v in a if v is not None and math.isfinite(v)]
+    y = [float(v) for v in b if v is not None and math.isfinite(v)]
+    n1, n2 = len(x), len(y)
+    if n1 == 0 or n2 == 0:
+        return None
+    n = n1 + n2
+    count = math.comb(n, n1)
+    if count > max_combinations:
+        return None
+
+    pooled = x + y
+    total = sum(pooled)
+    observed = abs(sum(x) / n1 - sum(y) / n2)
+    # Float sums differ in the last bits between splits that are mathematically equal.
+    tol = 1e-9 * max(1.0, max(abs(v) for v in pooled))
+
+    hits = 0
+    for idx in itertools.combinations(range(n), n1):
+        s = 0.0
+        for i in idx:
+            s += pooled[i]
+        if abs(s / n1 - (total - s) / n2) >= observed - tol:
+            hits += 1
+    return hits / float(count)
+
+
+def format_p_value(p: Optional[float]) -> str:
+    if p is None:
+        return "-"
+    if p < 0.001:
+        return "< 0.001"
+    return "{:.3f}".format(p)
+
+
+def compute_permutation_rows(
+    astar: Optional[Dict[str, Any]], dstar: Optional[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """One row per metric in PERMUTATION_METRICS with both planners' means and the exact p.
+
+    Empty when either planner has no runs. Samples are the same run subsets the
+    median tables use (see compute_planner_metrics).
+    """
+    if not astar or not dstar:
+        return []
+    a_samples = astar.get("samples") or {}
+    d_samples = dstar.get("samples") or {}
+    rows = []  # type: List[Dict[str, Any]]
+    for key, label, digits in PERMUTATION_METRICS:
+        a_vals = a_samples.get(key) or []
+        d_vals = d_samples.get(key) or []
+        a_mean = sum(a_vals) / len(a_vals) if a_vals else None
+        d_mean = sum(d_vals) / len(d_vals) if d_vals else None
+        rows.append({
+            "key": key,
+            "label": label,
+            "digits": digits,
+            "n_astar": len(a_vals),
+            "n_dstar": len(d_vals),
+            "mean_astar": a_mean,
+            "mean_dstar": d_mean,
+            "p": permutation_test_means(a_vals, d_vals),
+        })
+    return rows
+
+
+def _format_permutation_cells(row: Dict[str, Any]) -> Tuple[str, str, str, str]:
+    """(A* mean (n), D* mean (n), difference A* - D*, p) as display strings."""
+    fmt = "{:." + str(row["digits"]) + "f}"
+    a_mean, d_mean = row["mean_astar"], row["mean_dstar"]
+    a_str = "{} (n={})".format(fmt.format(a_mean), row["n_astar"]) if a_mean is not None else "-"
+    d_str = "{} (n={})".format(fmt.format(d_mean), row["n_dstar"]) if d_mean is not None else "-"
+    diff_str = fmt.format(a_mean - d_mean) if (a_mean is not None and d_mean is not None) else "-"
+    return a_str, d_str, diff_str, format_p_value(row["p"])
 
 
 def load_runs_from_csv(csv_path: str) -> List[Dict[str, Any]]:
@@ -259,9 +377,34 @@ def compute_planner_metrics(runs: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "n": len(pr_med_clean),
             }
 
+    plans_vals = [_to_float(r.get("plans")) for r in valid_runs]
+    early_replans_vals = [_to_float(r.get("early_replans")) for r in valid_runs]
+
+    def _clean(values: Sequence[Optional[float]]) -> List[float]:
+        return [v for v in values if v is not None]
+
+    # Per-run values behind the medians above, for the permutation test.
+    samples = {
+        "sim_time_s": _clean(time_vals),
+        "driven_m": _clean(driven_vals),
+        "path_ratio": _clean(ratio_vals),
+        "stops": _clean(stops_vals),
+        "min_clearance_m": _clean(clear_vals),
+        "max_xte_m": _clean(max_xte_vals),
+        "mean_xte_m": _clean(mean_xte_vals),
+        "heading_osc": _clean(heading_osc_vals),
+        "path_switches": _clean(path_switches_vals),
+        "plans": _clean(plans_vals),
+        "early_replans": _clean(early_replans_vals),
+        "replan_ms": list(replan_med_clean),
+        "plan_time_s": _clean(plan_time_s_vals),
+        "plan_share_pct": _clean(plan_share_pct_vals),
+    }  # type: Dict[str, List[float]]
+
     return {
         "planner": planner_name,
         "is_dstar": is_dstar,
+        "samples": samples,
         "total_runs": total_runs,
         "valid_runs": valid_n,
         "succeeded_runs": len(succeeded_runs),
@@ -532,6 +675,17 @@ def generate_markdown_report(scenarios_data: Dict[str, Dict[str, Any]]) -> str:
         lines.append("| Planner time share of run (%) | {} | {} | {} |".format(a_psp, d_psp, r_psp))
         lines.append("")
 
+        perm_rows = compute_permutation_rows(astar, dstar)
+        if perm_rows:
+            lines.append("### Permutation test (exact, two-sided, on means)")
+            lines.append("")
+            lines.append("| Metric | A* mean | D* mean | A* - D* | p |")
+            lines.append("| :--- | :--- | :--- | :--- | :--- |")
+            for row in perm_rows:
+                a_str, d_str, diff_str, p_str = _format_permutation_cells(row)
+                lines.append("| {} | {} | {} | {} | {} |".format(row["label"], a_str, d_str, diff_str, p_str))
+            lines.append("")
+
     lines.append("---")
     lines.append("### Footnotes")
     lines.append("1. " + FOOTNOTE_TIMER)
@@ -540,6 +694,7 @@ def generate_markdown_report(scenarios_data: Dict[str, Dict[str, Any]]) -> str:
     lines.append("4. " + FOOTNOTE_RATIO)
     lines.append("5. " + FOOTNOTE_SPREAD)
     lines.append("6. " + FOOTNOTE_PLANNER_TIME)
+    lines.append("7. " + FOOTNOTE_PERMUTATION)
     lines.append("")
 
     return "\n".join(lines)
@@ -1036,6 +1191,21 @@ tr:hover {
         html_parts.append('</tbody>')
         html_parts.append('</table>')
 
+        perm_rows = compute_permutation_rows(astar, dstar)
+        if perm_rows:
+            html_parts.append('<h3>Permutation test (exact, two-sided, on means)</h3>')
+            html_parts.append('<table>')
+            html_parts.append('<thead><tr><th>Metric</th><th>A* mean</th><th>D* mean</th><th>A* - D*</th><th>p</th></tr></thead>')
+            html_parts.append('<tbody>')
+            for row in perm_rows:
+                a_str, d_str, diff_str, p_str = _format_permutation_cells(row)
+                html_parts.append('<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td class="ratio-col">{}</td></tr>'.format(
+                    html.escape(row["label"]), html.escape(a_str), html.escape(d_str),
+                    html.escape(diff_str), html.escape(p_str)
+                ))
+            html_parts.append('</tbody>')
+            html_parts.append('</table>')
+
         html_parts.append('</div>')
 
     # Footnotes
@@ -1048,6 +1218,7 @@ tr:hover {
     html_parts.append('<li>{}</li>'.format(html.escape(FOOTNOTE_RATIO)))
     html_parts.append('<li>{}</li>'.format(html.escape(FOOTNOTE_SPREAD)))
     html_parts.append('<li>{}</li>'.format(html.escape(FOOTNOTE_PLANNER_TIME)))
+    html_parts.append('<li>{}</li>'.format(html.escape(FOOTNOTE_PERMUTATION)))
     html_parts.append('</ol>')
     html_parts.append('</div>')
 

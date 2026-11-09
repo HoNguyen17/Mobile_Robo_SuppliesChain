@@ -25,8 +25,9 @@ The **A/B Benchmark Suite** is an autonomous test harness designed to execute re
 | `WarehouseProjectURP/Assets/Scripts/Ros/Editor/AbBenchmarkMenu.cs` | Unity Editor menu integration (`Warehouse > A-B Test`) driving automated benchmarking from the Editor. |
 | `ros1/turtlebot_control/scripts/ab_batch.py` | Supervisory batch orchestrator managing ROS lifecycle, subprocess supervision, watchdog gates, and report dispatch. |
 | `ros1/turtlebot_control/scripts/ab_run.py` | Single-stack test runner managing `/sim/reset_scenario` resets, settle immobility checks, goal dispatch, and 41-column CSV capture. |
-| `ros1/turtlebot_control/scripts/ab_report.py` | Offline report generator generating `report.html` (interactive SVG charts) and `report.md` comparison tables. |
-| `ros1/turtlebot_control/test/test_ab_tools.py` | Unit tests for `ab_run.py` metrics collection and `ab_report.py` table/footnote generation. |
+| `ros1/turtlebot_control/scripts/ab_report.py` | Offline report generator generating `report.html` (interactive SVG charts) and `report.md` comparison tables, plus an exact two-sided permutation test on means (`permutation_test_means`). |
+| `ros1/turtlebot_control/test/test_ab_tools.py` | Unit tests for `ab_run.py` metrics collection and `ab_report.py` table/footnote generation and the permutation test. |
+| `docs/benchmark-data/` | Tracked copy of session `20261026_214123` (CSVs, `meta_*.json`, reports, redacted `handoff.txt`). See its `README.md`. |
 | `ros1/turtlebot_control/test/test_ab_batch.py` | Unit tests for `ab_batch.py` process group isolation, XML-RPC readiness gating, and cleanup routines. |
 | `ros1/turtlebot_control/test/test_launch_files.py` | Unit tests verifying node topology, argument passing, and parameter parity across launch files. |
 
@@ -286,15 +287,16 @@ Defined in `CSV_COLUMNS` (`ab_run.py` lines 22–65):
 1. **Footnote 1 (`FOOTNOTE_TIMER`):** Total computation timer inside the `Planned: ...` log line. A* publishes costmap and path before reading the timer. D* Lite logs `path_ready` immediately after path publication, before costmap generation. Total `ms` must be compared for like-for-like algorithmic fairness.
 2. **Footnote 2 (`FOOTNOTE_REUSE`):** D* Lite reuses its search graph across successive goals; only `rebuilt=True` first plans represent cold-start searches.
 3. **Footnote 3 (`FOOTNOTE_MOTION`):** Cross-track error (XTE) measures perpendicular deviation from the active `/planned_path`. Because every replan originates at the robot's current pose, XTE resets toward 0 upon replanning; XTE is comparable only between planners with similar `path_switches`. `path_ratio` is `driven_m / displacement_m` ($\ge 1.0$).
-4. **Footnote 4 (`FOOTNOTE_P95`):** Displays median of run medians alongside worst-case tail performance across runs (`p95_largest` convention).
-5. **Footnote 5 (`FOOTNOTE_FIRST_PLAN`):** First-plan latencies are explicitly distinguished as `First Plan ms (cold)` (`rebuilt=True`) or `First Plan ms (warm)` (`rebuilt=False`).
+4. **Footnote 4 (`FOOTNOTE_RATIO`):** A ratio (A\*/D\*) above 1 means D\* has the lower value for time and count metrics.
+5. **Footnote 5 (`FOOTNOTE_SPREAD`):** `n` per planner and `[min, max]` ranges; with $n=5$, differences inside the run-to-run spread are not established.
 6. **Footnote 6 (`FOOTNOTE_PLANNER_TIME`):** Cumulative ms computation timer across all `Planned:` lines. Only plans started by the dynamic-obstacle check run synchronously inside `on_scan`; first plans and goal changes run in `on_goal`, and lookahead replan requests run in `on_replan` in separate subscriber callback threads.
+7. **Footnote 7 (`FOOTNOTE_PERMUTATION`):** The permutation test table below each scenario: exact, two-sided, on the difference of means (`permutation_test_means` in `ab_report.py`). With $n=5$ per planner the smallest possible $p$ is $2/252 = 0.0079$. No correction for the number of metrics tested.
 
 ### Statistical Interpretation & Sample Size ($n=5$ Caution)
 With $n=5$ runs per planner, individual outliers can distort sample means. Differences that fall within the run-to-run min-max spread should be treated as not established. Pooling multiple batches ($n=10$ per planner) yields rigorous statistical confidence.
 
 ### Pooled Benchmark Results Table (S-04 Crossing NPC, n=10 per planner)
-Data pooled from Batch 1 (`~/ab_runs/20261025_071408/`) and Batch 2 (`~/ab_runs/20261025_103721/`) [verified in data]:
+Data pooled from Batch 1 (`~/ab_runs/20261025_071408/`) and Batch 2 (`~/ab_runs/20261025_103721/`) [verified in data]. These two sessions are not copied into the repo (only `20261026_214123` is, see §7.5). The p-value column was first computed ad hoc; §7.5 says which values `ab_report.py` reproduces from the CSVs and which it does not.
 
 | Metric | A* (`astar_planner`) | D* Lite (`dstar_planner`) | Ratio (A*/D*) | Exact Permutation p-value | Significance |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -333,6 +335,41 @@ With `astar_planner.py` updated to include `expand_lidar_hit(..., filter_static=
 | **Plan ms Total per Run (s)** | **3.17 s** [3.07, 4.04] (mean 3.41 s) | **0.53 s** [0.43, 0.94] (mean 0.60 s) | **5.94x** | **Decisive (D* uses 5.9x less CPU time)** |
 | **Plan Share % of Sim Time** | **8.1%** [7.4%, 10.1%] | **1.4%** [1.0%, 2.4%] | **5.7x** | **1.4% vs 8.1% CPU share** |
 
+The planner-time rows are the sum of the `ms` timer of all `Planned:` log lines (`plan_ms_total`), i.e. wall-clock planning time, not measured CPU time.
+
+### 7.5 Reproducing the p-values
+
+The copy of session `20261026_214123` is in `docs/benchmark-data/20261026_214123/` (see `docs/benchmark-data/README.md`). From the repo root, in WSL:
+
+```bash
+python3 ros1/turtlebot_control/scripts/ab_report.py --out /tmp/ab_report \
+    docs/benchmark-data/20261026_214123/astar_runs.csv docs/benchmark-data/20261026_214123/dstar_runs.csv
+```
+
+The report now has a "Permutation test (exact, two-sided, on means)" table per scenario (footnote 7). It enumerates every split of the pooled runs into the two group sizes (252 splits for 5 vs 5) and counts the splits whose absolute difference of means is at least the observed one. Parity batch, n=5 per planner:
+
+| Metric | A\* mean | D\* mean | p |
+|---|:---:|:---:|:---:|
+| Sim Time to Goal (s) | 39.66 | 39.88 | 0.786 |
+| Driven Distance (m) | 8.997 | 9.043 | 0.540 |
+| Path Ratio | 1.048 | 1.054 | 0.571 |
+| Min Clearance (m) | 0.210 | 0.183 | 0.056 |
+| Mean XTE (m) | 0.016 | 0.013 | 0.079 |
+| Max XTE (m) | 0.124 | 0.111 | 0.135 |
+| Heading Oscillations | 3.80 | 4.20 | 1.000 |
+| Path Switches = Plans per Run | 16.60 | 15.40 | 0.532 |
+| Early Replans | 6.40 | 6.60 | 1.000 |
+| Replan ms (per-run median) | 189.3 | 25.0 | 0.008 |
+| Planner Time per Run (s) | 3.411 | 0.602 | 0.008 |
+| Planner Time Share of Run (%) | 8.62 | 1.52 | 0.008 |
+
+With 5 vs 5 the smallest possible two-sided p is 2/252 = 0.0079, which every metric where all D\* runs lie below all A\* runs reaches. It says "separated", not "how large". Stops is 0 in every run (p = 1).
+
+The same code on the pooled batches `20261025_071408` + `20261025_103721` (n=10 per planner, CSVs still in WSL only) reproduces the pooled table above for time (0.760), distance (0.239), path ratio (0.253), min clearance (0.029), heading oscillations (0.558), early replans (< 0.001) and replan ms (< 0.001). Two rows differ:
+
+- **Path switches:** 0.0034, shown above as 0.004 (rounding).
+- **Plan ms total and plan share, `p < 0.001`:** not reproducible from those CSVs. Batch `20261025_071408` was recorded before `plan_ms_total` and `plan_share_pct` existed (40 columns), so only 5 vs 5 runs carry them and the smallest possible p is 0.0079. The pooled means in that table (2.96 s / 0.64 s) come from another source than the CSVs (0.0079 and means 2.81 s / 0.63 s from the CSVs).
+
 ---
 
 ## 8. Running the Unit Tests
@@ -345,7 +382,7 @@ cd <repo>/ros1/turtlebot_control && python3 -m unittest discover -s test
 
 **Expected Result:**
 ```
-Ran 251 tests in ~30s
+Ran 268 tests in ~40s
 OK
 ```
 [verified in code: `test_launch_files.py`, `test_ab_tools.py`, `test_ab_batch.py`, `test_dstar_lite.py`, `test_grid_planner.py`, `test_path_tracker.py`]

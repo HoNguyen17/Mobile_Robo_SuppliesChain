@@ -1522,5 +1522,172 @@ class TestReportGeneration(unittest.TestCase):
             self.assertIn(html.escape(expected_fn), html_text)
 
 
+class TestPermutationTest(unittest.TestCase):
+    def test_complete_separation_five_vs_five_is_two_over_252(self):
+        p = ab_report.permutation_test_means([1, 2, 3, 4, 5], [11, 12, 13, 14, 15])
+        self.assertAlmostEqual(p, 2.0 / 252.0, places=12)
+
+    def test_complete_separation_three_vs_three(self):
+        # 20 splits; only "all low vs all high" and its mirror reach the observed difference.
+        self.assertAlmostEqual(ab_report.permutation_test_means([1, 2, 3], [4, 5, 6]), 0.1, places=12)
+
+    def test_hand_computed_two_vs_two(self):
+        # pooled [1, 2, 3, 10], 6 splits, |mean diff| = 5, 4, 3, 3, 4, 5; observed 5 -> 2/6
+        self.assertAlmostEqual(ab_report.permutation_test_means([1, 2], [3, 10]), 2.0 / 6.0, places=12)
+
+    def test_identical_samples_give_one(self):
+        self.assertEqual(ab_report.permutation_test_means([1, 1, 1], [1, 1, 1]), 1.0)
+        self.assertEqual(ab_report.permutation_test_means([1, 2, 3, 4], [1, 2, 3, 4]), 1.0)
+
+    def test_symmetric_in_its_arguments(self):
+        a = [0.19, 0.22, 0.23, 0.21, 0.20]
+        b = [0.16, 0.18, 0.20, 0.17, 0.19]
+        self.assertEqual(ab_report.permutation_test_means(a, b), ab_report.permutation_test_means(b, a))
+
+    def test_float_noise_does_not_split_equal_differences(self):
+        # 0.1 + 0.2 != 0.3 in floating point; the mirror split must still count.
+        p = ab_report.permutation_test_means([0.1, 0.2, 0.3], [0.4, 0.5, 0.6])
+        self.assertAlmostEqual(p, 0.1, places=12)
+
+    def test_unequal_sizes(self):
+        p = ab_report.permutation_test_means([1, 2], [10, 11, 12])
+        # C(5, 2) = 10 splits; only the observed split reaches |diff| = 9.5 (the next is 7.17)
+        self.assertAlmostEqual(p, 1.0 / 10.0, places=12)
+
+    def test_empty_sample_returns_none(self):
+        self.assertIsNone(ab_report.permutation_test_means([], [1, 2]))
+        self.assertIsNone(ab_report.permutation_test_means([1, 2], []))
+
+    def test_nan_and_inf_are_ignored(self):
+        nan, inf = float("nan"), float("inf")
+        p = ab_report.permutation_test_means([1, 2, 3, nan], [4, 5, 6, inf])
+        self.assertAlmostEqual(p, 0.1, places=12)
+        self.assertIsNone(ab_report.permutation_test_means([nan], [1.0]))
+
+    def test_too_many_splits_returns_none(self):
+        a = list(range(10))
+        b = list(range(10, 20))
+        self.assertIsNone(ab_report.permutation_test_means(a, b, max_combinations=1000))
+        self.assertIsNotNone(ab_report.permutation_test_means(a, b))
+
+    def test_format_p_value(self):
+        self.assertEqual(ab_report.format_p_value(None), "-")
+        self.assertEqual(ab_report.format_p_value(0.0005), "< 0.001")
+        self.assertEqual(ab_report.format_p_value(2.0 / 252.0), "0.008")
+        self.assertEqual(ab_report.format_p_value(1.0), "1.000")
+
+
+def _perm_row(planner: str, index: int, **overrides: Any) -> Dict[str, Any]:
+    row = {
+        "run_id": "{}{}".format(planner[0], index), "label": planner, "planner": planner,
+        "scenario": "S-04", "goal_x": -3.75, "goal_y": -3.13, "run_index": index,
+        "outcome": "succeeded", "sim_time_to_goal_s": 40.0, "wall_time_s": 40.0,
+        "driven_m": 9.0, "straight_m": 8.0, "displacement_m": 8.5, "path_ratio": 1.05,
+        "stops": 0, "collisions": 0, "min_clearance_m": 0.2, "plans": 15,
+        "early_replans": 6, "first_plan_ms": 100.0, "first_plan_rebuilt": "",
+        "replan_ms_median": 100.0, "replan_ms_p95": 120.0, "replan_ms_max": 130.0,
+        "expanded_total": "", "rebuilds": "", "level_max": "", "started_at": "",
+        "ended_at": "", "settle_plans": 0, "invalid_reason": "",
+        "first_plan_path_ready_ms": "", "replan_path_ready_median_ms": "",
+        "replan_path_ready_p95_ms": "", "settle_diag": "{}", "settle_retry": 0,
+        "max_xte_m": 0.1, "mean_xte_m": 0.02, "heading_osc": 4, "path_switches": 16,
+        "plan_ms_total": 3000.0, "plan_share_pct": 7.5,
+    }  # type: Dict[str, Any]
+    row.update(overrides)
+    return row
+
+
+def _write_runs_csv(path: str, rows: List[Dict[str, Any]]) -> None:
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+class TestPermutationInReport(unittest.TestCase):
+    def _separated_rows(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        # replan_ms_median: every D* run is lower than every A* run -> p = 2/252.
+        # sim_time_to_goal_s: identical samples -> p = 1.
+        astar = [_perm_row("astar", i + 1, replan_ms_median=190.0 + i) for i in range(5)]
+        dstar = [_perm_row("dstar", i + 1, replan_ms_median=20.0 + i) for i in range(5)]
+        return astar, dstar
+
+    def test_samples_follow_the_median_table_subsets(self):
+        rows = [
+            _perm_row("astar", 1, sim_time_to_goal_s=30.0),
+            _perm_row("astar", 2, outcome="timeout", sim_time_to_goal_s=120.0, min_clearance_m=0.1),
+            _perm_row("astar", 3, outcome="invalid", invalid_reason="settle movement"),
+        ]
+        m = ab_report.compute_planner_metrics(rows)
+        # time is succeeded-only, clearance is all valid runs, invalid runs are excluded everywhere
+        self.assertEqual(m["samples"]["sim_time_s"], [30.0])
+        self.assertEqual(m["samples"]["min_clearance_m"], [0.2, 0.1])
+        self.assertEqual(m["samples"]["plans"], [15.0, 15.0])
+        self.assertEqual(m["samples"]["plan_time_s"], [3.0])
+
+    def test_rows_need_both_planners(self):
+        astar_rows, _ = self._separated_rows()
+        astar = ab_report.compute_planner_metrics(astar_rows)
+        self.assertEqual(ab_report.compute_permutation_rows(astar, None), [])
+        self.assertEqual(ab_report.compute_permutation_rows(None, astar), [])
+
+    def test_rows_values(self):
+        a_rows, d_rows = self._separated_rows()
+        rows = ab_report.compute_permutation_rows(
+            ab_report.compute_planner_metrics(a_rows), ab_report.compute_planner_metrics(d_rows)
+        )
+        by_key = {r["key"]: r for r in rows}
+        self.assertAlmostEqual(by_key["replan_ms"]["p"], 2.0 / 252.0, places=12)
+        self.assertAlmostEqual(by_key["replan_ms"]["mean_astar"], 192.0)
+        self.assertAlmostEqual(by_key["replan_ms"]["mean_dstar"], 22.0)
+        self.assertEqual(by_key["sim_time_s"]["p"], 1.0)
+        self.assertEqual(by_key["replan_ms"]["n_astar"], 5)
+        self.assertEqual([r["key"] for r in rows], [k for k, _, _ in ab_report.PERMUTATION_METRICS])
+
+    def test_missing_metric_gives_none_not_a_crash(self):
+        a_rows, d_rows = self._separated_rows()
+        for r in a_rows:
+            r["mean_xte_m"] = ""
+        rows = ab_report.compute_permutation_rows(
+            ab_report.compute_planner_metrics(a_rows), ab_report.compute_planner_metrics(d_rows)
+        )
+        xte = [r for r in rows if r["key"] == "mean_xte_m"][0]
+        self.assertIsNone(xte["p"])
+        self.assertIsNone(xte["mean_astar"])
+        self.assertEqual(ab_report._format_permutation_cells(xte)[3], "-")
+
+    def test_markdown_and_html_contain_the_section(self):
+        a_rows, d_rows = self._separated_rows()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            csv_a = os.path.join(tmpdir, "astar_runs.csv")
+            csv_d = os.path.join(tmpdir, "dstar_runs.csv")
+            _write_runs_csv(csv_a, a_rows)
+            _write_runs_csv(csv_d, d_rows)
+            md_path, html_path = ab_report.generate_report_from_csvs([csv_a, csv_d], tmpdir)
+            with open(md_path, "r", encoding="utf-8") as f:
+                md_text = f.read()
+            with open(html_path, "r", encoding="utf-8") as f:
+                html_text = f.read()
+
+        self.assertIn("### Permutation test (exact, two-sided, on means)", md_text)
+        self.assertIn("| Replan ms (per-run median) | 192.0 (n=5) | 22.0 (n=5) | 170.0 | 0.008 |", md_text)
+        self.assertIn("| Sim Time to Goal (s) | 40.00 (n=5) | 40.00 (n=5) | 0.00 | 1.000 |", md_text)
+        self.assertIn("7. " + ab_report.FOOTNOTE_PERMUTATION, md_text)
+        self.assertIn("Permutation test (exact, two-sided, on means)", html_text)
+        self.assertIn(html.escape(ab_report.FOOTNOTE_PERMUTATION), html_text)
+        # Footnote 6 keeps its number
+        self.assertIn("6. " + ab_report.FOOTNOTE_PLANNER_TIME, md_text)
+
+    def test_single_planner_report_has_no_permutation_section(self):
+        a_rows, _ = self._separated_rows()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            csv_a = os.path.join(tmpdir, "astar_runs.csv")
+            _write_runs_csv(csv_a, a_rows)
+            md_path, _html_path = ab_report.generate_report_from_csvs([csv_a], tmpdir)
+            with open(md_path, "r", encoding="utf-8") as f:
+                md_text = f.read()
+        self.assertNotIn("### Permutation test", md_text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,49 @@
+{
+  "git_commit": "3a1ab03f60509b3a2772c3b117766e08a969b2e3",
+  "git_status": "",
+  "git_diff_stat": "",
+  "file_sha256": {
+    "ros1/turtlebot_control/scripts/ab_batch.py": "784d116d7e43912b5eb6deaac8b4cf8fa971235cd0902f2ae1df160b02bbc5c0",
+    "ros1/turtlebot_control/scripts/ab_run.py": "b516a14ac003b692951ab405135abb5d20bf1abd7a123c1e663e739c5d65976a",
+    "ros1/turtlebot_control/scripts/ab_report.py": "668253e1f018415410cfba8b447fc1e8f3ff410cd01e49e90a7540c54655f820",
+    "ros1/turtlebot_control/scripts/dstar_planner.py": "2249ed1401f8deec992b68b942c9aaec2fa07b46f5d3eb7ce930f9402990cb94",
+    "ros1/turtlebot_control/scripts/dstar_lite.py": "ffaf0c487b8a27e9a8b453cc30810d45b0a726654eae84a1a04e67f57a0951bb",
+    "ros1/turtlebot_control/scripts/astar_planner.py": "da6dde00aefe903ee4b6f1adb062b9f7d201f1a8934061c9b5e80bdad4592668",
+    "ros1/turtlebot_control/scripts/path_follower.py": "7bdb10eeb79f11ee40cd42350b74c3bef7304e8aa8fb81a85228d33850a52893",
+    "ros1/turtlebot_control/launch/navigation_dstar.launch": "fd16fd1baecb7806725bb8906b9c0e235c709f0d2031ac83a184272afb6b6f81",
+    "WarehouseProjectURP/Assets/Scripts/Ros/ScenarioLoader.cs": "e3a5d1e64d4296d0540281ec282761b2762b588a299b591bec8623d29874023a"
+  },
+  "planner": "dstar",
+  "effective_repeats": 5,
+  "rviz": false,
+  "cli_args": {
+    "planner": "both",
+    "repeats": 5,
+    "scenario": "S-04",
+    "goal": [
+      -3.75,
+      -3.13
+    ],
+    "settle": 7.0,
+    "timeout": 120.0,
+    "rviz": false,
+    "out": "~/ab_runs",
+    "dry": false,
+    "stop": false,
+    "order": "astar,dstar"
+  },
+  "rosparam_values": {
+    "/dstar_planner/filter_static_hits": true,
+    "/dstar_planner/blocked_use_plan_radius": true,
+    "/dstar_planner/verify_costmap": false,
+    "/dstar_planner/trigger_debug": false,
+    "/dstar_planner/obstacle_memory_s": 6.0
+  },
+  "nav_max_lin": 0.26,
+  "nav_inflation_radius": 0.35,
+  "python_version": "3.8.10 (default, Mar 18 2025, 20:04:55) \n[GCC 9.4.0]",
+  "start_time": "2026-10-26T21:46:13.039299",
+  "end_time": "2026-10-26T21:50:29.622499",
+  "ab_run_exit_code": 0,
+  "respawn_count": 0
+}
