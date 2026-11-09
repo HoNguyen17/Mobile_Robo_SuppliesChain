@@ -52,8 +52,10 @@ public class ScenarioFile
         ScenarioFile file = null;
         try { file = JsonUtility.FromJson<ScenarioFile>(json); }
         catch (ArgumentException ex) { throw new FormatException("scenarios.json is not valid JSON: " + ex.Message); }
-        if (file == null || file.scenarios == null) throw new FormatException("scenarios.json has no scenarios");
+        if (file == null) throw new FormatException("scenarios.json has no scenarios");
         if (file.schema != SupportedSchema) throw new FormatException("scenarios.json schema " + file.schema + " is not supported");
+        // JsonUtility leaves a missing list as an empty list, not null, so an empty list counts as "no scenarios".
+        if (file.scenarios == null || file.scenarios.Count == 0) throw new FormatException("scenarios.json has no scenarios");
         return file;
     }
 

@@ -7,6 +7,7 @@ The project is the UC6 warehouse robot: a simulated TurtleBot3 Waffle Pi in Unit
 ## Unreleased
 
 ### Fixed
+- Unity: `ScenarioFile.FromJson` refuses a scenarios file with no scenarios. `JsonUtility` turns a missing list into an empty list, not null, so `{"schema":1}` passed the guard (EditMode test `A_file_with_another_schema_is_refused`)
 - Planners: plans no longer overlap, a replan no longer blocks the scan callback, and `/nav/cancel` makes both planners forget the goal and the path, so a stale path is not republished after a leg ended. One `PlanScheduler` thread plans; stale results are dropped ([ADR-016](docs/ADR-016-planner-scheduling.md)). Closes open issues 10, 18 and 19; replan timing can differ slightly from the earlier benchmarks.
 
 - The live `/costmap` uses the inflation radius of the plan being followed (`nav_common.costmap_radius`), so RViz no longer alternates between 0.40 m and 0.35 m ([ADR-017](docs/ADR-017-live-costmap-radius.md)). Closes open issue 11.
