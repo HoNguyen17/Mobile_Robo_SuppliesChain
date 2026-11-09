@@ -217,6 +217,59 @@ class PlannerNodeTest(unittest.TestCase):
             self.assertEqual(len(paths), 2)
             self.assertAlmostEqual(paths[-1].poses[-1].pose.position.x, 6.0, places=1)
 
+    def live_radius(self, mod, node, kind, fake):
+        """The inflation radius the live costmap was built with by the last on_scan (main thread)."""
+        if kind == "astar":
+            radii = []
+            original = mod.inflate
+
+            def record(grid, radius):
+                if threading.current_thread() is threading.main_thread():  # not the planning thread
+                    radii.append(radius)
+                return original(grid, radius)
+
+            mod.inflate = record
+            try:
+                fake.sim_time += 2.0
+                node.on_pose(pose_at(fake.sim_time))
+                node.on_scan(scan_with_hit_ahead(fake.sim_time))
+            finally:
+                mod.inflate = original
+            self.assertEqual(len(radii), 1)
+            return radii[0]
+        node._live_radius = None
+        fake.sim_time += 2.0
+        node.on_pose(pose_at(fake.sim_time))
+        node.on_scan(scan_with_hit_ahead(fake.sim_time))
+        return node._live_radius
+
+    def test_the_live_costmap_uses_the_radius_of_the_plan_being_followed(self):
+        """ADR-017: before a plan the nominal radius, during a leg the planned one, after a cancel nominal again."""
+        import contextlib
+
+        for script, cls, kind in PLANNERS:
+            with self.subTest(planner=kind), contextlib.ExitStack() as stack:
+                ctx = fake_rospy_context({"/nav/inflation_radius": 0.35}, "pn_live_" + kind, script)
+                mod, fake = ctx.__enter__()
+                stack.callback(ctx.__exit__, None, None, None)
+                node = getattr(mod, cls)()
+                node.on_map(free_map())
+                node.on_pose(pose_at(fake.sim_time))
+
+                self.assertEqual(self.live_radius(mod, node, kind, fake), 0.35)  # no plan yet
+                node.last_costmap_pub_time = 0.0
+
+                node.on_goal(goal_at(fake.sim_time, 9.0))
+                self.assertTrue(node.scheduler.wait_idle(WAIT))
+                self.assertEqual(node.current_path_radius, 0.40)  # the planner prefers the wide margin
+                node.last_costmap_pub_time = 0.0
+                node.last_auto_replan_time = 1e12  # keep the scan below from starting a replan
+                self.assertEqual(self.live_radius(mod, node, kind, fake), 0.40)
+
+                node.on_cancel(object())
+                node.last_costmap_pub_time = 0.0
+                self.assertEqual(self.live_radius(mod, node, kind, fake), 0.35)
+
     def test_a_failing_plan_is_logged_and_the_node_keeps_planning(self):
         for mod, fake, node, kind in self.each():
             fail_first_plan(node, mod, kind)

@@ -27,6 +27,23 @@ def finite_or(value: Any, default: float, minimum: float) -> float:
     return number if math.isfinite(number) and number >= minimum else default
 
 
+def costmap_radius(plan_radius: Optional[float], nominal: float) -> float:
+    """Inflation radius for the live /costmap (ADR-017).
+
+    While a path exists, the radius that path was planned with (`plan_radius`, one of 0.40, the
+    nominal one, 0.30 or 0.28 m); otherwise `nominal`, the planner's /nav/inflation_radius.
+    Showing a different radius than the planner used made RViz alternate between two costmaps.
+    """
+    if (
+        isinstance(plan_radius, (int, float))
+        and not isinstance(plan_radius, bool)
+        and math.isfinite(plan_radius)
+        and plan_radius > 0.0
+    ):
+        return float(plan_radius)
+    return nominal
+
+
 def wait_for_clock(
     now: Callable[[], float],
     sleep: Callable[[float], None],

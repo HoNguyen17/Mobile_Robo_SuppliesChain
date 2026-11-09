@@ -40,7 +40,7 @@ from grid_planner import (  # noqa: E402
     overlay_obstacles,
     plan_inflated,
 )
-from nav_common import ABORTED, NO_PATH, finite_or, leg_result  # noqa: E402
+from nav_common import ABORTED, NO_PATH, costmap_radius, finite_or, leg_result  # noqa: E402
 from plan_scheduler import (  # noqa: E402
     GOAL,
     REPLAN,
@@ -306,11 +306,13 @@ class AStarPlanner:
     def publish_live_costmap(self, obstacle_points: List[Tuple[float, float]]) -> None:
         if self.maps is None:
             return
-        radius = finite_or(
+        nominal = finite_or(
             rospy.get_param("/nav/inflation_radius", DEFAULT_INFLATION),
             DEFAULT_INFLATION,
             0.0,
         )
+        # The radius of the plan that is being followed, so RViz does not alternate (ADR-017)
+        radius = costmap_radius(self.current_path_radius, nominal)
         active = overlay_obstacles(self.maps.grid, obstacle_points)
         inflated = inflate(active, radius)
         self.publish_costmap(inflated)

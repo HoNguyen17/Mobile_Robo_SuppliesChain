@@ -43,7 +43,7 @@ from grid_planner import (  # noqa: E402
     inflate,
     overlay_obstacles,
 )
-from nav_common import ABORTED, NO_PATH, finite_or, leg_result  # noqa: E402
+from nav_common import ABORTED, NO_PATH, costmap_radius, finite_or, leg_result  # noqa: E402
 from plan_scheduler import (  # noqa: E402
     GOAL,
     REPLAN,
@@ -325,11 +325,13 @@ class DStarPlanner:
     ) -> None:
         if self.maps is None:
             return
-        radius = finite_or(
+        nominal = finite_or(
             rospy.get_param("/nav/inflation_radius", DEFAULT_INFLATION),
             DEFAULT_INFLATION,
             0.0,
         )
+        # The radius of the plan that is being followed, so RViz does not alternate (ADR-017)
+        radius = costmap_radius(self.current_path_radius, nominal)
         if (
             self._live_inc is None
             or self.maps is not self._live_maps

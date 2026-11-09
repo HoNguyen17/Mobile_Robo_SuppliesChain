@@ -10,6 +10,7 @@ from nav_common import (
     NO_PATH,
     SUCCEEDED,
     ClockWatch,
+    costmap_radius,
     finite_or,
     leg_result,
     wait_for_clock,
@@ -106,6 +107,29 @@ class ClockWatchTest(unittest.TestCase):
         self.assertTrue(watch.jumped_back(2.0))
         self.assertFalse(watch.jumped_back(2.5))
         self.assertFalse(watch.jumped_back(3.0))
+
+
+class CostmapRadiusTest(unittest.TestCase):
+    """The live /costmap shows the radius of the plan being followed (ADR-017)."""
+
+    def test_without_a_plan_the_nominal_radius_is_used(self):
+        self.assertEqual(costmap_radius(None, 0.35), 0.35)
+
+    def test_with_a_plan_its_radius_is_used(self):
+        for chosen in (0.40, 0.35, 0.30, 0.28):
+            self.assertEqual(costmap_radius(chosen, 0.35), chosen)
+
+    def test_the_plan_radius_wins_even_when_it_is_smaller_than_nominal(self):
+        self.assertEqual(costmap_radius(0.28, 0.35), 0.28)
+
+    def test_an_integer_radius_is_returned_as_a_float(self):
+        result = costmap_radius(1, 0.35)
+        self.assertEqual(result, 1.0)
+        self.assertIsInstance(result, float)
+
+    def test_a_bad_plan_radius_falls_back_to_nominal(self):
+        for bad in (0.0, -0.3, math.nan, math.inf, -math.inf, "0.4", True, [0.4], object()):
+            self.assertEqual(costmap_radius(bad, 0.33), 0.33, repr(bad))
 
 
 if __name__ == "__main__":

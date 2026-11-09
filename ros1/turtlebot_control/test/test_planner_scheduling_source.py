@@ -1,6 +1,7 @@
-"""Source checks for the planner nodes, which cannot be imported without rospy (ADR-016).
+"""Source checks for the planner nodes, which cannot be imported without rospy (ADR-016, ADR-017).
 
-The nodes must hand every plan to the PlanScheduler and listen to /nav/cancel.
+The nodes must hand every plan to the PlanScheduler, listen to /nav/cancel, and take the live
+costmap radius from nav_common.costmap_radius.
 """
 import ast
 import os
@@ -105,6 +106,13 @@ class PlannerSchedulingSourceTest(unittest.TestCase):
             self.assertIn("ticket.cancelled", text, name)
             # the check comes before the first publish of the path
             self.assertLess(text.index("ticket.cancelled"), text.index("self.publish_path("), name)
+
+    def test_live_costmap_uses_the_shared_radius_function(self):
+        """ADR-017: the live costmap radius comes from nav_common.costmap_radius and the current plan."""
+        for name, cls, src, tree in self.each():
+            live = ast.get_source_segment(src, method(tree, cls, "publish_live_costmap"))
+            self.assertIn("costmap_radius(self.current_path_radius, nominal)", live, name)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,6 +9,8 @@ The project is the UC6 warehouse robot: a simulated TurtleBot3 Waffle Pi in Unit
 ### Fixed
 - Planners: plans no longer overlap, a replan no longer blocks the scan callback, and `/nav/cancel` makes both planners forget the goal and the path, so a stale path is not republished after a leg ended. One `PlanScheduler` thread plans; stale results are dropped ([ADR-016](docs/ADR-016-planner-scheduling.md)). Closes open issues 10, 18 and 19; replan timing can differ slightly from the earlier benchmarks.
 
+- The live `/costmap` uses the inflation radius of the plan being followed (`nav_common.costmap_radius`), so RViz no longer alternates between 0.40 m and 0.35 m ([ADR-017](docs/ADR-017-live-costmap-radius.md)). Closes open issue 11.
+
 ### Added
 - `scripts/plan_scheduler.py` and tests `test_plan_scheduler.py`, `test_planner_nodes.py` (both real planner nodes against a fake rospy), `test_planner_scheduling_source.py`; `plan_scheduler.py` is installed by `CMakeLists.txt`.
 - Exact two-sided permutation test on means in `ab_report.py` (`permutation_test_means`), with a per-scenario table in `report.md` and `report.html` and 17 tests in `test_ab_tools.py`.
